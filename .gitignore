@@ -1,4 +1,7 @@
-﻿node_modules/
+﻿/AUREO_PROJECT_SPEC.md
+/PROJECT_ARCHITECTURE_REFERENCE.md
+/AUREO_BUILD_PLAN.md
+node_modules/
 .env
 *.env
 backend/config/.env

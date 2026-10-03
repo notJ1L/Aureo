@@ -1,17 +1,23 @@
-﻿import express from "express"
-import { connectDB } from "./config/db.js";
-import dotenv from "dotenv";
+﻿const express = require("express"); //load nito ung express
+const cors = require("cors"); //cors pang communicate ni vite kay backend
 
-dotenv.config();
-const app = express();
-const PORT = process.env.PORT || 3000;
+const app = express(); //gawa ka ng express app
 
-connectDB();
+//nag allow lang ng request mula sa frontend address na ito
+app.use(
+    cors({
+        origin: "http://localhost:5173" //frontend adrress ito
+    })
+);
 
-app.get("/api/notes", (req, res) => {
-    res.send("you got the 40 notes");
+app.use(express.json()); //para sa JSON data
+app.use(express.urlencoded({ extended: true })); //para sa form data
+
+app.get("/api/v1/health", (req, res) => { //health check route
+    res.status(200).json({
+        success: true,
+        message: "Aureo API is running"
+    });
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-})
+module.exports = app;
