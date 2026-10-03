@@ -92,10 +92,13 @@ const productSchema = new mongoose.Schema(
 );
 
 productSchema.pre("validate", function (next) {
-    if (this.condition === "second-hand" && this.stock !== 1) {
+    if (
+        this.condition === "second-hand" &&
+        ![0, 1].includes(this.stock)
+    ) {
         this.invalidate(
             "stock",
-            "Second-hand products must have exactly one unit in stock"
+            "Second-hand products can only have zero or one unit in stock"
         );
     }
 
