@@ -219,10 +219,60 @@ const logoutUser = catchAsyncErrors(async (req, res) => {
     });
 });
 
+const updateProfile = catchAsyncErrors(async (req, res, next) => {
+    const allowedFields = [
+        "name",
+        "contactNumber",
+        "address"
+    ];
+
+    const updates = {};
+
+    allowedFields.forEach((field) => {
+        if (req.body[field] !== undefined) {
+            updates[field] = req.body[field];
+        }
+    });
+
+    if (updates.name !== undefined) {
+        updates.name = updates.name.trim();
+
+        if (!updates.name) {
+            return next(
+                new ErrorHandler("Name cannot be empty", 400)
+            );
+        }
+    }
+
+    if (Object.keys(updates).length === 0) {
+        return next(
+            new ErrorHandler(
+                "No profile fields were provided",
+                400
+            )
+        );
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        updates,
+        {
+            new: true,
+            runValidators: true
+        }
+    );
+
+    res.status(200).json({
+        success: true,
+        user
+    });
+});
+
 module.exports = {
     registerUser,
     verifyEmail,
     loginUser,
     getCurrentUser,
-    logoutUser
+    logoutUser,
+    updateProfile
 };

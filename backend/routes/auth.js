@@ -5,7 +5,8 @@ const {
     verifyEmail,
     loginUser,
     getCurrentUser,
-    logoutUser
+    logoutUser,
+    updateProfile
 } = require("../controllers/authController");
 
 const {
@@ -17,17 +18,8 @@ const router = express.Router();
 router.post("/register", registerUser);
 router.post("/verify-email", verifyEmail);
 router.post("/login", loginUser);
-
-router.get(
-    "/me",
-    isAuthenticatedUser,
-    getCurrentUser
-);
-
-router.get(
-    "/logout",
-    isAuthenticatedUser,
-    logoutUser
-);
+router.get("/me", isAuthenticatedUser, getCurrentUser);
+router.get("/logout", isAuthenticatedUser, logoutUser);
+router.put("/me/update", isAuthenticatedUser, updateProfile);
 
 module.exports = router;
