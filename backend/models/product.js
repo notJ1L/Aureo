@@ -15,6 +15,13 @@ const productSchema = new mongoose.Schema(
             trim: true
         },
 
+        category: {
+            type: String,
+            required: [true, "Category is required"],
+            trim: true,
+            lowercase: true
+        },
+
         movement: {
             type: String,
             required: [true, "Movement is required"],
@@ -107,10 +114,12 @@ productSchema.pre("validate", function (next) {
 
 productSchema.index({
     brand: 1,
+    category: 1,
     movement: 1,
     condition: 1,
     price: 1,
+    ratings: 1,
+    numOfReviews: 1,
     isActive: 1
 });
-
 module.exports = mongoose.model("Product", productSchema);

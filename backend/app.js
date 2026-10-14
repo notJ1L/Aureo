@@ -4,6 +4,7 @@ const errorMiddleware = require("./middlewares/error"); //pang handle ng error n
 const ErrorHandler = require("./utils/ErrorHandler"); //pang create ng custom error natin
 const healthRoutes = require("./routes/health");
 const authRoutes = require("./routes/auth");
+const productRoutes = require("./routes/product");
 
 const app = express(); //gawa ka ng express app
 
@@ -19,7 +20,7 @@ app.use(express.urlencoded({ extended: true })); //para sa form data
 
 app.use("/api/v1/health", healthRoutes);
 app.use("/api/v1", authRoutes);
-
+app.use("/api/v1", productRoutes);
 app.use((req, res, next) => {
     next(new ErrorHandler(`Route not found: ${req.originalUrl}`, 404));
 });
