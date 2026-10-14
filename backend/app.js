@@ -3,6 +3,7 @@ const cors = require("cors"); //cors pang communicate ni vite kay backend
 const errorMiddleware = require("./middlewares/error"); //pang handle ng error natin
 const ErrorHandler = require("./utils/ErrorHandler"); //pang create ng custom error natin
 const healthRoutes = require("./routes/health");
+const authRoutes = require("./routes/auth");
 
 const app = express(); //gawa ka ng express app
 
@@ -17,6 +18,7 @@ app.use(express.json()); //para sa JSON data
 app.use(express.urlencoded({ extended: true })); //para sa form data
 
 app.use("/api/v1/health", healthRoutes);
+app.use("/api/v1", authRoutes);
 
 app.use((req, res, next) => {
     next(new ErrorHandler(`Route not found: ${req.originalUrl}`, 404));
