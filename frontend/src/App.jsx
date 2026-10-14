@@ -2,6 +2,7 @@ import { useState } from "react";
 import { BrowserRouter, Link, Route, Routes} from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import "./App.css";
+import RegisterPage from "./pages/RegisterPage";
 
 const products = [
     {
@@ -207,6 +208,7 @@ function App() {
             <Routes>
                 <Route path="/" element={<StoreLanding />} />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
             </Routes>
         </BrowserRouter>
     );

@@ -587,3 +587,52 @@ a {
 .auth-footer span {
     color: var(--gold);
 }
+
+.auth-card form {
+    display: grid;
+    gap: 1.2rem;
+}
+
+.auth-card label {
+    display: grid;
+    gap: 0.45rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.auth-card input {
+    width: 100%;
+    min-height: 46px;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    outline: none;
+    color: var(--white);
+    background: var(--panel-light);
+}
+
+.auth-card input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201, 164, 92, 0.16);
+}
+
+.auth-card .gold-button {
+    width: 100%;
+    min-height: 48px;
+    margin-top: 0.4rem;
+    border: 1px solid var(--gold);
+    border-radius: 2px;
+    color: #111;
+    background: var(--gold);
+    font-weight: 700;
+}
+
+.auth-card .gold-button:hover {
+    border-color: var(--gold-light);
+    background: var(--gold-light);
+}
+
+.auth-card .auth-footer {
+    text-align: center;
+}

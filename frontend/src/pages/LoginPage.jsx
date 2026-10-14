@@ -97,7 +97,7 @@ function LoginPage() {
 
                 <p className="auth-footer">
                     New to Aureo?{" "}
-                    <span>Registration will be connected next.</span>
+                    <Link to="/register">Create an account</Link>
                 </p>
             </section>
         </main>
