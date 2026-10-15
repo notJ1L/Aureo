@@ -149,9 +149,15 @@ function AdminProductsPage() {
         }
     };
 
-    const handleDelete = (id, name) => {
-        if (window.confirm(`Are you sure you want to delete or deactivate "${name}"?`)) {
-            dispatch(deleteProduct(id));
+    const handleToggleActive = (prod) => {
+        if (prod.isActive) {
+            if (window.confirm(`Deactivate "${prod.name}"? It will be archived and hidden from public catalog.`)) {
+                dispatch(deleteProduct(prod._id));
+            }
+        } else {
+            if (window.confirm(`Restore and activate "${prod.name}" back to public catalog?`)) {
+                dispatch(updateProduct(prod._id, { isActive: true }));
+            }
         }
     };
 
@@ -245,10 +251,10 @@ function AdminProductsPage() {
                                             </button>
                                             <button
                                                 type="button"
-                                                className="admin-btn del-btn"
-                                                onClick={() => handleDelete(prod._id, prod.name)}
+                                                className={`admin-btn ${prod.isActive ? "del-btn" : "edit-btn"}`}
+                                                onClick={() => handleToggleActive(prod)}
                                             >
-                                                Remove
+                                                {prod.isActive ? "Deactivate" : "Restore"}
                                             </button>
                                         </div>
                                     </td>

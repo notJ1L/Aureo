@@ -241,7 +241,7 @@ const updateProduct = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Admin: Delete product (soft delete if in orders)
+// Admin: Delete product (soft delete only: marks inactive)
 const deleteProduct = catchAsyncErrors(async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         return next(new ErrorHandler("Invalid product ID", 400));
@@ -252,29 +252,14 @@ const deleteProduct = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Product not found", 404));
     }
 
-    // Check if product exists in any completed/existing orders
-    const hasOrders = await Order.findOne({ "orderItems.product": req.params.id });
-
-    if (hasOrders) {
-        product.isActive = false;
-        await product.save({ validateBeforeSave: false });
-        return res.status(200).json({
-            success: true,
-            message: "Product exists in existing orders; marked as inactive instead of deleting."
-        });
-    }
-
-    // Also remove from any user's wishlist
-    await User.updateMany(
-        { wishlist: req.params.id },
-        { $pull: { wishlist: req.params.id } }
-    );
-
-    await product.deleteOne();
+    // Soft delete only: never hard delete products
+    product.isActive = false;
+    await product.save({ validateBeforeSave: false });
 
     res.status(200).json({
         success: true,
-        message: "Product deleted successfully"
+        message: "Product deactivated (soft deleted) successfully",
+        product
     });
 });
 

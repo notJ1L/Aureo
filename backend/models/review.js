@@ -1,4 +1,4 @@
-﻿const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 
 const reviewSchema = new mongoose.Schema(
     {
@@ -30,6 +30,11 @@ const reviewSchema = new mongoose.Schema(
             required: [true, "Comment is required"],
             trim: true,
             maxlength: [1000, "Comment cannot exceed 1000 characters"]
+        },
+
+        isActive: {
+            type: Boolean,
+            default: true
         }
     },
     {

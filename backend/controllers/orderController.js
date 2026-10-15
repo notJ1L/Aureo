@@ -261,7 +261,7 @@ const updateAdminOrder = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Admin: Delete order
+// Admin: Delete order (soft delete: marks Cancelled and restores stock)
 const deleteAdminOrder = catchAsyncErrors(async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         return next(new ErrorHandler("Invalid order ID", 400));
@@ -272,11 +272,25 @@ const deleteAdminOrder = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Order not found", 404));
     }
 
-    await order.deleteOne();
+    // Soft delete: set status to Cancelled and restore inventory if not already cancelled
+    if (order.status !== "Cancelled") {
+        for (const item of order.orderItems) {
+            await Product.findByIdAndUpdate(item.product, {
+                $inc: { stock: item.quantity }
+            });
+        }
+        order.status = "Cancelled";
+        order.statusHistory.push({
+            status: "Cancelled",
+            changedAt: new Date()
+        });
+        await order.save();
+    }
 
     res.status(200).json({
         success: true,
-        message: "Order deleted successfully"
+        message: "Order cancelled (soft deleted) successfully",
+        order
     });
 });
 

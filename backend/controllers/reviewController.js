@@ -5,9 +5,9 @@ const Order = require("../models/order");
 const ErrorHandler = require("../utils/ErrorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncErrors");
 
-// Helper to update product ratings
+// Helper to update product ratings (active reviews only)
 const updateProductRatingStats = async (productId) => {
-    const reviews = await Review.find({ product: productId });
+    const reviews = await Review.find({ product: productId, isActive: true });
     const numOfReviews = reviews.length;
     const ratings = numOfReviews > 0
         ? Number((reviews.reduce((acc, r) => acc + r.rating, 0) / numOfReviews).toFixed(1))
@@ -19,7 +19,7 @@ const updateProductRatingStats = async (productId) => {
     });
 };
 
-// Public: Get all reviews for a product
+// Public: Get all active reviews for a product
 const getProductReviews = catchAsyncErrors(async (req, res, next) => {
     const { id } = req.params;
 
@@ -27,7 +27,7 @@ const getProductReviews = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Invalid product ID", 400));
     }
 
-    const reviews = await Review.find({ product: id })
+    const reviews = await Review.find({ product: id, isActive: true })
         .populate("user", "name avatar")
         .sort({ createdAt: -1 });
 
@@ -123,14 +123,17 @@ const deleteReview = catchAsyncErrors(async (req, res, next) => {
     }
 
     const productId = review.product;
-    await review.deleteOne();
+    
+    // Soft delete: set isActive to false
+    review.isActive = false;
+    await review.save();
 
     // Recalculate
     await updateProductRatingStats(productId);
 
     res.status(200).json({
         success: true,
-        message: "Review removed successfully"
+        message: "Review removed (soft deleted) successfully"
     });
 });
 
