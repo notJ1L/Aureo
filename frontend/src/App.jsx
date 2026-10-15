@@ -1,8 +1,19 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter, Link, Route, Routes} from "react-router-dom";
+import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
+import { useSelector } from "react-redux";
 import LoginPage from "./pages/LoginPage";
-import "./App.css";
 import RegisterPage from "./pages/RegisterPage";
+import ProfilePage from "./pages/ProfilePage";
+import CatalogPage from "./pages/CatalogPage";
+import ProductDetailPage from "./pages/ProductDetailPage";
+import WishlistPage from "./pages/WishlistPage";
+import AdminProductsPage from "./pages/admin/AdminProductsPage";
+import CartPage from "./pages/CartPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import OrdersPage from "./pages/OrdersPage";
+import OrderDetailPage from "./pages/OrderDetailPage";
+import { PrivateRoute, AdminRoute } from "./routes/ProtectedRoutes";
+import "./App.css";
 import api from "./services/api";
 
 function StoreLanding() {
@@ -46,35 +57,67 @@ useEffect(() => {
     loadProducts();
 }, []);
 
+    const { isAuthenticated, user } = useSelector((state) => state.auth);
+    const [cartCount, setCartCount] = useState(0);
+
+    const updateCartCount = () => {
+        try {
+            const raw = localStorage.getItem("aureoCart");
+            const items = raw ? JSON.parse(raw) : [];
+            const count = items.reduce((acc, item) => acc + (item.quantity || 1), 0);
+            setCartCount(count);
+        } catch {
+            setCartCount(0);
+        }
+    };
+
+    useEffect(() => {
+        updateCartCount();
+        window.addEventListener("storage", updateCartCount);
+        return () => window.removeEventListener("storage", updateCartCount);
+    }, []);
+
     return (
         <main className="storefront">
             <header className="navbar">
                 <a className="logo" href="#top">AUREO</a>
 
                 <nav className="nav-links">
-                    <a href="#collection">Collection</a>
+                    <Link to="/catalog">Collection</Link>
                     <a href="#services">Services</a>
                     <a href="#story">The Aureo Standard</a>
+                    <Link to="/wishlist">Wishlist</Link>
+                    {isAuthenticated && <Link to="/orders">Orders</Link>}
+                    {user?.role === "admin" && (
+                        <Link to="/admin/products" style={{ color: "var(--gold)", fontWeight: 600 }}>
+                            Vault (Admin)
+                        </Link>
+                    )}
                 </nav>
 
                 <div className="nav-actions">
-                    <button
-                        type="button"
-                        className="nav-action"
-                        onClick={() => showNotice("Search will be available soon.")}
-                    >
-                        Search
-                    </button>
-                    <Link className="nav-action" to="/login">
-                      Account
+                    <Link to="/catalog" className="nav-action">
+                        Browse Catalog
                     </Link>
-                    <button
-                        type="button"
-                        className="cart-button"
-                        onClick={() => showNotice("Your cart is currently empty.")}
-                    >
-                        Cart <span>0</span>
-                    </button>
+                    {isAuthenticated ? (
+                        <Link className="nav-action" to="/me" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", color: "var(--gold)", fontWeight: 600 }}>
+                            {user?.avatar?.url && (
+                                <img
+                                    src={user.avatar.url}
+                                    alt="Avatar"
+                                    style={{ width: "22px", height: "22px", borderRadius: "50%", objectFit: "cover", border: "1px solid var(--gold)" }}
+                                />
+                            )}
+                            <span>{user?.name ? user.name.split(" ")[0] : "Account"}</span>
+                        </Link>
+                    ) : (
+                        <Link className="nav-action" to="/login">
+                            Account
+                        </Link>
+                    )}
+                    <Link to="/cart" className="cart-button">
+                        Bag <span>{cartCount}</span>
+                    </Link>
                 </div>
             </header>
 
@@ -243,6 +286,65 @@ function App() {
                 <Route path="/" element={<StoreLanding />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route
+                    path="/me"
+                    element={
+                        <PrivateRoute>
+                            <ProfilePage />
+                        </PrivateRoute>
+                    }
+                />
+                <Route
+                    path="/profile"
+                    element={
+                        <PrivateRoute>
+                            <ProfilePage />
+                        </PrivateRoute>
+                    }
+                />
+                <Route path="/catalog" element={<CatalogPage />} />
+                <Route path="/product/:id" element={<ProductDetailPage />} />
+                <Route
+                    path="/wishlist"
+                    element={
+                        <PrivateRoute>
+                            <WishlistPage />
+                        </PrivateRoute>
+                    }
+                />
+                <Route
+                    path="/admin/products"
+                    element={
+                        <AdminRoute>
+                            <AdminProductsPage />
+                        </AdminRoute>
+                    }
+                />
+                <Route path="/cart" element={<CartPage />} />
+                <Route
+                    path="/checkout"
+                    element={
+                        <PrivateRoute>
+                            <CheckoutPage />
+                        </PrivateRoute>
+                    }
+                />
+                <Route
+                    path="/orders"
+                    element={
+                        <PrivateRoute>
+                            <OrdersPage />
+                        </PrivateRoute>
+                    }
+                />
+                <Route
+                    path="/order/:id"
+                    element={
+                        <PrivateRoute>
+                            <OrderDetailPage />
+                        </PrivateRoute>
+                    }
+                />
             </Routes>
         </BrowserRouter>
     );

@@ -1,8 +1,10 @@
-﻿const User = require("../models/user");
+const User = require("../models/user");
 const ErrorHandler = require("../utils/ErrorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncErrors");
 const sendEmail = require("../utils/sendEmail");
 const generateToken = require("../utils/generateToken");
+const cloudinary = require("../config/cloudinary");
+const { getAuth } = require("../config/firebase");
 
 const {
     generateVerificationCode,
@@ -268,11 +270,101 @@ const updateProfile = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
+const googleLogin = catchAsyncErrors(async (req, res, next) => {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+        return next(new ErrorHandler("Firebase ID token is required", 400));
+    }
+
+    let decodedToken;
+    try {
+        decodedToken = await getAuth().verifyIdToken(idToken);
+    } catch {
+        return next(new ErrorHandler("Invalid or expired Google token", 401));
+    }
+
+    const { uid, email, name, picture } = decodedToken;
+
+    if (!email) {
+        return next(new ErrorHandler("Google account has no email", 400));
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    let user = await User.findOne({ email: normalizedEmail }).select("+googleId");
+
+    if (user) {
+        // Link Google ID if not already linked
+        if (!user.googleId) {
+            user.googleId = uid;
+            await user.save({ validateBeforeSave: false });
+        }
+    } else {
+        // Create new user — no password needed for Google accounts
+        user = await User.create({
+            name: name || "Aureo User",
+            email: normalizedEmail,
+            password: `google_${uid}_${Date.now()}`, // unusable placeholder
+            isVerified: true,
+            googleId: uid,
+            avatar: picture
+                ? { public_id: "", url: picture }
+                : { public_id: "", url: "" }
+        });
+    }
+
+    const token = generateToken(user._id);
+
+    const userData = user.toObject();
+    delete userData.password;
+    delete userData.googleId;
+
+    res.status(200).json({ success: true, token, user: userData });
+});
+
+const uploadAvatar = catchAsyncErrors(async (req, res, next) => {
+    const { avatar } = req.body; // base64 data URI from frontend
+
+    if (!avatar) {
+        return next(new ErrorHandler("No image provided", 400));
+    }
+
+    const user = await User.findById(req.user._id);
+
+    // Delete old Cloudinary image if it exists
+    if (user.avatar?.public_id) {
+        await cloudinary.uploader.destroy(user.avatar.public_id);
+    }
+
+    const result = await cloudinary.uploader.upload(avatar, {
+        folder: "aureo/avatars",
+        width: 400,
+        crop: "fill",
+        gravity: "face"
+    });
+
+    user.avatar = {
+        public_id: result.public_id,
+        url: result.secure_url
+    };
+
+    await user.save({ validateBeforeSave: false });
+
+    res.status(200).json({
+        success: true,
+        avatar: user.avatar
+    });
+});
+
 module.exports = {
     registerUser,
     verifyEmail,
     loginUser,
+    googleLogin,
     getCurrentUser,
     logoutUser,
-    updateProfile
+    updateProfile,
+    uploadAvatar
 };
+

@@ -1,4 +1,4 @@
-﻿const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
@@ -76,7 +76,19 @@ const userSchema = new mongoose.Schema(
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "Product"
             }
-        ]
+        ],
+
+        googleId: {
+            type: String,
+            default: null,
+            select: false
+        },
+
+        supabaseId: {
+            type: String,
+            default: null,
+            select: false
+        }
     },
     {
         timestamps: true
