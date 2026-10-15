@@ -1,4 +1,4 @@
-﻿const path = require("path");
+const path = require("path");
 const dotenv = require("dotenv");
 
 dotenv.config({
@@ -112,7 +112,7 @@ const seedAdmin = async () => {
                 product,
                 {
                     upsert: true,
-                    new: true,
+                    returnDocument: "after",
                     setDefaultsOnInsert: true
                 }
             );
@@ -126,7 +126,7 @@ const seedAdmin = async () => {
                 service,
                 {
                     upsert: true,
-                    new: true,
+                    returnDocument: "after",
                     setDefaultsOnInsert: true
                 }
             );

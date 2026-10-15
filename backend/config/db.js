@@ -1,4 +1,9 @@
-﻿const mongoose = require("mongoose");
+const mongoose = require("mongoose");
+const dns = require("dns");
+
+// Force Node.js to use Google DNS directly — fixes querySrv ECONNREFUSED
+// caused by Windows system DNS resolver not forwarding SRV queries correctly.
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 const connectDB = async () => {
     try {
