@@ -1,39 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BrowserRouter, Link, Route, Routes} from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import "./App.css";
 import RegisterPage from "./pages/RegisterPage";
-
-const products = [
-    {
-        name: "Presage Cocktail Time",
-        brand: "Seiko",
-        price: "PHP 28,500",
-        condition: "New",
-        image: "https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=900&q=85"
-    },
-    {
-        name: "Carrera Chronograph",
-        brand: "TAG Heuer",
-        price: "PHP 92,000",
-        condition: "New",
-        image: "https://images.unsplash.com/photo-1547996160-81dfa63595aa?auto=format&fit=crop&w=900&q=85"
-    },
-    {
-        name: "Black Bay 58",
-        brand: "Tudor",
-        price: "PHP 148,000",
-        condition: "New",
-        image: "https://images.unsplash.com/photo-1533139502658-0198f920d8e8?auto=format&fit=crop&w=900&q=85"
-    },
-    {
-        name: "Datejust 36",
-        brand: "Rolex",
-        price: "PHP 395,000",
-        condition: "Pre-owned",
-        image: "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&w=900&q=85"
-    }
-];
+import api from "./services/api";
 
 function StoreLanding() {
     const [notice, setNotice] = useState("");
@@ -45,6 +15,36 @@ function StoreLanding() {
             setNotice("");
         }, 2600);
     };
+
+    const formatPrice = (price) => {
+    return new Intl.NumberFormat("en-PH", {
+        style: "currency",
+        currency: "PHP",
+        maximumFractionDigits: 0
+    }).format(price);
+};
+
+    const [products, setProducts] = useState([]);
+    const [productsLoading, setProductsLoading] = useState(true);
+    const [productsError, setProductsError] = useState("");
+
+useEffect(() => {
+    const loadProducts = async () => {
+        try {
+            const response = await api.get("/products");
+            setProducts(response.data.products);
+        } catch (requestError) {
+            setProductsError(
+                requestError.response?.data?.message ||
+                "Unable to load products"
+            );
+        } finally {
+            setProductsLoading(false);
+        }
+    };
+
+    loadProducts();
+}, []);
 
     return (
         <main className="storefront">
@@ -145,28 +145,61 @@ function StoreLanding() {
                 </div>
 
                 <div className="product-grid">
-                    {products.map((product) => (
-                        <article className="product-card" key={product.name}>
-                            <div className="product-image">
-                                <img src={product.image} alt={product.name} />
-                                <span>{product.condition}</span>
-                            </div>
+                    {productsLoading && (
+    <p className="catalog-message">
+        Loading the collection...
+    </p>
+)}
 
-                            <div className="product-info">
-                                <p className="product-brand">{product.brand}</p>
-                                <h3>{product.name}</h3>
-                                <div className="product-bottom">
-                                    <strong>{product.price}</strong>
-                                    <button
-                                        type="button"
-                                        onClick={() => showNotice(`${product.name} selected.`)}
-                                    >
-                                        View piece
-                                    </button>
-                                </div>
-                            </div>
-                        </article>
-                    ))}
+{productsError && (
+    <p className="catalog-message error">
+        {productsError}
+    </p>
+)}
+
+{!productsLoading &&
+    !productsError &&
+    products.map((product) => (
+        <article className="product-card" key={product._id}>
+            <div className="product-image">
+                <img
+                    src={
+                        product.images?.[0]?.url ||
+                        "https://images.unsplash.com/photo-1523170335258-f5ed11844a49"
+                    }
+                    alt={product.name}
+                />
+                <span>
+                    {product.stock === 0
+                        ? "Sold"
+                        : product.condition}
+                </span>
+            </div>
+
+            <div className="product-info">
+                <p className="product-brand">
+                    {product.brand}
+                </p>
+
+                <h3>{product.name}</h3>
+
+                <div className="product-bottom">
+                    <strong>
+                        {formatPrice(product.price)}
+                    </strong>
+
+                    <button
+                        type="button"
+                        onClick={() =>
+                            showNotice(`${product.name} selected.`)
+                        }
+                    >
+                        View piece
+                    </button>
+                </div>
+            </div>
+        </article>
+    ))}
                 </div>
             </section>
 
@@ -199,6 +232,7 @@ function StoreLanding() {
 
             {notice && <div className="toast">{notice}</div>}
         </main>
+        
     );
 }
 
