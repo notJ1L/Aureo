@@ -295,17 +295,15 @@ const googleLogin = catchAsyncErrors(async (req, res, next) => {
     let user = await User.findOne({ email: normalizedEmail }).select("+googleId");
 
     if (user) {
-        // Link Google ID if not already linked
         if (!user.googleId) {
             user.googleId = uid;
             await user.save({ validateBeforeSave: false });
         }
     } else {
-        // Create new user — no password needed for Google accounts
         user = await User.create({
             name: name || "Aureo User",
             email: normalizedEmail,
-            password: `google_${uid}_${Date.now()}`, // unusable placeholder
+            password: `google_${uid}_${Date.now()}`,
             isVerified: true,
             googleId: uid,
             avatar: picture
@@ -324,7 +322,7 @@ const googleLogin = catchAsyncErrors(async (req, res, next) => {
 });
 
 const uploadAvatar = catchAsyncErrors(async (req, res, next) => {
-    const { avatar } = req.body; // base64 data URI from frontend
+    const { avatar } = req.body;
 
     if (!avatar) {
         return next(new ErrorHandler("No image provided", 400));
@@ -332,7 +330,6 @@ const uploadAvatar = catchAsyncErrors(async (req, res, next) => {
 
     const user = await User.findById(req.user._id);
 
-    // Delete old Cloudinary image if it exists
     if (user.avatar?.public_id) {
         await cloudinary.uploader.destroy(user.avatar.public_id);
     }

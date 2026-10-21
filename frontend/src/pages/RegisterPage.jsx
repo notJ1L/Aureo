@@ -18,14 +18,12 @@ function RegisterPage() {
     });
     const [infoMsg, setInfoMsg] = useState("");
 
-    // If logged in (e.g. via Google or post-verify login), redirect home
     useEffect(() => {
         if (isAuthenticated) {
             navigate("/");
         }
     }, [isAuthenticated, navigate]);
 
-    // When registeredEmail changes in Redux, advance to verify stage
     useEffect(() => {
         if (registeredEmail) {
             setStage("verify");
@@ -34,7 +32,6 @@ function RegisterPage() {
         }
     }, [registeredEmail]);
 
-    // When verified becomes true, redirect to login
     useEffect(() => {
         if (verified) {
             navigate("/login");

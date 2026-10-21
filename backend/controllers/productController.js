@@ -10,7 +10,6 @@ const escapeRegex = (value) => {
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 };
 
-// Public: Get all active products with search, filter, pagination
 const getProducts = catchAsyncErrors(async (req, res) => {
     const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
     const requestedLimit = Number.parseInt(req.query.limit, 10) || 12;
@@ -143,7 +142,6 @@ const createProduct = catchAsyncErrors(async (req, res, next) => {
         images
     } = req.body;
 
-    // Second-hand stock rule
     if (condition === "second-hand" && Number(stock) !== 1) {
         return next(
             new ErrorHandler("Second-hand products must have a stock of exactly 1", 400)
@@ -209,7 +207,6 @@ const updateProduct = catchAsyncErrors(async (req, res, next) => {
         );
     }
 
-    // Handle new images if provided as base64
     if (Array.isArray(req.body.images) && req.body.images.length > 0) {
         const newImages = [];
         for (const img of req.body.images) {
@@ -241,7 +238,7 @@ const updateProduct = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Admin: Delete product (soft delete only: marks inactive)
+// Admin: Delete product (soft delete if in orders)
 const deleteProduct = catchAsyncErrors(async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         return next(new ErrorHandler("Invalid product ID", 400));
@@ -252,14 +249,29 @@ const deleteProduct = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Product not found", 404));
     }
 
-    // Soft delete only: never hard delete products
-    product.isActive = false;
-    await product.save({ validateBeforeSave: false });
+    // Check if product exists in any completed/existing orders
+    const hasOrders = await Order.findOne({ "orderItems.product": req.params.id });
+
+    if (hasOrders) {
+        product.isActive = false;
+        await product.save({ validateBeforeSave: false });
+        return res.status(200).json({
+            success: true,
+            message: "Product exists in existing orders; marked as inactive instead of deleting."
+        });
+    }
+
+    // Also remove from any user's wishlist
+    await User.updateMany(
+        { wishlist: req.params.id },
+        { $pull: { wishlist: req.params.id } }
+    );
+
+    await product.deleteOne();
 
     res.status(200).json({
         success: true,
-        message: "Product deactivated (soft deleted) successfully",
-        product
+        message: "Product deleted successfully"
     });
 });
 

@@ -11,7 +11,6 @@ function CatalogPage() {
     const { wishlist } = useSelector((state) => state.wishlist);
     const { isAuthenticated, user } = useSelector((state) => state.auth);
 
-    // Filter states
     const [keyword, setKeyword] = useState(searchParams.get("keyword") || "");
     const [brand, setBrand] = useState(searchParams.get("brand") || "");
     const [movement, setMovement] = useState(searchParams.get("movement") || "");

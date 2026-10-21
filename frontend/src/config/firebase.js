@@ -10,10 +10,8 @@ const firebaseConfig = {
     appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-// Initialize Firebase app (idempotent — safe to import from multiple files)
 const app = initializeApp(firebaseConfig);
 
-// Auth instance and Google provider used for the Google sign-in flow
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 

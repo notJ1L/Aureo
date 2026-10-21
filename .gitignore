@@ -1,9 +1,7 @@
-﻿/AUREO_PROJECT_SPEC.md
-/PROJECT_ARCHITECTURE_REFERENCE.md
-/AUREO_BUILD_PLAN.md
-node_modules/
+﻿node_modules/
 .env
 *.env
 backend/config/.env
 frontend/dist/
 coverage/
+frontend/.env   

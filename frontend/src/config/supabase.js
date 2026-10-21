@@ -9,6 +9,4 @@ if (!supabaseUrl || !supabaseAnonKey) {
     );
 }
 
-// Frontend uses the anon key — safe to expose to the browser.
-// Row Level Security must be configured in the Supabase dashboard.
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);

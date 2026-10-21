@@ -1,6 +1,5 @@
 const { initializeApp, getApps, cert } = require("firebase-admin/app");
 
-// getApps() replaces admin.apps in firebase-admin v12+
 if (!getApps().length) {
     initializeApp({
         credential: cert({
@@ -13,7 +12,6 @@ if (!getApps().length) {
     });
 }
 
-// Export auth for verifying Google ID tokens in controllers
 const { getAuth } = require("firebase-admin/auth");
 
 module.exports = { getAuth };

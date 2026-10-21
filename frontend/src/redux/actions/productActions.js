@@ -11,7 +11,6 @@ import {
     PRODUCT_CLEAR_ERRORS
 } from "../constants/productConstants";
 
-// Get products with filters & pagination
 export const getProducts = (params = {}) => async (dispatch) => {
     dispatch({ type: PRODUCT_LIST_REQUEST });
     try {
@@ -28,7 +27,6 @@ export const getProducts = (params = {}) => async (dispatch) => {
     }
 };
 
-// Get single product details
 export const getProductDetails = (id) => async (dispatch) => {
     dispatch({ type: PRODUCT_DETAILS_REQUEST });
     try {
@@ -45,7 +43,6 @@ export const getProductDetails = (id) => async (dispatch) => {
     }
 };
 
-// Admin: Get all products
 export const getAdminProducts = () => async (dispatch) => {
     dispatch({ type: ADMIN_PRODUCT_LIST_REQUEST });
     try {
@@ -62,7 +59,6 @@ export const getAdminProducts = () => async (dispatch) => {
     }
 };
 
-// Admin: Create product
 export const createProduct = (productData) => async (dispatch) => {
     dispatch({ type: PRODUCT_CREATE_REQUEST });
     try {
@@ -79,7 +75,6 @@ export const createProduct = (productData) => async (dispatch) => {
     }
 };
 
-// Admin: Update product
 export const updateProduct = (id, productData) => async (dispatch) => {
     dispatch({ type: PRODUCT_UPDATE_REQUEST });
     try {
@@ -96,7 +91,6 @@ export const updateProduct = (id, productData) => async (dispatch) => {
     }
 };
 
-// Admin: Delete product
 export const deleteProduct = (id) => async (dispatch) => {
     dispatch({ type: PRODUCT_DELETE_REQUEST });
     try {
@@ -113,7 +107,6 @@ export const deleteProduct = (id) => async (dispatch) => {
     }
 };
 
-// Wishlist: Get user wishlist
 export const getWishlist = () => async (dispatch) => {
     dispatch({ type: WISHLIST_GET_REQUEST });
     try {
@@ -130,7 +123,6 @@ export const getWishlist = () => async (dispatch) => {
     }
 };
 
-// Wishlist: Add
 export const addToWishlist = (productId) => async (dispatch) => {
     dispatch({ type: WISHLIST_TOGGLE_REQUEST });
     try {
@@ -147,7 +139,6 @@ export const addToWishlist = (productId) => async (dispatch) => {
     }
 };
 
-// Wishlist: Remove
 export const removeFromWishlist = (productId) => async (dispatch) => {
     dispatch({ type: WISHLIST_TOGGLE_REQUEST });
     try {

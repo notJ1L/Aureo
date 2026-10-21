@@ -15,7 +15,6 @@ function LoginPage() {
         password: ""
     });
 
-    // If redirected from a protected route
     const from = location.state?.from?.pathname || "/";
 
     useEffect(() => {

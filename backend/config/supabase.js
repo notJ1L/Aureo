@@ -9,8 +9,6 @@ if (!supabaseUrl || !supabaseServiceRoleKey) {
     );
 }
 
-// Backend uses the service-role key — bypasses Row Level Security.
-// Never expose this key to the frontend.
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
     auth: {
         autoRefreshToken: false,
