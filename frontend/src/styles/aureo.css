@@ -54,7 +54,7 @@
 /* Gold is the single accent colour, so the pre-owned badge uses the gold
  * family instead of a blue tone. */
 .catalog-page .preowned-badge {
-    background: rgba(201, 164, 92, 0.18);
+    background: var(--gold-18);
     color: var(--gold);
     border: 1px solid var(--gold);
 }
@@ -63,7 +63,7 @@
 .catalog-page .wishlist-heart-btn.active {
     color: var(--danger);
     border-color: var(--danger);
-    background: rgba(229, 72, 77, 0.15);
+    background: var(--danger-15);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -96,25 +96,6 @@
 .catalog-page .product-rating-count {
     color: var(--text-muted);
     font-size: 0.78rem;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Auth pages                                                                 */
-/* -------------------------------------------------------------------------- */
-
-/* The Google button is part of the dark theme, not a white Google widget. */
-.auth-page .google-btn {
-    background: var(--bg-elevated);
-    color: var(--text-primary);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-}
-
-.auth-page .google-btn:hover {
-    background: #262a33;
-    border-color: var(--gold);
-    box-shadow: none;
-    color: var(--text-primary);
 }
 
 /* -------------------------------------------------------------------------- */

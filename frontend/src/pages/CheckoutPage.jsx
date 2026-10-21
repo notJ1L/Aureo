@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { createOrder, clearOrderErrors } from "../redux/actions/orderActions";
 import { ORDER_CREATE_RESET } from "../redux/constants/orderConstants";
+import { toast } from "react-toastify";
 
 function CheckoutPage() {
     const navigate = useNavigate();
@@ -69,7 +70,9 @@ function CheckoutPage() {
 
         // Enforce FR 1.5: Unverified users cannot place orders
         if (!user?.isVerified) {
-            alert("Email verification required: Please verify your email before placing an order (FR 1.5).");
+            toast.error(
+                "Email verification required: please verify your email before placing an order (FR 1.5)."
+            );
             return;
         }
 

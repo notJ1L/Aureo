@@ -1,0 +1,95 @@
+/* -------------------------------------------------------------------------- */
+/* Overlay themes                                                             */
+/* -------------------------------------------------------------------------- */
+
+/* SweetAlert2 and Toastify both ship with a light default. The main
+ * stylesheet themes the visible parts of both libraries. This file adds the
+ * pieces that were still missing: the backdrop behind a dialog, the close
+ * button, the footer, and the toast progress bar. */
+
+/* -------------------------------------------------------------------------- */
+/* SweetAlert2                                                                */
+/* -------------------------------------------------------------------------- */
+
+/* The backdrop behind a confirmation dialog. */
+.swal2-backdrop {
+    background: var(--overlay-80) !important;
+    backdrop-filter: blur(2px);
+}
+
+/* The close button in the top right corner. The light default is white on a
+ * white popup, so it has to be themed explicitly. */
+.swal2-close {
+    color: var(--text-muted) !important;
+    background: transparent !important;
+    transition: color 160ms ease, background 160ms ease;
+}
+
+.swal2-close:hover {
+    color: var(--gold) !important;
+    background: var(--gold-10) !important;
+}
+
+/* The footer that holds the buttons. */
+.swal2-footer {
+    margin: 1.25rem 0 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+}
+
+/* The content area keeps its own padding so the dialog does not feel
+ * cramped. */
+.swal2-content {
+    color: var(--text-secondary) !important;
+}
+
+/* The icon colours. A success stays green and a failure stays red, because
+ * they carry meaning that the gold accent cannot replace. */
+.swal2-icon.swal2-success {
+    color: var(--success) !important;
+    border-color: var(--success) !important;
+}
+
+.swal2-icon.swal2-error {
+    color: var(--danger) !important;
+    border-color: var(--danger) !important;
+}
+
+.swal2-icon.swal2-warning {
+    color: var(--gold) !important;
+    border-color: var(--gold) !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Toastify                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/* The progress bar at the bottom of a toast. */
+.Toastify__progress-bar {
+    background: var(--gold) !important;
+}
+
+/* The title and the body of a toast. */
+.Toastify__toast-title {
+    color: var(--text-primary) !important;
+    font-weight: 700;
+}
+
+.Toastify__toast-body {
+    color: var(--text-secondary) !important;
+    font-size: 0.85rem;
+}
+
+/* The close button on a toast. */
+.Toastify__close-button {
+    color: var(--text-muted) !important;
+}
+
+.Toastify__close-button:hover {
+    color: var(--gold) !important;
+}
+
+/* The container that holds the stack of toasts. */
+.Toastify__toast-container {
+    z-index: 9999;
+}

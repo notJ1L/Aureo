@@ -83,7 +83,16 @@ function ChatWidget() {
                             </div>
                         ))}
 
-                        {loading && <div className="chat-bubble assistant typing">...</div>}
+                        {loading && (
+                            <div
+                                className="chat-bubble assistant typing"
+                                aria-label="The assistant is composing a reply"
+                            >
+                                <span />
+                                <span />
+                                <span />
+                            </div>
+                        )}
                     </div>
 
                     {preferenceChips.length > 0 && (

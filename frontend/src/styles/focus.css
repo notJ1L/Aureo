@@ -1,0 +1,98 @@
+/* -------------------------------------------------------------------------- */
+/* Focus states                                                               */
+/* -------------------------------------------------------------------------- */
+
+/* Aureo uses one focus ring everywhere. The specification names it
+ * explicitly: "Prices, active nav items, rating stars, and focus rings use
+ * gold."
+ *
+ * `:focus-visible` is used instead of `:focus` so the ring only appears for
+ * keyboard navigation and not when a mouse is clicked, which keeps the
+ * interface calm without giving up keyboard accessibility.
+ */
+
+/* Links, buttons, and anything else that can be tabbed to. */
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* The catalogue filter pills and the homepage filter chips are custom
+ * controls, so they need the ring as well. */
+.pill-btn:focus-visible,
+.filter-chip:focus-visible,
+.pagination-btn:focus-visible,
+.wishlist-heart-btn:focus-visible,
+.admin-btn:focus-visible,
+.aureo-btn:focus-visible,
+.aureo-pagination .page-link:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+}
+
+/* Inputs, selects, and textareas already show a gold border and a soft
+ * glow. They keep that ring instead of a second outline, so the two never
+ * stack on top of each other. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: var(--focus-ring);
+}
+
+/* A card or a product tile that can be reached with the keyboard. */
+.product-card:focus-visible,
+a.product-card:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+}
+
+/* The Material UI rating is a group of radio buttons. The ring is drawn on
+ * the group so it does not flicker while the arrow keys move between the
+ * stars. */
+.MuiRating-root:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+    border-radius: 6px;
+}
+
+/* The chat bubble and the floating widget. */
+.chat-launcher:focus-visible,
+.chat-widget:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+}
+
+/* Disabled controls never take focus, so they never show a ring. */
+button:disabled:focus-visible,
+input:disabled:focus-visible,
+select:disabled:focus-visible,
+textarea:disabled:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Motion preferences                                                         */
+/* -------------------------------------------------------------------------- */
+
+/* The specification asks for reduced motion to be respected. Every animation
+ * in Aureo is shortened rather than removed, so the interface still
+ * communicates that something happened. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

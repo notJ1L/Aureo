@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getOrderDetails, cancelOrder } from "../redux/actions/orderActions";
+import { confirmAction } from "../utils/sweetAlert";
 
 function OrderDetailPage() {
     const { id } = useParams();
@@ -22,8 +23,14 @@ function OrderDetailPage() {
         }).format(price || 0);
     };
 
-    const handleCancel = () => {
-        if (window.confirm("Confirm cancellation of this order? Timepiece will return to inventory.")) {
+    const handleCancel = async () => {
+        const confirmed = await confirmAction({
+            title: "Cancel this order?",
+            message: "The timepiece returns to the Aureo inventory. This cannot be undone.",
+            confirmText: "Cancel order"
+        });
+
+        if (confirmed) {
             dispatch(cancelOrder(id));
         }
     };

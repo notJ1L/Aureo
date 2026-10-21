@@ -50,7 +50,7 @@ Legend: **Done** = implemented and exercised. **Partial** = core path works, lis
 | 8. Services and Tickets | Done | `GET /api/v1/services`, admin service CRUD with a datatable and checkbox bulk delete, positive price rule, verified-user ticket creation, unique ticket numbers, admin ticket listing and status updates, timestamped status history, `MockEmail` ticket notifications, service pages and ticket timelines. |
 | 9. Admin Dashboard | Done | `GET /api/v1/admin/dashboard` reports sales (Paid or later), order counts by status, inventory, and appraisal expenses. The Recharts dashboard draws a bar chart and a line chart with a from/to date-range filter. |
 | 10. Rule-Based AI Chat | Done | `POST /api/v1/chat` and `GET /api/v1/chat/history`, one `ChatHistory` document per user, backend keyword extraction for budget, style, brand, and movement, matching against in-stock products, and a logged-in-only chat widget. |
-| 11. 3D Experience and UI Completion | Partial | Responsive pages, gold theme, Toastify, SweetAlert2, and a lazy-loaded Three.js home hero with a primitive-watch model, a CSS watch fallback for devices without WebGL and on small screens, `prefers-reduced-motion` support, and resource disposal on unmount. Gap: the product detail page has no 3D viewer and no product-level 3D gallery. |
+| 11. 3D Experience and UI Completion | Done | Lazy-loaded Three.js home hero with a primitive-watch model, plus a product-level 3D viewer on the detail page. Both use one canvas per page, detect WebGL before creating a GPU context, fall back to a CSS watch, honour `prefers-reduced-motion`, and dispose the renderer on unmount. The catalogue, product, cart, account, and admin interfaces are complete: every loading, empty, and error state is styled, the navigation stays reachable on a phone, and the specifications table collapses to one column. The whole stylesheet is driven by the black/gold tokens, every interactive element has a gold focus ring, and all confirmations use SweetAlert2 and all notifications use Toastify. |
 | 12. Hardening, Testing, Documentation | Partial | 7 backend test suites (117 cases) run against a dedicated test database and cover auth, products, orders, reviews, appraisals, services, and dashboard metrics. `README.md` documents the setup, the scripts, the seed commands, the API conventions, the assumptions, the assessment coverage, and the local development flow. Gaps: no frontend test script, and no chat isolation coverage. |
 | 13. Deployment on Render | Partial | `render.yaml` defines the Express API service and the static Vite site with the health check, the build and start commands, and the SPA rewrite. `frontend/public/_redirects` provides the SPA fallback. The production environment variables are declared but not filled in, so the deployment has not been run or verified yet. |
 
@@ -288,6 +288,6 @@ The first implementation slice is Phase 0 and Phase 1:
 4. Add `GET /api/v1/health`.
 5. Confirm the backend starts successfully before implementing models or authentication.
 
-Both are complete. Phases 0 through 10 are implemented, and Phase 13 has its Render blueprint in
-`render.yaml`. The remaining work is Phase 11's product-level 3D viewer, the frontend test suite and
-the chat isolation test in Phase 12, and running the Render deployment itself.
+Both are complete. Phases 0 through 11 are implemented, and Phase 13 has its Render blueprint in
+`render.yaml`. The remaining work is the frontend test suite and the chat isolation test in
+Phase 12, and running the Render deployment itself.

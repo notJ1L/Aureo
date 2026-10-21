@@ -13,6 +13,58 @@
     --danger: #e5484d;
     --success: #3fb97f;
 
+    /* Derived tints. These keep the palette consistent: every translucent
+     * fill in the application comes from one of the four colours above. */
+    --gold-06: rgba(201, 164, 92, 0.06);
+    --gold-07: rgba(201, 164, 92, 0.07);
+    --gold-08: rgba(201, 164, 92, 0.08);
+    --gold-10: rgba(201, 164, 92, 0.1);
+    --gold-12: rgba(201, 164, 92, 0.12);
+    --gold-14: rgba(201, 164, 92, 0.14);
+    --gold-16: rgba(201, 164, 92, 0.16);
+    --gold-18: rgba(201, 164, 92, 0.18);
+    --gold-20: rgba(201, 164, 92, 0.2);
+    --gold-30: rgba(201, 164, 92, 0.3);
+    --gold-35: rgba(201, 164, 92, 0.35);
+    --gold-55: rgba(201, 164, 92, 0.55);
+    --danger-10: rgba(229, 72, 77, 0.1);
+    --danger-12: rgba(229, 72, 77, 0.12);
+    --danger-15: rgba(229, 72, 77, 0.15);
+    --danger-20: rgba(229, 72, 77, 0.2);
+    --danger-30: rgba(229, 72, 77, 0.3);
+    --danger-35: rgba(229, 72, 77, 0.35);
+    --success-08: rgba(63, 185, 127, 0.08);
+    --success-10: rgba(63, 185, 127, 0.1);
+    --success-15: rgba(63, 185, 127, 0.15);
+    --success-30: rgba(63, 185, 127, 0.3);
+    --success-35: rgba(63, 185, 127, 0.35);
+    --success-40: rgba(63, 185, 127, 0.4);
+
+    /* A lighter red for error text, so it stays readable on the dark page. */
+    --danger-text: #ff8588;
+
+    /* The gold shades used by the CSS watch fallback and the 3D materials. */
+    --gold-highlight: #e2c489;
+    --gold-deep: #8f7238;
+    --gold-deepest: #5d4c26;
+    --dial-face: #1b1f26;
+    --elevated-55: rgba(31, 35, 43, 0.55);
+
+    /* Overlays and scrims. */
+    --overlay-20: rgba(0, 0, 0, 0.2);
+    --overlay-35: rgba(0, 0, 0, 0.35);
+    --overlay-40: rgba(0, 0, 0, 0.4);
+    --overlay-55: rgba(0, 0, 0, 0.55);
+    --overlay-60: rgba(0, 0, 0, 0.6);
+    --overlay-75: rgba(0, 0, 0, 0.75);
+    --overlay-80: rgba(0, 0, 0, 0.8);
+    --scrim-35: rgba(15, 17, 21, 0.35);
+    --scrim-70: rgba(15, 17, 21, 0.7);
+    --text-25: rgba(244, 239, 230, 0.25);
+
+    /* The gold focus ring, used by every interactive element. */
+    --focus-ring: 0 0 0 3px rgba(201, 164, 92, 0.3);
+
     font-family: "DM Sans", sans-serif;
     color: var(--text-primary);
     background: var(--bg-page);

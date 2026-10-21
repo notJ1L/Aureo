@@ -1,0 +1,376 @@
+/* -------------------------------------------------------------------------- */
+/* Layout containers                                                          */
+/* -------------------------------------------------------------------------- */
+
+/* These containers are already in the markup of the pages. They had no
+ * rules, so the sections inside them ran together without spacing and the
+ * columns did not line up. */
+
+/* -------------------------------------------------------------------------- */
+/* Catalogue                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/* The whole card is the link, so the link itself has to fill the card. */
+.product-info-link {
+    display: block;
+    color: inherit;
+}
+
+.product-info-link:hover {
+    color: inherit;
+}
+
+.product-info-link:hover .product-title {
+    color: var(--gold-hover);
+}
+
+/* The catalogue card uses its own title and meta rules, because the homepage
+ * card styles its title through `.product-info h3`. */
+.product-title {
+    min-height: 3rem;
+    margin: 0.5rem 0 0.6rem;
+    color: var(--text-primary);
+    font-family: "Playfair Display", serif;
+    font-size: 1.2rem;
+    font-weight: 500;
+    transition: color 160ms ease;
+}
+
+.product-meta {
+    margin: 0 0 0.6rem;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    text-transform: capitalize;
+}
+
+.product-price {
+    color: var(--gold);
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Checkout                                                                   */
+/* -------------------------------------------------------------------------- */
+
+.checkout-forms {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.checkout-form {
+    display: grid;
+    gap: 1.1rem;
+}
+
+.checkout-summary-column {
+    position: sticky;
+    top: 1.5rem;
+    align-self: start;
+}
+
+.checkout-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    margin: 1rem 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Orders                                                                     */
+/* -------------------------------------------------------------------------- */
+
+.orders-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.order-head-badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.order-item-price {
+    color: var(--gold);
+    font-weight: 700;
+}
+
+.order-detail-main {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-width: 0;
+}
+
+.order-detail-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.order-items-table {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.order-detail-item-total {
+    color: var(--gold);
+    font-size: 1.05rem;
+    white-space: nowrap;
+}
+
+.item-price-qty {
+    margin: 0.2rem 0 0.4rem;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.order-timestamp {
+    margin: 0.3rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    letter-spacing: 0.03em;
+}
+
+.head-right-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 0.5rem;
+    color: var(--gold);
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+}
+
+.back-link:hover {
+    color: var(--gold-hover);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Cart                                                                       */
+/* -------------------------------------------------------------------------- */
+
+.cart-item-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.cart-qty-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Product detail                                                             */
+/* -------------------------------------------------------------------------- */
+
+.detail-gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 0;
+}
+
+.detail-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+/* The switch between the photographs and the 3D viewer. */
+.detail-viewer-toggle {
+    display: inline-flex;
+    align-self: flex-start;
+    gap: 0.3rem;
+    padding: 0.25rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.viewer-tab {
+    padding: 0.4rem 0.9rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.viewer-tab:hover:not(:disabled) {
+    color: var(--gold);
+}
+
+.viewer-tab.active {
+    background: var(--gold-12);
+    border-color: var(--gold-35);
+    color: var(--gold);
+}
+
+.viewer-tab:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.specs-section {
+    margin-top: 2rem;
+}
+
+.specs-section h3 {
+    margin: 0 0 0.5rem;
+    color: var(--gold);
+    font-size: 1rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Reviews                                                                    */
+/* -------------------------------------------------------------------------- */
+
+.review-form {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.25rem;
+    padding: 1.25rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.star-rating-select {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.star-rating-select label {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Admin                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/* The row of links to the other admin sections. It sits in the header of
+ * every admin page, so it has to wrap cleanly on a narrow screen. */
+.admin-nav-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.admin-nav-actions a {
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    transition: border-color 160ms ease, color 160ms ease;
+}
+
+.admin-nav-actions a:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Responsive                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/* The checkout and the order detail page are two column layouts. They
+ * collapse to a single column on a narrow screen, and the sticky summary
+ * is released so it does not cover the form. */
+@media (max-width: 960px) {
+    .checkout-summary-column {
+        position: static;
+    }
+}
+
+@media (max-width: 900px) {
+    /* The admin header holds the logo, the tag, and the navigation to the
+     * other admin sections. On a phone it has to wrap onto two rows. */
+    .admin-header-bar {
+        flex-wrap: wrap;
+        row-gap: 0.6rem;
+        padding-bottom: 0.6rem;
+    }
+
+    .admin-page-title-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .admin-nav-actions {
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .orders-header,
+    .head-right-actions {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .order-detail-item-total {
+        font-size: 0.95rem;
+    }
+
+    .review-form {
+        padding: 1rem;
+    }
+
+    /* The specification table is two columns, which is too narrow for a
+     * phone. */
+    .specs-grid {
+        grid-template-columns: 1fr;
+        gap: 0.9rem;
+    }
+
+    .star-rating-select {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.4rem;
+    }
+
+    /* The account and admin containers use a fixed gutter that is too wide
+     * for a phone. */
+    .profile-container,
+    .admin-container,
+    .admin-header-bar,
+    .catalog-container {
+        width: calc(100% - 2rem);
+    }
+}

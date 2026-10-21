@@ -1,16 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap");
-
-:root {
-    --page: #0f1115;
-    --panel: #171a20;
-    --panel-light: #1f232b;
-    --line: #2a2d33;
-    --gold: #c9a45c;
-    --gold-light: #dfbf7d;
-    --white: #f4efe6;
-    --muted: #a49e91;
-    --dim: #716d65;
-}
+/* The Aureo design tokens live in `src/index.css`. They are the only source of
+ * colour in the application, so no colour is hard-coded here. */
 
 * {
     box-sizing: border-box;
@@ -22,8 +11,8 @@ html {
 
 body {
     margin: 0;
-    color: var(--white);
-    background: var(--page);
+    color: var(--text-primary);
+    background: var(--bg-page);
     font-family: "DM Sans", sans-serif;
 }
 
@@ -50,8 +39,8 @@ a {
     min-height: 100vh;
     overflow: hidden;
     background:
-        radial-gradient(circle at 85% 5%, rgba(201, 164, 92, 0.1), transparent 25rem),
-        var(--page);
+        radial-gradient(circle at 85% 5%, var(--gold-10), transparent 25rem),
+        var(--bg-page);
 }
 
 .navbar {
@@ -61,7 +50,7 @@ a {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--border);
 }
 
 .logo {
@@ -79,25 +68,25 @@ a {
 }
 
 .nav-links {
-    color: var(--muted);
+    color: var(--text-secondary);
     font-size: 0.82rem;
 }
 
 .nav-links a:hover,
 .nav-action:hover {
-    color: var(--gold-light);
+    color: var(--gold-hover);
 }
 
 .nav-action,
 .cart-button {
     border: 0;
-    color: var(--muted);
+    color: var(--text-secondary);
     background: transparent;
     font-size: 0.8rem;
 }
 
 .cart-button {
-    color: var(--white);
+    color: var(--text-primary);
 }
 
 .cart-button span {
@@ -141,7 +130,7 @@ a {
 .hero-copy h1 {
     max-width: 680px;
     margin: 1.4rem 0;
-    color: var(--white);
+    color: var(--text-primary);
     font-family: "Playfair Display", serif;
     font-size: clamp(3.6rem, 7vw, 7rem);
     font-weight: 500;
@@ -150,7 +139,7 @@ a {
 
 .hero-description {
     max-width: 460px;
-    color: var(--muted);
+    color: var(--text-secondary);
     font-size: 1rem;
     line-height: 1.8;
 }
@@ -174,12 +163,12 @@ a {
 }
 
 .gold-button {
-    color: #111;
+    color: var(--bg-page);
     background: var(--gold);
 }
 
 .gold-button:hover {
-    background: var(--gold-light);
+    background: var(--gold-hover);
 }
 
 .outline-button {
@@ -188,7 +177,7 @@ a {
 }
 
 .outline-button:hover {
-    color: #111;
+    color: var(--bg-page);
     background: var(--gold);
 }
 
@@ -197,7 +186,7 @@ a {
     flex-wrap: wrap;
     gap: 1.2rem;
     margin-top: 4rem;
-    color: var(--dim);
+    color: var(--text-muted);
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.08rem;
@@ -207,8 +196,8 @@ a {
     position: relative;
     min-height: 480px;
     overflow: hidden;
-    border: 1px solid var(--line);
-    background: var(--panel);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
 }
 
 .hero-visual img {
@@ -226,7 +215,7 @@ a {
     z-index: 1;
     top: 1.2rem;
     left: 1.2rem;
-    color: var(--gold-light);
+    color: var(--gold-hover);
     font-size: 0.68rem;
     letter-spacing: 0.16rem;
 }
@@ -240,7 +229,7 @@ a {
     flex-direction: column;
     gap: 0.35rem;
     padding-top: 1rem;
-    border-top: 1px solid rgba(244, 239, 230, 0.25);
+    border-top: 1px solid var(--text-25);
 }
 
 .visual-caption strong {
@@ -250,7 +239,7 @@ a {
 }
 
 .visual-caption span {
-    color: var(--muted);
+    color: var(--text-secondary);
     font-size: 0.75rem;
 }
 
@@ -263,14 +252,14 @@ a {
     align-items: end;
     justify-content: space-between;
     gap: 2rem;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--border);
     padding-bottom: 1.5rem;
 }
 
 .section-heading h2,
 .service-strip h2 {
     margin: 0.65rem 0 0;
-    color: var(--white);
+    color: var(--text-primary);
     font-family: "Playfair Display", serif;
     font-size: 2.5rem;
     font-weight: 500;
@@ -292,8 +281,8 @@ a {
 
 .filter-chip {
     padding: 0.55rem 0.8rem;
-    border: 1px solid var(--line);
-    color: var(--muted);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
     background: transparent;
     font-size: 0.75rem;
 }
@@ -306,7 +295,7 @@ a {
 
 .result-count {
     margin-left: auto;
-    color: var(--dim);
+    color: var(--text-muted);
     font-size: 0.75rem;
 }
 
@@ -317,15 +306,15 @@ a {
 }
 
 .product-card {
-    border: 1px solid var(--line);
-    background: var(--panel);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
 }
 
 .product-image {
     position: relative;
     aspect-ratio: 0.82;
     overflow: hidden;
-    background: var(--panel-light);
+    background: var(--bg-elevated);
 }
 
 .product-image img {
@@ -346,7 +335,7 @@ a {
     top: 0.8rem;
     left: 0.8rem;
     padding: 0.35rem 0.5rem;
-    color: #111;
+    color: var(--bg-page);
     background: var(--gold);
     font-size: 0.63rem;
     font-weight: 700;
@@ -369,7 +358,7 @@ a {
 .product-info h3 {
     min-height: 3rem;
     margin: 0.5rem 0 1.2rem;
-    color: var(--white);
+    color: var(--text-primary);
     font-family: "Playfair Display", serif;
     font-size: 1.25rem;
     font-weight: 500;
@@ -383,7 +372,7 @@ a {
 }
 
 .product-bottom strong {
-    color: var(--white);
+    color: var(--text-primary);
     font-size: 0.78rem;
 }
 
@@ -401,20 +390,20 @@ a {
     align-items: center;
     gap: 3rem;
     padding: 4rem 0;
-    border-top: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
 }
 
 .service-items {
     display: grid;
     gap: 1rem;
-    color: var(--muted);
+    color: var(--text-secondary);
     font-size: 0.85rem;
 }
 
 .service-items span {
     padding-bottom: 1rem;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--border);
 }
 
 .story-section {
@@ -424,7 +413,7 @@ a {
 .story-copy {
     max-width: 760px;
     margin-top: 1.5rem;
-    color: var(--white);
+    color: var(--text-primary);
     font-family: "Playfair Display", serif;
     font-size: clamp(2rem, 4vw, 4rem);
     line-height: 1.15;
@@ -434,8 +423,8 @@ a {
     display: flex;
     justify-content: space-between;
     padding: 2rem 0;
-    border-top: 1px solid var(--line);
-    color: var(--dim);
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
     font-size: 0.72rem;
 }
 
@@ -446,9 +435,9 @@ a {
     z-index: 3;
     padding: 1rem 1.2rem;
     border: 1px solid var(--gold);
-    color: var(--white);
-    background: var(--panel-light);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+    color: var(--text-primary);
+    background: var(--bg-elevated);
+    box-shadow: 0 12px 40px var(--overlay-35);
 }
 
 @media (max-width: 900px) {
@@ -461,8 +450,40 @@ a {
         width: min(100% - 32px, 620px);
     }
 
+    /* The navigation links used to be hidden completely on a narrow screen,
+     * which left a phone visitor with no way to reach the services, the
+     * appraisal form, or the wishlist. They now move onto their own row and
+     * scroll sideways when they do not fit. */
+    .navbar {
+        flex-wrap: wrap;
+        align-items: center;
+        row-gap: 0.5rem;
+        padding-bottom: 0.6rem;
+    }
+
     .nav-links {
+        display: flex;
+        order: 3;
+        width: 100%;
+        gap: 1.1rem;
+        overflow-x: auto;
+        padding-bottom: 0.2rem;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .nav-links::-webkit-scrollbar {
         display: none;
+    }
+
+    .nav-links a {
+        white-space: nowrap;
+        padding: 0.25rem 0;
+        border-bottom: 1px solid transparent;
+    }
+
+    .nav-links a:hover {
+        border-bottom-color: var(--gold);
     }
 
     .hero-section {
@@ -476,6 +497,11 @@ a {
     }
 
     .hero-visual img {
+        min-height: 390px;
+    }
+
+    /* The 3D hero follows the panel it sits in. */
+    .hero-visual .hero-3d {
         min-height: 390px;
     }
 
@@ -533,10 +559,10 @@ a {
     background:
         radial-gradient(
             circle at 50% 20%,
-            rgba(201, 164, 92, 0.12),
+            var(--gold-12),
             transparent 30rem
         ),
-        var(--page);
+        var(--bg-page);
 }
 
 .auth-back {
@@ -550,14 +576,14 @@ a {
 .auth-card {
     width: min(100%, 440px);
     padding: 2.5rem;
-    border: 1px solid var(--line);
-    background: var(--panel);
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    box-shadow: 0 24px 80px var(--overlay-35);
 }
 
 .auth-card h1 {
     margin: 0.7rem 0;
-    color: var(--white);
+    color: var(--text-primary);
     font-family: "Playfair Display", serif;
     font-size: 2.8rem;
     font-weight: 500;
@@ -565,7 +591,7 @@ a {
 
 .auth-description {
     margin-bottom: 2rem;
-    color: var(--muted);
+    color: var(--text-secondary);
     line-height: 1.6;
 }
 
@@ -573,14 +599,14 @@ a {
     margin-bottom: 1rem;
     padding: 0.8rem;
     border: 1px solid var(--danger);
-    color: #ff8588;
-    background: rgba(229, 72, 77, 0.1);
+    color: var(--danger-text);
+    background: var(--danger-10);
     font-size: 0.85rem;
 }
 
 .auth-footer {
     margin-top: 1.5rem;
-    color: var(--dim);
+    color: var(--text-muted);
     font-size: 0.8rem;
 }
 
@@ -596,7 +622,7 @@ a {
 .auth-card label {
     display: grid;
     gap: 0.45rem;
-    color: var(--muted);
+    color: var(--text-secondary);
     font-size: 0.8rem;
     font-weight: 600;
 }
@@ -605,16 +631,16 @@ a {
     width: 100%;
     min-height: 46px;
     padding: 0.8rem 0.9rem;
-    border: 1px solid var(--line);
+    border: 1px solid var(--border);
     border-radius: 2px;
     outline: none;
-    color: var(--white);
-    background: var(--panel-light);
+    color: var(--text-primary);
+    background: var(--bg-elevated);
 }
 
 .auth-card input:focus {
     border-color: var(--gold);
-    box-shadow: 0 0 0 3px rgba(201, 164, 92, 0.16);
+    box-shadow: var(--focus-ring);
 }
 
 .auth-card .gold-button {
@@ -623,21 +649,25 @@ a {
     margin-top: 0.4rem;
     border: 1px solid var(--gold);
     border-radius: 2px;
-    color: #111;
+    color: var(--bg-page);
     background: var(--gold);
     font-weight: 700;
 }
 
 .auth-card .gold-button:hover {
-    border-color: var(--gold-light);
-    background: var(--gold-light);
+    border-color: var(--gold-hover);
+    background: var(--gold-hover);
 }
 
 .auth-card .auth-footer {
     text-align: center;
 }
 
-/* Google Sign In Button */
+/* Google Sign In Button.
+ *
+ * The Google brand keeps its own colours in the icon, but the button itself
+ * is part of the Aureo theme. A white Google widget would break the black
+ * and gold design. */
 .google-btn {
     width: 100%;
     min-height: 46px;
@@ -645,19 +675,21 @@ a {
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    background: #ffffff;
-    color: #3c4043;
+    background: var(--bg-elevated);
+    color: var(--text-primary);
     font-size: 0.9rem;
     font-weight: 600;
-    border: 1px solid #dadce0;
-    border-radius: 2px;
-    transition: background 0.2s, box-shadow 0.2s;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
     margin-bottom: 1.25rem;
 }
 
 .google-btn:hover {
-    background: #f8f9fa;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    background: var(--bg-elevated);
+    border-color: var(--gold);
+    box-shadow: none;
+    filter: brightness(1.3);
 }
 
 .auth-divider {
@@ -665,7 +697,7 @@ a {
     align-items: center;
     text-align: center;
     margin: 1.25rem 0;
-    color: var(--dim);
+    color: var(--text-muted);
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.08rem;
@@ -675,7 +707,7 @@ a {
 .auth-divider::after {
     content: "";
     flex: 1;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--border);
 }
 
 .auth-divider span {
@@ -685,9 +717,9 @@ a {
 .auth-info {
     margin-bottom: 1rem;
     padding: 0.8rem;
-    border: 1px solid rgba(63, 185, 127, 0.4);
-    color: #3fb97f;
-    background: rgba(63, 185, 127, 0.08);
+    border: 1px solid var(--success-40);
+    color: var(--success);
+    background: var(--success-08);
     font-size: 0.85rem;
     border-radius: 2px;
 }
@@ -695,7 +727,7 @@ a {
 /* Profile Page */
 .profile-page {
     min-height: 100vh;
-    background: radial-gradient(circle at 80% 10%, rgba(201, 164, 92, 0.08), transparent 30rem), var(--page);
+    background: radial-gradient(circle at 80% 10%, var(--gold-08), transparent 30rem), var(--bg-page);
     padding: 2rem;
 }
 
@@ -717,10 +749,10 @@ a {
 }
 
 .profile-card {
-    background: var(--panel);
-    border: 1px solid var(--line);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     padding: 2.5rem;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 20px 60px var(--overlay-40);
 }
 
 .profile-top {
@@ -752,18 +784,18 @@ a {
 }
 
 .avatar-upload-btn:hover {
-    color: var(--gold-light);
+    color: var(--gold-hover);
 }
 
 .profile-meta h2 {
     margin: 0.2rem 0;
     font-family: "Playfair Display", serif;
     font-size: 2rem;
-    color: var(--white);
+    color: var(--text-primary);
 }
 
 .profile-email {
-    color: var(--muted);
+    color: var(--text-secondary);
     font-size: 0.9rem;
     margin: 0 0 0.75rem;
 }
@@ -783,26 +815,26 @@ a {
 }
 
 .role-badge {
-    background: var(--panel-light);
+    background: var(--bg-elevated);
     color: var(--gold);
     border: 1px solid var(--border);
 }
 
 .verified-badge {
-    background: rgba(63, 185, 127, 0.15);
-    color: #3fb97f;
-    border: 1px solid rgba(63, 185, 127, 0.3);
+    background: var(--success-15);
+    color: var(--success);
+    border: 1px solid var(--success-30);
 }
 
 .unverified-badge {
-    background: rgba(229, 72, 77, 0.15);
-    color: #ff8588;
-    border: 1px solid rgba(229, 72, 77, 0.3);
+    background: var(--danger-15);
+    color: var(--danger-text);
+    border: 1px solid var(--danger-30);
 }
 
 .profile-divider {
     border: 0;
-    border-top: 1px solid var(--line);
+    border-top: 1px solid var(--border);
     margin: 2rem 0;
 }
 
@@ -822,7 +854,7 @@ a {
 .profile-form label {
     display: grid;
     gap: 0.45rem;
-    color: var(--muted);
+    color: var(--text-secondary);
     font-size: 0.8rem;
     font-weight: 600;
 }
@@ -831,16 +863,16 @@ a {
     width: 100%;
     min-height: 44px;
     padding: 0.8rem;
-    border: 1px solid var(--line);
+    border: 1px solid var(--border);
     border-radius: 2px;
-    background: var(--panel-light);
-    color: var(--white);
+    background: var(--bg-elevated);
+    color: var(--text-primary);
 }
 
 .profile-form input:focus {
     border-color: var(--gold);
     outline: none;
-    box-shadow: 0 0 0 2px rgba(201, 164, 92, 0.2);
+    box-shadow: var(--focus-ring);
 }
 
 .form-row-3 {
@@ -864,7 +896,7 @@ a {
    ========================================================================== */
 .catalog-page {
     min-height: 100vh;
-    background: var(--page);
+    background: var(--bg-page);
 }
 
 .catalog-container {
@@ -877,8 +909,8 @@ a {
 }
 
 .catalog-sidebar {
-    background: var(--panel);
-    border: 1px solid var(--line);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     padding: 1.5rem;
     position: sticky;
     top: 2rem;
@@ -891,13 +923,13 @@ a {
     align-items: center;
     margin-bottom: 1.5rem;
     padding-bottom: 0.8rem;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--border);
 }
 
 .sidebar-head h3 {
     margin: 0;
     font-size: 1.1rem;
-    color: var(--white);
+    color: var(--text-primary);
     letter-spacing: 0.05rem;
 }
 
@@ -919,7 +951,7 @@ a {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.08rem;
-    color: var(--muted);
+    color: var(--text-secondary);
     margin-bottom: 0.5rem;
     font-weight: 600;
 }
@@ -929,9 +961,9 @@ a {
     width: 100%;
     min-height: 40px;
     padding: 0.6rem 0.8rem;
-    background: var(--panel-light);
-    border: 1px solid var(--line);
-    color: var(--white);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
     border-radius: 2px;
     outline: none;
     font-size: 0.85rem;
@@ -940,6 +972,7 @@ a {
 .catalog-input:focus,
 .catalog-select:focus {
     border-color: var(--gold);
+    box-shadow: var(--focus-ring);
 }
 
 .radio-pill-group {
@@ -950,9 +983,9 @@ a {
 
 .pill-btn {
     padding: 0.35rem 0.75rem;
-    background: var(--panel-light);
-    border: 1px solid var(--line);
-    color: var(--muted);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
     font-size: 0.75rem;
     border-radius: 20px;
     cursor: pointer;
@@ -962,7 +995,7 @@ a {
 .pill-btn.active,
 .pill-btn:hover {
     background: var(--gold);
-    color: #111;
+    color: var(--bg-page);
     border-color: var(--gold);
     font-weight: 600;
 }
@@ -974,7 +1007,7 @@ a {
 }
 
 .price-inputs span {
-    color: var(--dim);
+    color: var(--text-muted);
 }
 
 .catalog-main {
@@ -993,7 +1026,7 @@ a {
     margin: 0.2rem 0 0;
     font-family: "Playfair Display", serif;
     font-size: 2.2rem;
-    color: var(--white);
+    color: var(--text-primary);
 }
 
 .badge-overlay {
@@ -1004,20 +1037,20 @@ a {
 }
 
 .new-badge {
-    background: rgba(201, 164, 92, 0.2);
+    background: var(--gold-20);
     color: var(--gold);
     border: 1px solid var(--gold);
 }
 
 .preowned-badge {
-    background: rgba(66, 133, 244, 0.2);
-    color: #8ab4f8;
-    border: 1px solid #4285f4;
+    background: var(--gold-20);
+    color: var(--gold);
+    border: 1px solid var(--gold);
 }
 
 .sold-badge {
-    background: rgba(229, 72, 77, 0.2);
-    color: #ff8588;
+    background: var(--danger-20);
+    color: var(--danger-text);
     border: 1px solid var(--danger);
 }
 
@@ -1025,9 +1058,9 @@ a {
     position: absolute;
     top: 1rem;
     right: 1rem;
-    background: rgba(15, 17, 21, 0.7);
-    border: 1px solid var(--line);
-    color: var(--muted);
+    background: var(--scrim-70);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
     font-size: 1.1rem;
     width: 34px;
     height: 34px;
@@ -1041,9 +1074,9 @@ a {
 
 .wishlist-heart-btn:hover,
 .wishlist-heart-btn.active {
-    color: #ff5252;
-    border-color: #ff5252;
-    background: rgba(255, 82, 82, 0.15);
+    color: var(--danger-text);
+    border-color: var(--danger-text);
+    background: var(--danger-15);
 }
 
 .card-footer-price {
@@ -1069,9 +1102,9 @@ a {
 
 .pagination-btn {
     padding: 0.5rem 1.2rem;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    color: var(--white);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
     font-size: 0.85rem;
     border-radius: 2px;
 }
@@ -1082,7 +1115,7 @@ a {
 }
 
 .page-indicator {
-    color: var(--muted);
+    color: var(--text-secondary);
     font-size: 0.85rem;
 }
 
@@ -1091,14 +1124,14 @@ a {
    ========================================================================== */
 .product-detail-page {
     min-height: 100vh;
-    background: var(--page);
+    background: var(--bg-page);
 }
 
 .detail-breadcrumb {
     width: min(1200px, calc(100% - 48px));
     margin: 1.5rem auto 0;
     font-size: 0.8rem;
-    color: var(--dim);
+    color: var(--text-muted);
 }
 
 .detail-breadcrumb a {
@@ -1115,8 +1148,8 @@ a {
 
 .detail-main-image-wrap {
     position: relative;
-    background: var(--panel-light);
-    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
     height: 480px;
     display: grid;
     place-items: center;
@@ -1146,8 +1179,8 @@ a {
 .thumb-btn {
     width: 72px;
     height: 72px;
-    border: 1px solid var(--line);
-    background: var(--panel-light);
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
     border-radius: 4px;
     padding: 4px;
     cursor: pointer;
@@ -1167,7 +1200,7 @@ a {
     margin: 0.4rem 0 1rem;
     font-family: "Playfair Display", serif;
     font-size: 2.6rem;
-    color: var(--white);
+    color: var(--text-primary);
 }
 
 .detail-price-row {
@@ -1185,16 +1218,16 @@ a {
 
 .detail-wishlist-btn {
     background: none;
-    border: 1px solid var(--line);
-    color: var(--muted);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
     padding: 0.5rem 1rem;
     border-radius: 20px;
     font-size: 0.85rem;
 }
 
 .detail-wishlist-btn.active {
-    color: #ff5252;
-    border-color: #ff5252;
+    color: var(--danger-text);
+    border-color: var(--danger-text);
 }
 
 .detail-actions {
@@ -1220,16 +1253,16 @@ a {
 }
 
 .stock-in {
-    color: #3fb97f;
+    color: var(--success);
 }
 
 .stock-single {
-    color: var(--gold-light);
+    color: var(--gold-hover);
     font-weight: 600;
 }
 
 .stock-out {
-    color: #ff8588;
+    color: var(--danger-text);
 }
 
 .specs-grid {
@@ -1240,7 +1273,7 @@ a {
 }
 
 .specs-grid dt {
-    color: var(--dim);
+    color: var(--text-muted);
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05rem;
@@ -1248,13 +1281,13 @@ a {
 
 .specs-grid dd {
     margin: 0.2rem 0 0;
-    color: var(--white);
+    color: var(--text-primary);
     font-weight: 600;
     font-size: 0.95rem;
 }
 
 .detail-description p {
-    color: var(--muted);
+    color: var(--text-secondary);
     line-height: 1.7;
     margin-top: 0.8rem;
 }
@@ -1264,7 +1297,7 @@ a {
    ========================================================================== */
 .wishlist-page {
     min-height: 100vh;
-    background: var(--page);
+    background: var(--bg-page);
 }
 
 .wishlist-container {
@@ -1286,8 +1319,8 @@ a {
 }
 
 .wishlist-card {
-    background: var(--panel);
-    border: 1px solid var(--line);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 4px;
     overflow: hidden;
     display: flex;
@@ -1297,7 +1330,7 @@ a {
 .wishlist-img-wrap {
     position: relative;
     height: 220px;
-    background: var(--panel-light);
+    background: var(--bg-elevated);
 }
 
 .wishlist-img-wrap img {
@@ -1330,7 +1363,7 @@ a {
    ========================================================================== */
 .admin-page {
     min-height: 100vh;
-    background: var(--page);
+    background: var(--bg-page);
 }
 
 .admin-header-bar {
@@ -1340,12 +1373,12 @@ a {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--border);
 }
 
 .admin-tag {
     background: var(--gold);
-    color: #111;
+    color: var(--bg-page);
     font-size: 0.65rem;
     font-weight: 800;
     padding: 0.2rem 0.5rem;
@@ -1374,8 +1407,8 @@ a {
 
 .admin-table-wrap {
     overflow-x: auto;
-    background: var(--panel);
-    border: 1px solid var(--line);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 4px;
 }
 
@@ -1388,8 +1421,8 @@ a {
 
 .admin-table th {
     padding: 1rem 1.2rem;
-    border-bottom: 1px solid var(--line);
-    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05rem;
@@ -1406,12 +1439,12 @@ a {
     height: 50px;
     border-radius: 4px;
     object-fit: cover;
-    background: var(--panel-light);
+    background: var(--bg-elevated);
 }
 
 .admin-subtext {
     display: block;
-    color: var(--dim);
+    color: var(--text-muted);
     font-size: 0.75rem;
 }
 
@@ -1429,7 +1462,7 @@ a {
 }
 
 .admin-row-selected {
-    background: rgba(201, 164, 92, 0.08);
+    background: var(--gold-08);
 }
 
 .admin-bulk-bar {
@@ -1441,8 +1474,8 @@ a {
     padding: 0.85rem 1.1rem;
     border: 1px solid var(--gold);
     border-radius: 6px;
-    background: var(--panel);
-    color: var(--text);
+    background: var(--bg-card);
+    color: var(--text-primary);
     font-size: 0.85rem;
 }
 
@@ -1471,9 +1504,9 @@ a {
 }
 
 .edit-btn {
-    background: var(--panel-light);
-    border-color: var(--line);
-    color: var(--white);
+    background: var(--bg-elevated);
+    border-color: var(--border);
+    color: var(--text-primary);
 }
 
 .edit-btn:hover {
@@ -1482,21 +1515,21 @@ a {
 }
 
 .del-btn {
-    background: rgba(229, 72, 77, 0.1);
-    border-color: rgba(229, 72, 77, 0.3);
-    color: #ff8588;
+    background: var(--danger-10);
+    border-color: var(--danger-30);
+    color: var(--danger-text);
 }
 
 .del-btn:hover {
     background: var(--danger);
-    color: #fff;
+    color: var(--text-primary);
 }
 
 /* Modal */
 .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.8);
+    background: var(--overlay-80);
     backdrop-filter: blur(4px);
     display: grid;
     place-items: center;
@@ -1505,14 +1538,14 @@ a {
 }
 
 .modal-card {
-    background: var(--panel);
-    border: 1px solid var(--line);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     width: min(650px, 100%);
     max-height: 90vh;
     overflow-y: auto;
     padding: 2rem;
     border-radius: 4px;
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 24px 80px var(--overlay-60);
 }
 
 .modal-head {
@@ -1532,7 +1565,7 @@ a {
     background: none;
     border: none;
     font-size: 1.8rem;
-    color: var(--muted);
+    color: var(--text-secondary);
     cursor: pointer;
 }
 
@@ -1545,7 +1578,7 @@ a {
     display: grid;
     gap: 0.4rem;
     font-size: 0.8rem;
-    color: var(--muted);
+    color: var(--text-secondary);
     font-weight: 600;
 }
 
@@ -1553,9 +1586,9 @@ a {
 .admin-form textarea {
     width: 100%;
     padding: 0.7rem;
-    background: var(--panel-light);
-    border: 1px solid var(--line);
-    color: var(--white);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
     border-radius: 2px;
 }
 
@@ -1609,7 +1642,7 @@ a {
    ========================================================================== */
 .cart-page {
     min-height: 100vh;
-    background: var(--page);
+    background: var(--bg-page);
 }
 
 .cart-container {
@@ -1637,8 +1670,8 @@ a {
 }
 
 .cart-item-card {
-    background: var(--panel);
-    border: 1px solid var(--line);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 4px;
     padding: 1.2rem;
     display: grid;
@@ -1651,7 +1684,7 @@ a {
     width: 90px;
     height: 90px;
     object-fit: cover;
-    background: var(--panel-light);
+    background: var(--bg-elevated);
     border-radius: 2px;
 }
 
@@ -1662,22 +1695,22 @@ a {
 
 .cart-unit-price {
     margin: 0.4rem 0 0;
-    color: var(--muted);
+    color: var(--text-secondary);
     font-size: 0.85rem;
 }
 
 .qty-picker {
     display: flex;
     align-items: center;
-    border: 1px solid var(--line);
-    background: var(--panel-light);
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
     border-radius: 2px;
 }
 
 .qty-picker button {
     background: none;
     border: none;
-    color: var(--white);
+    color: var(--text-primary);
     padding: 0.4rem 0.8rem;
 }
 
@@ -1709,8 +1742,8 @@ a {
 }
 
 .cart-summary-box {
-    background: var(--panel);
-    border: 1px solid var(--line);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 4px;
     padding: 2rem;
 }
@@ -1726,11 +1759,11 @@ a {
     justify-content: space-between;
     margin-bottom: 0.8rem;
     font-size: 0.9rem;
-    color: var(--muted);
+    color: var(--text-secondary);
 }
 
 .summary-row strong {
-    color: var(--white);
+    color: var(--text-primary);
 }
 
 .summary-total {
@@ -1745,7 +1778,7 @@ a {
 }
 
 .free-shipping {
-    color: #3fb97f;
+    color: var(--success);
 }
 
 .checkout-btn {
@@ -1760,7 +1793,7 @@ a {
     text-align: center;
     margin-top: 1rem;
     font-size: 0.8rem;
-    color: var(--muted);
+    color: var(--text-secondary);
 }
 
 /* ==========================================================================
@@ -1768,7 +1801,7 @@ a {
    ========================================================================== */
 .checkout-page {
     min-height: 100vh;
-    background: var(--page);
+    background: var(--bg-page);
 }
 
 .checkout-container {
@@ -1784,8 +1817,8 @@ a {
 }
 
 .checkout-section-box {
-    background: var(--panel);
-    border: 1px solid var(--line);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 4px;
     padding: 2rem;
     margin-bottom: 2rem;
@@ -1810,8 +1843,8 @@ a {
     display: flex;
     align-items: center;
     gap: 0.8rem;
-    background: var(--panel-light);
-    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
     padding: 0.8rem 1rem;
     border-radius: 4px;
     cursor: pointer;
@@ -1820,12 +1853,12 @@ a {
 
 .payment-pill.selected {
     border-color: var(--gold);
-    background: rgba(201, 164, 92, 0.06);
+    background: var(--gold-06);
 }
 
 .card-input-box {
-    background: var(--panel-light);
-    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
     padding: 1.5rem;
     border-radius: 4px;
 }
@@ -1833,15 +1866,15 @@ a {
 .card-mock-notice {
     font-size: 0.78rem;
     color: var(--gold);
-    background: rgba(201, 164, 92, 0.1);
-    border: 1px solid rgba(201, 164, 92, 0.3);
+    background: var(--gold-10);
+    border: 1px solid var(--gold-30);
     padding: 0.6rem 0.8rem;
     border-radius: 2px;
     margin-bottom: 1rem;
 }
 
 .card-mock-notice code {
-    background: #000;
+    background: var(--bg-page);
     padding: 0.1rem 0.4rem;
     border-radius: 2px;
 }
@@ -1864,7 +1897,7 @@ a {
     height: 50px;
     object-fit: cover;
     border-radius: 2px;
-    background: var(--panel-light);
+    background: var(--bg-elevated);
 }
 
 .checkout-mini-info {
@@ -1878,7 +1911,7 @@ a {
 
 .checkout-mini-info span {
     font-size: 0.75rem;
-    color: var(--dim);
+    color: var(--text-muted);
 }
 
 .checkout-mini-price {
@@ -1892,7 +1925,7 @@ a {
 .orders-page,
 .order-detail-page {
     min-height: 100vh;
-    background: var(--page);
+    background: var(--bg-page);
 }
 
 .orders-container,
@@ -1909,8 +1942,8 @@ a {
 }
 
 .order-card {
-    background: var(--panel);
-    border: 1px solid var(--line);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 4px;
     overflow: hidden;
 }
@@ -1920,22 +1953,22 @@ a {
     justify-content: space-between;
     align-items: center;
     padding: 1.2rem 1.8rem;
-    background: var(--panel-light);
-    border-bottom: 1px solid var(--line);
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
 }
 
 .order-id-label {
     display: block;
     font-size: 0.9rem;
     font-weight: 700;
-    color: var(--white);
+    color: var(--text-primary);
     letter-spacing: 0.05rem;
 }
 
 .order-date-label {
     display: block;
     font-size: 0.75rem;
-    color: var(--dim);
+    color: var(--text-muted);
 }
 
 .order-card-items {
@@ -1956,7 +1989,7 @@ a {
     height: 60px;
     object-fit: cover;
     border-radius: 2px;
-    background: var(--panel-light);
+    background: var(--bg-elevated);
 }
 
 .order-item-info {
@@ -1970,7 +2003,7 @@ a {
 
 .order-item-info span {
     font-size: 0.8rem;
-    color: var(--muted);
+    color: var(--text-secondary);
 }
 
 .order-card-footer {
@@ -1978,7 +2011,7 @@ a {
     justify-content: space-between;
     align-items: center;
     padding: 1.2rem 1.8rem;
-    border-top: 1px solid var(--line);
+    border-top: 1px solid var(--border);
 }
 
 .order-footer-details {
@@ -1986,7 +2019,7 @@ a {
     flex-direction: column;
     gap: 0.2rem;
     font-size: 0.85rem;
-    color: var(--muted);
+    color: var(--text-secondary);
 }
 
 .order-total-highlight strong {
@@ -2001,7 +2034,7 @@ a {
 
 .cancel-order-btn {
     border-color: var(--danger);
-    color: #ff8588;
+    color: var(--danger-text);
 }
 
 .order-detail-head-bar {
@@ -2022,7 +2055,7 @@ a {
     align-items: center;
     gap: 1.2rem;
     padding: 1rem 0;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--border);
 }
 
 .order-item-thumb-lg {
@@ -2058,7 +2091,7 @@ a {
     top: 5px;
     bottom: 5px;
     width: 2px;
-    background: var(--line);
+    background: var(--border);
 }
 
 .timeline-step {
@@ -2076,22 +2109,22 @@ a {
     height: 14px;
     border-radius: 50%;
     background: var(--gold);
-    border: 2px solid var(--panel);
+    border: 2px solid var(--bg-card);
 }
 
 .timeline-content strong {
     display: block;
-    color: var(--white);
+    color: var(--text-primary);
     font-size: 0.9rem;
 }
 
 .timeline-content span {
     font-size: 0.75rem;
-    color: var(--dim);
+    color: var(--text-muted);
 }
 
 .sidebar-text {
-    color: var(--muted);
+    color: var(--text-secondary);
     font-size: 0.88rem;
     line-height: 1.6;
 }
@@ -2102,7 +2135,7 @@ a {
 .product-reviews-section {
     margin-top: 3rem;
     padding-top: 2.5rem;
-    border-top: 1px solid var(--line);
+    border-top: 1px solid var(--border);
 }
 
 .reviews-head {
@@ -2125,8 +2158,8 @@ a {
 }
 
 .review-form-card {
-    background: var(--panel);
-    border: 1px solid var(--line);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 4px;
     padding: 1.8rem;
     margin-bottom: 2.5rem;
@@ -2134,7 +2167,7 @@ a {
 
 .review-disclaimer {
     font-size: 0.78rem;
-    color: var(--dim);
+    color: var(--text-muted);
     margin: 0.4rem 0 1.2rem;
 }
 
@@ -2155,7 +2188,7 @@ a {
     background: none;
     border: none;
     font-size: 1.4rem;
-    color: var(--dim);
+    color: var(--text-muted);
     cursor: pointer;
     line-height: 1;
 }
@@ -2166,7 +2199,7 @@ a {
 
 .rating-num-label {
     font-size: 0.8rem;
-    color: var(--muted);
+    color: var(--text-secondary);
     margin-left: 0.5rem;
 }
 
@@ -2177,11 +2210,11 @@ a {
 
 .review-login-prompt {
     padding: 1.2rem;
-    background: var(--panel);
-    border: 1px dashed var(--line);
+    background: var(--bg-card);
+    border: 1px dashed var(--border);
     border-radius: 4px;
     font-size: 0.85rem;
-    color: var(--muted);
+    color: var(--text-secondary);
     text-align: center;
     margin-bottom: 2rem;
 }
@@ -2193,8 +2226,8 @@ a {
 }
 
 .review-card {
-    background: var(--panel);
-    border: 1px solid var(--line);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 4px;
     padding: 1.5rem;
 }
@@ -2223,13 +2256,13 @@ a {
 .review-user-name {
     display: block;
     font-size: 0.9rem;
-    color: var(--white);
+    color: var(--text-primary);
 }
 
 .review-date {
     display: block;
     font-size: 0.75rem;
-    color: var(--dim);
+    color: var(--text-muted);
 }
 
 .review-rating-stars {
@@ -2239,7 +2272,7 @@ a {
 }
 
 .review-body {
-    color: var(--muted);
+    color: var(--text-secondary);
     font-size: 0.9rem;
     line-height: 1.6;
     margin: 0;
@@ -2272,75 +2305,75 @@ a {
 }
 /* SweetAlert2 theme overrides (black and gold) */
 .aureo-swal-popup {
-    background: var(--bg-card, #171a20) !important;
-    color: var(--text-primary, #f4efe6) !important;
-    border: 1px solid var(--border, #2a2d33) !important;
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border) !important;
     border-radius: 10px !important;
 }
 
 .aureo-swal-popup .swal2-title {
-    color: var(--text-primary, #f4efe6) !important;
+    color: var(--text-primary) !important;
     font-size: 1.15rem !important;
 }
 
 .aureo-swal-popup .swal2-html-container {
-    color: var(--text-secondary, #b8b2a6) !important;
+    color: var(--text-secondary) !important;
     font-size: 0.9rem !important;
 }
 
 .aureo-swal-confirm {
-    background: var(--gold, #c9a45c) !important;
-    color: #0f1115 !important;
-    border: 1px solid var(--gold, #c9a45c) !important;
+    background: var(--gold) !important;
+    color: var(--bg-page) !important;
+    border: 1px solid var(--gold) !important;
     border-radius: 6px !important;
     font-weight: 600 !important;
 }
 
 .aureo-swal-confirm:hover {
-    background: var(--gold-hover, #d8b574) !important;
+    background: var(--gold-hover) !important;
 }
 
 .aureo-swal-danger {
-    background: var(--danger, #e5484d) !important;
-    border-color: var(--danger, #e5484d) !important;
-    color: #fff !important;
+    background: var(--danger) !important;
+    border-color: var(--danger) !important;
+    color: var(--text-primary) !important;
 }
 
 .aureo-swal-danger:hover {
-    background: #c93b40 !important;
+    background: var(--danger) !important;
 }
 
 .aureo-swal-cancel {
     background: transparent !important;
-    color: var(--gold, #c9a45c) !important;
-    border: 1px solid var(--gold, #c9a45c) !important;
+    color: var(--gold) !important;
+    border: 1px solid var(--gold) !important;
     border-radius: 6px !important;
     font-weight: 600 !important;
 }
 
 /* react-toastify dark theme alignment */
 .Toastify__toast {
-    background: var(--bg-card, #171a20) !important;
-    color: var(--text-primary, #f4efe6) !important;
-    border: 1px solid var(--border, #2a2d33) !important;
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border) !important;
     border-radius: 8px !important;
     font-size: 0.85rem !important;
 }
 
 .Toastify__toast--success {
-    border-left: 3px solid var(--success, #3fb97f) !important;
+    border-left: 3px solid var(--success) !important;
 }
 
 .Toastify__toast--error {
-    border-left: 3px solid var(--danger, #e5484d) !important;
+    border-left: 3px solid var(--danger) !important;
 }
 
 .Toastify__toast--warning {
-    border-left: 3px solid var(--gold, #c9a45c) !important;
+    border-left: 3px solid var(--gold) !important;
 }
 
 .Toastify__toast--info {
-    border-left: 3px solid var(--gold, #c9a45c) !important;
+    border-left: 3px solid var(--gold) !important;
 }
 
 .edit-review-link {
@@ -2713,7 +2746,7 @@ a {
     border: 1px solid var(--gold);
     border-radius: 24px;
     background: var(--gold);
-    color: #0f1115;
+    color: var(--bg-page);
     font-weight: 700;
     letter-spacing: 0.05em;
     cursor: pointer;
@@ -2732,7 +2765,7 @@ a {
     border: 1px solid var(--border);
     border-radius: 12px;
     background: var(--bg-card);
-    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+    box-shadow: 0 18px 48px var(--overlay-55);
     overflow: hidden;
 }
 
@@ -2797,7 +2830,7 @@ a {
 .chat-bubble.user {
     align-self: flex-end;
     background: var(--gold);
-    color: #0f1115;
+    color: var(--bg-page);
 }
 
 .chat-bubble.assistant {
@@ -2849,6 +2882,7 @@ a {
 .chat-input input:focus {
     outline: none;
     border-color: var(--gold);
+    box-shadow: var(--focus-ring);
 }
 
 .chat-input .gold-button {

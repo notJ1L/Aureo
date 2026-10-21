@@ -8,6 +8,12 @@ import { loadUser } from "./redux/actions/authActions";
 import { AureoProvider } from "./components/ui/AureoProvider";
 import "./index.css";
 import App from "./App.jsx";
+// Loaded last so the focus ring, the state styles, and the layout
+// containers win over the component styles.
+import "./styles/focus.css";
+import "./styles/states.css";
+import "./styles/layouts.css";
+import "./styles/overlays.css";
 
 // Restore session from stored token on every page load
 store.dispatch(loadUser());

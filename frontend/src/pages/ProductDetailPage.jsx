@@ -1,8 +1,13 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getProductDetails, addToWishlist, removeFromWishlist, getWishlist } from "../redux/actions/productActions";
 import ProductReviews from "../components/ProductReviews";
+import { toast } from "react-toastify";
+
+// The 3D viewer is lazy loaded, so Three.js is only fetched when the
+// visitor actually asks for it.
+const ProductViewer = lazy(() => import("../components/three/ProductViewer"));
 
 function ProductDetailPage() {
     const { id } = useParams();
@@ -15,6 +20,7 @@ function ProductDetailPage() {
 
     const [selectedImage, setSelectedImage] = useState(0);
     const [addedNotice, setAddedNotice] = useState("");
+    const [showViewer, setShowViewer] = useState(false);
 
     useEffect(() => {
         dispatch(getProductDetails(id));
@@ -58,7 +64,9 @@ function ProductDetailPage() {
         if (existingIndex > -1) {
             // Check second hand limit (max 1) or stock
             if (product.condition === "second-hand" || cartItems[existingIndex].quantity >= product.stock) {
-                alert(`Cannot add more. Maximum available stock reached (${product.stock}).`);
+                toast.info(
+                    `Cannot add more. Maximum available stock reached (${product.stock}).`
+                );
                 return;
             }
             cartItems[existingIndex].quantity += 1;
@@ -133,7 +141,18 @@ function ProductDetailPage() {
                 {/* Visual Gallery */}
                 <div className="detail-gallery">
                     <div className="detail-main-image-wrap">
-                        {product.images?.[selectedImage]?.url ? (
+                        {showViewer ? (
+                            <Suspense
+                                fallback={
+                                    <div
+                                        className="product-viewer product-viewer-loading"
+                                        aria-hidden="true"
+                                    />
+                                }
+                            >
+                                <ProductViewer productName={product.name} />
+                            </Suspense>
+                        ) : product.images?.[selectedImage]?.url ? (
                             <img
                                 src={product.images[selectedImage].url}
                                 alt={product.name}
@@ -154,7 +173,27 @@ function ProductDetailPage() {
                         </div>
                     </div>
 
-                    {product.images?.length > 1 && (
+                    {/* The 3D viewer and the photograph gallery share the same
+                        frame, so the visitor can switch between them. */}
+                    <div className="detail-viewer-toggle">
+                        <button
+                            type="button"
+                            className={`viewer-tab ${!showViewer ? "active" : ""}`}
+                            onClick={() => setShowViewer(false)}
+                            disabled={!product.images?.length}
+                        >
+                            Photographs
+                        </button>
+                        <button
+                            type="button"
+                            className={`viewer-tab ${showViewer ? "active" : ""}`}
+                            onClick={() => setShowViewer(true)}
+                        >
+                            3D View
+                        </button>
+                    </div>
+
+                    {!showViewer && product.images?.length > 1 && (
                         <div className="detail-thumbnails">
                             {product.images.map((img, idx) => (
                                 <button

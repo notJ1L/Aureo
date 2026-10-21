@@ -585,14 +585,229 @@ git rm -r --cached backend/node_modules
 | Item | Where it is tracked |
 |---|---|
 | `GET /admin/users`, `GET/PUT/DELETE /admin/user/:id`, `GET /admin/mock-emails` are not built | `AUREO_PROJECT_SPEC.md` section 8, `PROJECT_REQUIREMENTS.md` |
-| The product detail page has no 3D viewer | `AUREO_BUILD_PLAN.md` Phase 11 |
 | The frontend has no test script | `AUREO_BUILD_PLAN.md` Phase 12 |
 | The Render deployment has not been run | `AUREO_SETUP_GUIDE.md` section 11 |
 | `utils/mockPayment.js` is planned but the payment logic is still inline in the order controller | `AUREO_BUILD_PLAN.md`, Recorded deviations |
 
 ---
 
-## 9. Verification summary
+## 9. Phase 11: 3D Experience and UI Completion
+
+Phase 11 is now **complete**. Items 1 to 5 (the home hero) were finished in the previous round of
+work. This round finished items 6 and 7.
+
+### 9.1 The design tokens were consolidated
+
+**Changed**
+
+- `frontend/src/App.css` had a second `:root` block that redefined the palette under different
+  names. It was loaded after `src/index.css`, so it won the cascade.
+- Deleted that block and rewrote all **170** alias references to the specification's names.
+
+| Was | Now |
+|---|---|
+| `var(--page)` | `var(--bg-page)` |
+| `var(--panel)` | `var(--bg-card)` |
+| `var(--panel-light)` | `var(--bg-elevated)` |
+| `var(--line)` | `var(--border)` |
+| `var(--gold-light)` | `var(--gold-hover)` |
+| `var(--white)` | `var(--text-primary)` |
+| `var(--muted)` | `var(--text-secondary)` |
+| `var(--dim)` | `var(--text-muted)` |
+
+**Why necessary**
+
+Section 3.1 of the specification says the tokens must be "defined as CSS variables in
+`frontend/src/index.css` and use them everywhere; never hard-code random colors". The duplicate
+block broke that in two ways. First, three of its values did not match the specification:
+`--gold-light` was `#dfbf7d` instead of `#d8b574`, `--muted` was `#a49e91` instead of `#b8b2a6`, and
+`--dim` was `#716d65` instead of `#7d786e`. Those were the colours actually rendered, so the site
+was quietly off-palette. Second, the palette had two sources of truth, so changing a token could
+change one half of the interface and not the other.
+
+The alias names were used in `App.css` only. A grep of every other stylesheet and every JSX file
+found no other reference, so the rewrite was contained to one file.
+
+### 9.2 Every hard-coded colour was replaced with a token
+
+**Changed**
+
+- `frontend/src/index.css` gained the derived tints that the stylesheets were repeating as literal
+  `rgba()` values: the gold, danger, and success alpha steps, the black overlays, and the gold
+  focus ring.
+- Replaced every remaining literal in `App.css`, `ui.css`, `aureo.css`, and `hero.css`.
+
+**Why necessary**
+
+The same rule applies: no colour outside the token file. The scan found **45** distinct literals
+spread across the four stylesheets, including two that broke the theme outright:
+
+- The **PRE-OWNED badge was blue** (`#8ab4f8` on `#4285f4`). The specification states that "Gold is
+  the single accent color" and that "no default blue/white components appear".
+- The **Google sign-in button was a white Google widget** (`#ffffff`, `#f8f9fa`, `#dadce0`,
+  `#3c4043`). It is now a dark Aureo button that keeps only the Google brand mark colourful.
+
+The result: `App.css` and the three other stylesheets now contain **zero** literal colours. The
+only literals left in the project are the token definitions themselves in `src/index.css`.
+
+### 9.3 A focus ring on every interactive element
+
+**Changed** — added `frontend/src/styles/focus.css`.
+
+**Why necessary**
+
+Section 3.1 of the specification names the focus ring explicitly: "Prices, active nav items, rating
+stars, and **focus rings** use gold." The stylesheet had **four** `:focus` rules in nearly three
+thousand lines, all of them on form inputs. Buttons, links, navigation items, filter pills,
+pagination controls, the wishlist heart, the admin buttons, and the product cards had no visible
+focus indicator at all, so a keyboard user could not tell where they were.
+
+The new file gives every one of them the same gold ring. It uses `:focus-visible`, so the ring
+appears for keyboard navigation and not for a mouse click. Inputs keep their existing gold border
+and glow instead, so the two never stack. The existing input rings were also moved onto one shared
+`--focus-ring` token, because they were using three different alpha values.
+
+The file also carries a `prefers-reduced-motion` block that shortens every animation and
+transition in the application. The specification asks for reduced motion to be respected, and the
+3D hero already handled it; this extends it to the whole interface.
+
+### 9.4 The loading, empty, and error states were styled
+
+**Changed** — added `frontend/src/styles/states.css`.
+
+**Why necessary**
+
+Section 10 of the specification says to "add loading, error, and empty states to every list/detail
+page". The markup was already in the pages, but **35 classes had no CSS rule at all**. An empty
+cart, a failed catalogue load, a list that is still loading, and the product page with no
+photograph all rendered as unstyled text with no spacing and no panel.
+
+The new file gives them one shared visual language: a bordered card for the empty state, a gold
+spinner drawn with a border for the loading states, a centred message for the detail pages, and a
+dashed well for a missing photograph. The chat typing indicator also gained the three-dot
+animation it was missing.
+
+### 9.5 The layout containers were completed
+
+**Changed** — added `frontend/src/styles/layouts.css`.
+
+**Why necessary**
+
+The same 35 classes included the layout containers. The checkout columns did not line up, the order
+detail page had no two-column grid, the order rows had no spacing, and the review form had no
+panel. Section 10 of the specification asks for a "clean layout with generous spacing".
+
+### 9.6 The navigation stays reachable on a phone
+
+**Changed** — `frontend/src/App.css`.
+
+**Why necessary**
+
+At 900 pixels and below the navigation links were set to `display: none`. A visitor on a phone
+had no way to reach **Services**, **Sell your watch**, **Appraisals**, or **Wishlist**, because
+those links exist only in the navigation. That is a functional break on the layout the
+specification calls for ("Responsive: works on laptop and mobile widths"), and it hid the pages
+that build plan Phases 7 and 8 delivered.
+
+The links now move onto their own row and scroll sideways when they do not fit, so nothing becomes
+unreachable without adding a JavaScript menu.
+
+### 9.7 Every other responsive gap was closed
+
+**Changed** — `frontend/src/styles/layouts.css` and `frontend/src/App.css`.
+
+| Gap | Fix |
+|---|---|
+| The specification table stayed two columns on a phone | It collapses to one column below 640 pixels |
+| The admin header did not wrap | It wraps onto two rows, and the admin title row stacks |
+| The checkout summary was sticky and could cover the form | It is released below 960 pixels |
+| The account and admin containers used a fixed gutter | They use `calc(100% - 2rem)` on a phone |
+| The 3D hero kept its desktop height on a phone | It follows the panel down to 390 pixels |
+
+### 9.8 The native dialogs were replaced
+
+**Changed**
+
+| File | Was | Now |
+|---|---|---|
+| `frontend/src/pages/CheckoutPage.jsx` | `alert("Email verification required...")` | `toast.error(...)` |
+| `frontend/src/pages/ProductDetailPage.jsx` | `alert("Cannot add more...")` | `toast.info(...)` |
+| `frontend/src/pages/OrdersPage.jsx` | `window.confirm("Are you sure...")` | `confirmAction({...})` |
+| `frontend/src/pages/OrderDetailPage.jsx` | `window.confirm("Confirm cancellation...")` | `confirmAction({...})` |
+| `frontend/src/utils/sweetAlert.js` | three hard-coded hex values | The values are read from the CSS tokens at call time |
+
+**Why necessary**
+
+Section 10 of the specification says to "confirm destructive actions with SweetAlert2" and to "use
+Toastify for success and error messages". A native `alert` and a native `confirm` are neither.
+They also ignore the theme, so a white browser dialog appeared in the middle of a black and gold
+page.
+
+The `sweetAlert.js` change removes the last hard-coded colours from the JavaScript. The values are
+now read from the document root with `getComputedStyle`, so there is one definition of the palette.
+The fallbacks in that helper only apply if the stylesheet has not loaded yet.
+
+### 9.9 The overlay theme was completed
+
+**Changed** — added `frontend/src/styles/overlays.css`.
+
+**Why necessary**
+
+The stylesheet themed the visible parts of SweetAlert2 and Toastify, but the backdrop behind a
+dialog, the close button, the dialog footer, the toast progress bar, and the toast title were
+still at their light defaults. The close button in particular was white on a white popup.
+
+### 9.10 The product detail page gained a 3D viewer
+
+**Changed** — added `frontend/src/components/three/ProductViewer.jsx` and wired a
+**Photographs / 3D View** switch into `frontend/src/pages/ProductDetailPage.jsx`.
+
+**Why necessary**
+
+Section 3.2 of the specification lists the product detail page second: "a small 3D viewer **or a
+rotatable gallery** for the selected watch". The gallery existed, but it only switches between
+photographs. The viewer lets the visitor drag the watch around and look at it from any angle.
+
+It follows the same rules as the home hero: lazy loaded so Three.js is not fetched until it is
+asked for, one canvas per page, the WebGL check runs before a GPU context is created, the renderer
+is disposed on unmount, and the idle turn stops under `prefers-reduced-motion`.
+
+The capability checks were moved into `frontend/src/components/three/capabilities.js` by the
+concurrent agent during this session, so the viewer imports them from there.
+
+### 9.11 The card tilt micro-interaction
+
+**Changed** — `frontend/src/components/three/hero.css`.
+
+**Why necessary**
+
+Section 3.2 of the specification lists the optional micro-interactions: "card tilt on hover (CSS
+`perspective` + `rotateX/Y`)". The catalogue cards now tilt four degrees on hover. The effect is
+limited to devices with a real pointer and is switched off entirely under
+`prefers-reduced-motion`, so it never fights the accessibility setting.
+
+### 9.12 The chat typing indicator
+
+**Changed** — `frontend/src/components/ChatWidget.jsx` and `frontend/src/styles/states.css`.
+
+**Why necessary**
+
+The indicator was the literal text `...` in a bubble with no animation, so it did not read as the
+assistant composing a reply. It is now three dots that rise in sequence.
+
+### 9.13 Commands used for Phase 11
+
+| Command | Why it was needed |
+|---|---|
+| `Select-String` over the CSS and the JSX | To find the 35 unstyled classes, the four `:focus` rules, the hard-coded literals, and the native dialogs. Each list was produced by scanning, not by reading every file by hand. |
+| `Select-String` for `var(--x)` references, compared against the token definitions | To prove that every token reference resolves. It found five that did not: `--gold-14`, `--gold-55`, `--overlay-75`, `--scrim-35`, and a pre-existing `var(--text)` in the admin bulk bar that was silently dropped by the browser. |
+| `npm run build` | The only way to catch the `MISSING_EXPORT` error when the viewer imported a function the concurrent agent had already moved into another module. |
+| `npx eslint .` | Caught the `react-hooks/set-state-in-effect` error in the viewer. The fix was to match the pattern the hero already used: a lazy `useState` initialiser for the first value, and the effect only for subscription updates. |
+| `npx vite --port 5205` and requesting each changed module | To confirm the dev server transforms every new file, and that the new stylesheets are served. |
+
+---
+
+## 10. Verification summary
 
 | Check | Result |
 |---|---|
@@ -601,6 +816,10 @@ git rm -r --cached backend/node_modules
 | `npx eslint .` (frontend) | Clean, exit code 0 |
 | `GET /api/v1/health` | `{"success":true,"message":"Aureo API is running"}` |
 | `GET /api/v1/products?minRating=4&minReviews=1&category=dress` | 200, three correct results |
-| Vite transform of all 14 changed and new modules | All 200, no errors in the log |
-| Main bundle | 489 kB baseline, 1,052 kB after (deep imports removed 426 kB) |
-| Three.js hero and Recharts dashboard | Separate lazy chunks, neither blocks first paint |
+| Vite transform of the changed and new modules | All 200, no errors in the log |
+| Main bundle | 489 kB baseline, 1,053 kB after (deep imports removed 426 kB) |
+| Three.js hero, product viewer, and Recharts dashboard | Separate lazy chunks, none blocks first paint |
+| Hard-coded colours outside `src/index.css` | Zero in all four stylesheets |
+| Undefined `var()` references | Zero, down from five |
+| CSS classes used in JSX with no rule | Zero, down from 35 |
+| Native `alert` and `confirm` calls | Zero, down from four |

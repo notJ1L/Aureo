@@ -1,0 +1,228 @@
+/* -------------------------------------------------------------------------- */
+/* Loading, empty and error states                                            */
+/* -------------------------------------------------------------------------- */
+
+/* Every list and detail page has the same three states: loading, empty, and
+ * failed. They share one visual language so the interface feels identical
+ * whether the visitor is on the catalogue, the cart, or an admin table.
+ *
+ * The specification asks for "loading, error, and empty states to every
+ * list/detail page". The markup was already in place, but it had no
+ * styling, so it rendered as unstyled text. */
+
+.loading-state,
+.catalog-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 2.5rem 1rem;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    letter-spacing: 0.04em;
+}
+
+/* The spinner. It is drawn with a border so no image is needed. */
+.loading-state::before {
+    content: "";
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    border: 2px solid var(--gold-30);
+    border-top-color: var(--gold);
+    animation: aureo-spin 0.9s linear infinite;
+}
+
+@keyframes aureo-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.catalog-message.error {
+    color: var(--danger-text);
+}
+
+/* The empty state. It reads as a deliberate panel, not as a gap in the
+ * layout. */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 3rem 1.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.empty-state p {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.empty-state span {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    max-width: 46ch;
+}
+
+/* The detail pages show one centred message while they load or when the
+ * record cannot be read. */
+.detail-page-loading,
+.detail-page-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    min-height: 55vh;
+    padding: 3rem 1.5rem;
+    text-align: center;
+}
+
+.detail-page-loading {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+}
+
+.detail-page-loading::before {
+    content: "";
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid var(--gold-30);
+    border-top-color: var(--gold);
+    animation: aureo-spin 0.9s linear infinite;
+}
+
+.detail-page-error {
+    color: var(--danger-text);
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+/* A product with no photograph. */
+.product-placeholder,
+.detail-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 180px;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--bg-elevated);
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+}
+
+.detail-placeholder {
+    min-height: 320px;
+    aspect-ratio: 0.82;
+}
+
+/* The review section of a product with no reviews yet. */
+.empty-reviews {
+    padding: 2rem 1.5rem;
+    text-align: center;
+    color: var(--text-secondary);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.empty-reviews p {
+    margin: 0;
+    font-size: 0.92rem;
+}
+
+/* The placeholder that is shown while a lazily loaded route is still being
+ * fetched. */
+.route-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.route-fallback::before {
+    content: "";
+    width: 22px;
+    height: 22px;
+    margin-right: 0.75rem;
+    border-radius: 50%;
+    border: 2px solid var(--gold-30);
+    border-top-color: var(--gold);
+    animation: aureo-spin 0.9s linear infinite;
+}
+
+/* The typing indicator in the chat. The three dots rise in sequence so it
+ * reads as the assistant is composing a reply. */
+.chat-bubble.typing {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    min-width: 46px;
+    color: var(--text-secondary);
+}
+
+.chat-bubble.typing span {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--gold);
+    animation: aureo-typing 1.2s ease-in-out infinite;
+}
+
+.chat-bubble.typing span:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.chat-bubble.typing span:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+@keyframes aureo-typing {
+    0%,
+    60%,
+    100% {
+        opacity: 0.25;
+        transform: translateY(0);
+    }
+
+    30% {
+        opacity: 1;
+        transform: translateY(-3px);
+    }
+}
+
+/* The Google mark keeps its own brand colours, so it is the one element that
+ * is allowed to be colourful. */
+.google-icon {
+    flex: 0 0 auto;
+}
+
+/* The spinner is not needed when the reduced motion preference is set, so
+ * the animation is switched off there as well. */
+@media (prefers-reduced-motion: reduce) {
+    .loading-state::before,
+    .detail-page-loading::before,
+    .route-fallback::before {
+        animation: none;
+    }
+}
