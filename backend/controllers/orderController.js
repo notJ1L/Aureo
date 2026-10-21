@@ -1,9 +1,81 @@
 const mongoose = require("mongoose");
 const Order = require("../models/order");
 const Product = require("../models/product");
-const EmailLog = require("../models/emailLog");
 const ErrorHandler = require("../utils/ErrorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncErrors");
+const mockEmail = require("../utils/mockEmail");
+const generateReceipt = require("../utils/generateReceipt");
+
+// FR 4.1 / FR 4.2: the order status flow. A completed order can never move
+// back to an earlier status and an order can only be cancelled while it is
+// still pending.
+const ORDER_STATUS_FLOW = {
+    Pending: ["Paid", "Cancelled"],
+    Paid: ["Shipped"],
+    Shipped: ["Completed"],
+    Completed: [],
+    Cancelled: []
+};
+
+const ALLOWED_ORDER_STATUSES = Object.keys(ORDER_STATUS_FLOW);
+
+const formatCurrency = (amount) =>
+    new Intl.NumberFormat("en-PH", {
+        style: "currency",
+        currency: "PHP"
+    }).format(Number(amount) || 0);
+
+const buildOrderStatusEmail = (order, user) => {
+    const total = order.calculateTotal();
+
+    return [
+        `Dear ${user?.name || "Collector"},`,
+        "",
+        `Your Aureo order #${order._id} is now "${order.status}".`,
+        "",
+        `Order total: ${formatCurrency(total)}`,
+        `Payment method: ${order.paymentMethod}`,
+        "",
+        "Warm regards,",
+        "Aureo Horology Vault"
+    ].join("\n");
+};
+
+const buildCompletedOrderEmail = (order, user) => {
+    const lines = order.orderItems.map(
+        (item) =>
+            `  - ${item.name} | ${item.quantity} x ${formatCurrency(item.price)} = ${formatCurrency(
+                item.price * item.quantity
+            )}`
+    );
+
+    const subtotal = order.orderItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+    );
+
+    const grandTotal = order.calculateTotal();
+
+    return [
+        `Dear ${user?.name || "Collector"},`,
+        "",
+        "Thank you for choosing Aureo. Your transaction is now complete.",
+        "",
+        `Order number: ${order._id}`,
+        `Status: ${order.status}`,
+        "",
+        "Items purchased:",
+        ...lines,
+        "",
+        `Subtotal: ${formatCurrency(subtotal)}`,
+        `Grand total: ${formatCurrency(grandTotal)}`,
+        "",
+        "Your PDF receipt is attached to this message.",
+        "",
+        "Warm regards,",
+        "Aureo Horology Vault"
+    ].join("\n");
+};
 
 // FR 4.1 & FR 4.2 & FR 4.3: Create new order
 const createOrder = catchAsyncErrors(async (req, res, next) => {
@@ -101,17 +173,13 @@ const createOrder = catchAsyncErrors(async (req, res, next) => {
 
     // FR 4.5: Record mock confirmation email
     const totalPrice = order.calculateTotal();
-    const formattedTotal = new Intl.NumberFormat("en-PH", {
-        style: "currency",
-        currency: "PHP"
-    }).format(totalPrice);
+    const formattedTotal = formatCurrency(totalPrice);
 
-    await EmailLog.create({
+    await mockEmail({
         to: req.user.email,
         subject: `Aureo Order Confirmation #${order._id}`,
         body: `Dear ${req.user.name},\n\nThank you for choosing Aureo. Your order #${order._id} for ${order.orderItems.length} timepiece(s) totalling ${formattedTotal} has been recorded.\n\nShipping to: ${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.country}.\n\nWarm regards,\nAureo Horology Vault`,
         type: "order",
-        status: "sent",
         relatedId: order._id.toString()
     });
 
@@ -218,7 +286,10 @@ const updateAdminOrder = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Invalid order ID", 400));
     }
 
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate(
+        "user",
+        "name email"
+    );
 
     if (!order) {
         return next(new ErrorHandler("Order not found", 404));
@@ -232,6 +303,29 @@ const updateAdminOrder = catchAsyncErrors(async (req, res, next) => {
 
     if (!status) {
         return next(new ErrorHandler("New status is required", 400));
+    }
+
+    if (!ALLOWED_ORDER_STATUSES.includes(status)) {
+        return next(
+            new ErrorHandler(
+                `Invalid order status. Allowed values are: ${ALLOWED_ORDER_STATUSES.join(", ")}.`,
+                400
+            )
+        );
+    }
+
+    // FR 4.2 / assumption 9: the status flow can only move forward.
+    const allowedNextStatuses = ORDER_STATUS_FLOW[order.status] || [];
+
+    if (!allowedNextStatuses.includes(status)) {
+        return next(
+            new ErrorHandler(
+                `Order cannot move from "${order.status}" to "${status}". Allowed next status: ${
+                    allowedNextStatuses.length ? allowedNextStatuses.join(", ") : "none"
+                }.`,
+                400
+            )
+        );
     }
 
     // If cancelled by admin, restore stock
@@ -255,8 +349,39 @@ const updateAdminOrder = catchAsyncErrors(async (req, res, next) => {
 
     await order.save();
 
+    // FR 4.5: every status change notifies the customer.
+    if (status === "Completed") {
+        // Term Test Lab: the completed transaction email carries the product
+        // list, the subtotals and the grand total, and the PDF receipt.
+        const receipt = await generateReceipt(order, order.user);
+
+        const attachment = {
+            filename: `aureo-receipt-${order._id}.pdf`,
+            content: receipt,
+            contentType: "application/pdf"
+        };
+
+        await mockEmail({
+            to: order.user.email,
+            subject: `Aureo Transaction Complete - Order #${order._id}`,
+            body: buildCompletedOrderEmail(order, order.user),
+            type: "order",
+            relatedId: order._id.toString(),
+            attachments: [attachment]
+        });
+    } else {
+        await mockEmail({
+            to: order.user.email,
+            subject: `Aureo Order #${order._id} - Status updated to ${status}`,
+            body: buildOrderStatusEmail(order, order.user),
+            type: "order",
+            relatedId: order._id.toString()
+        });
+    }
+
     res.status(200).json({
         success: true,
+        message: `Order status updated to ${status}`,
         order
     });
 });

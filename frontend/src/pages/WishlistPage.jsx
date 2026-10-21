@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getWishlist, removeFromWishlist } from "../redux/actions/productActions";
+import "../styles/aureo.css";
 
 function WishlistPage() {
     const dispatch = useDispatch();

@@ -1,80 +1,135 @@
-import { useEffect, useState } from "react";
-import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { BrowserRouter, Link, Route, Routes, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
 import CatalogPage from "./pages/CatalogPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import WishlistPage from "./pages/WishlistPage";
-import AdminProductsPage from "./pages/admin/AdminProductsPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrdersPage from "./pages/OrdersPage";
 import OrderDetailPage from "./pages/OrderDetailPage";
+import SellWatchPage from "./pages/SellWatchPage";
+import MyAppraisalsPage from "./pages/MyAppraisalsPage";
+import ServicesPage from "./pages/ServicesPage";
+import ChatWidget from "./components/ChatWidget";
+import { getProducts } from "./redux/actions/productActions";
 import { PrivateRoute, AdminRoute } from "./routes/ProtectedRoutes";
+import { useInfiniteScroll } from "./hooks/useInfiniteScroll";
 import "./App.css";
-import api from "./services/api";
+
+// Phase 11 / spec 3.2: the 3D hero is lazy loaded so Three.js never blocks
+// the first paint and never blocks navigation.
+const WatchHero = lazy(() => import("./components/three/WatchHero"));
+
+// The admin pages carry the heavy dependencies (Recharts and the data
+// tables), so they are split out of the main bundle as well.
+const AdminProductsPage = lazy(() => import("./pages/admin/AdminProductsPage"));
+const AdminOrdersPage = lazy(() => import("./pages/admin/AdminOrdersPage"));
+const AdminAppraisalsPage = lazy(() => import("./pages/admin/AdminAppraisalsPage"));
+const AdminServicesPage = lazy(() => import("./pages/admin/AdminServicesPage"));
+const AdminTicketsPage = lazy(() => import("./pages/admin/AdminTicketsPage"));
+const AdminDashboardPage = lazy(() => import("./pages/admin/AdminDashboardPage"));
+
+function RouteFallback() {
+    return <div className="route-fallback">Loading the vault...</div>;
+}
 
 function StoreLanding() {
-    const [notice, setNotice] = useState("");
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
 
-    const showNotice = (message) => {
-        setNotice(message);
+    const {
+        products,
+        pagination,
+        loading: productsLoading,
+        error: productsError
+    } = useSelector((state) => state.productList);
 
-        window.setTimeout(() => {
-            setNotice("");
-        }, 2600);
+    const [page, setPage] = useState(1);
+
+    // Quiz 3: the homepage product list is paginated and also supports
+    // infinite scroll. `visibleProducts` holds every page that was loaded so
+    // the grid keeps the pieces that are already on screen.
+    const [visibleProducts, setVisibleProducts] = useState([]);
+    const [loadedPage, setLoadedPage] = useState(0);
+
+    useEffect(() => {
+        dispatch(getProducts({ page, limit: 8 }));
+    }, [dispatch, page]);
+
+    // The pages that were already loaded are kept while the next page is
+    // fetched, so the grid never empties. The accumulation happens while
+    // rendering to avoid an extra render pass.
+    if (products?.length && page !== loadedPage) {
+        setLoadedPage(page);
+
+        setVisibleProducts((previous) => {
+            if (page === 1) {
+                return products;
+            }
+
+            const known = new Set(previous.map((item) => item._id));
+            const fresh = products.filter((item) => !known.has(item._id));
+
+            return fresh.length ? [...previous, ...fresh] : previous;
+        });
+    }
+
+    const totalPages = pagination?.totalPages || 1;
+    const hasMore = page < totalPages;
+
+    const loadMore = () => {
+        if (productsLoading || !hasMore) {
+            return;
+        }
+
+        setPage((current) => current + 1);
     };
+
+    const sentinelRef = useInfiniteScroll({
+        onLoadMore: loadMore,
+        hasMore,
+        loading: productsLoading
+    });
 
     const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-PH", {
-        style: "currency",
-        currency: "PHP",
-        maximumFractionDigits: 0
-    }).format(price);
-};
-
-    const [products, setProducts] = useState([]);
-    const [productsLoading, setProductsLoading] = useState(true);
-    const [productsError, setProductsError] = useState("");
-
-useEffect(() => {
-    const loadProducts = async () => {
-        try {
-            const response = await api.get("/products");
-            setProducts(response.data.products);
-        } catch (requestError) {
-            setProductsError(
-                requestError.response?.data?.message ||
-                "Unable to load products"
-            );
-        } finally {
-            setProductsLoading(false);
-        }
+        return new Intl.NumberFormat("en-PH", {
+            style: "currency",
+            currency: "PHP",
+            maximumFractionDigits: 0
+        }).format(price);
     };
 
-    loadProducts();
-}, []);
-
     const { isAuthenticated, user } = useSelector((state) => state.auth);
-    const [cartCount, setCartCount] = useState(0);
 
-    const updateCartCount = () => {
+    // The cart lives in localStorage, so the badge is derived from it. The
+    // initial value is computed lazily and refreshed through the custom
+    // "aureo:cart-updated" event that the cart pages dispatch.
+    const readCartCount = () => {
         try {
             const raw = localStorage.getItem("aureoCart");
             const items = raw ? JSON.parse(raw) : [];
-            const count = items.reduce((acc, item) => acc + (item.quantity || 1), 0);
-            setCartCount(count);
+            return items.reduce((acc, item) => acc + (item.quantity || 1), 0);
         } catch {
-            setCartCount(0);
+            return 0;
         }
     };
 
+    const [cartCount, setCartCount] = useState(readCartCount);
+
     useEffect(() => {
-        updateCartCount();
-        window.addEventListener("storage", updateCartCount);
-        return () => window.removeEventListener("storage", updateCartCount);
+        const handleCartUpdate = () => setCartCount(readCartCount());
+
+        window.addEventListener("storage", handleCartUpdate);
+        window.addEventListener("aureo:cart-updated", handleCartUpdate);
+
+        return () => {
+            window.removeEventListener("storage", handleCartUpdate);
+            window.removeEventListener("aureo:cart-updated", handleCartUpdate);
+        };
     }, []);
 
     return (
@@ -84,14 +139,22 @@ useEffect(() => {
 
                 <nav className="nav-links">
                     <Link to="/catalog">Collection</Link>
-                    <a href="#services">Services</a>
-                    <a href="#story">The Aureo Standard</a>
+                    <Link to="/sell">Sell your watch</Link>
+                    <Link to="/appraisals">Appraisals</Link>
                     <Link to="/wishlist">Wishlist</Link>
                     {isAuthenticated && <Link to="/orders">Orders</Link>}
                     {user?.role === "admin" && (
-                        <Link to="/admin/products" style={{ color: "var(--gold)", fontWeight: 600 }}>
-                            Vault (Admin)
-                        </Link>
+                        <>
+                            <Link to="/admin/products" style={{ color: "var(--gold)", fontWeight: 600 }}>
+                                Vault (Admin)
+                            </Link>
+                            <Link to="/admin/orders" style={{ color: "var(--gold)", fontWeight: 600 }}>
+                                Orders (Admin)
+                            </Link>
+                            <Link to="/admin/appraisals" style={{ color: "var(--gold)", fontWeight: 600 }}>
+                                Appraisals (Admin)
+                            </Link>
+                        </>
                     )}
                 </nav>
 
@@ -137,7 +200,7 @@ useEffect(() => {
                         <button
                             type="button"
                             className="outline-button"
-                            onClick={() => showNotice("Appraisal service coming next.")}
+                            onClick={() => navigate("/sell")}
                         >
                             Sell your watch
                         </button>
@@ -152,10 +215,13 @@ useEffect(() => {
 
                 <div className="hero-visual">
                     <div className="visual-label">FEATURED PIECE / 001</div>
-                    <img
-                        src="https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=1200&q=90"
-                        alt="Gold watch on a dark surface"
-                    />
+                    <Suspense
+                        fallback={
+                            <div className="hero-3d hero-3d-skeleton" aria-hidden="true" />
+                        }
+                    >
+                        <WatchHero />
+                    </Suspense>
                     <div className="visual-caption">
                         <strong>Quiet precision.</strong>
                         <span>Automatic movement / 40mm case</span>
@@ -170,80 +236,99 @@ useEffect(() => {
                         <h2>Selected watches</h2>
                     </div>
 
-                    <button
-                        type="button"
+                    <Link
+                        to="/catalog"
                         className="text-link"
-                        onClick={() => showNotice("Full catalog coming next.")}
+                        style={{ background: "none", border: "none", cursor: "pointer" }}
                     >
                         View all watches
-                    </button>
+                    </Link>
                 </div>
 
                 <div className="filter-row">
-                    <button type="button" className="filter-chip active">All pieces</button>
-                    <button type="button" className="filter-chip">New</button>
-                    <button type="button" className="filter-chip">Pre-owned</button>
-                    <button type="button" className="filter-chip">Automatic</button>
-                    <span className="result-count">04 pieces</span>
+                    <Link to="/catalog" className="filter-chip active">All pieces</Link>
+                    <Link to="/catalog?condition=new" className="filter-chip">New</Link>
+                    <Link to="/catalog?condition=second-hand" className="filter-chip">Pre-owned</Link>
+                    <Link to="/catalog?movement=automatic" className="filter-chip">Automatic</Link>
+                    <span className="result-count">
+                        {productsLoading
+                            ? "Loading..."
+                            : `${pagination?.totalProducts ?? products.length} pieces`}
+                    </span>
                 </div>
 
                 <div className="product-grid">
-                    {productsLoading && (
-    <p className="catalog-message">
-        Loading the collection...
-    </p>
-)}
+                    {productsLoading && visibleProducts.length === 0 && (
+                        <p className="catalog-message">Loading the collection...</p>
+                    )}
 
-{productsError && (
-    <p className="catalog-message error">
-        {productsError}
-    </p>
-)}
+                    {productsError && (
+                        <p className="catalog-message error">{productsError}</p>
+                    )}
 
-{!productsLoading &&
-    !productsError &&
-    products.map((product) => (
-        <article className="product-card" key={product._id}>
-            <div className="product-image">
-                <img
-                    src={
-                        product.images?.[0]?.url ||
-                        "https://images.unsplash.com/photo-1523170335258-f5ed11844a49"
-                    }
-                    alt={product.name}
-                />
-                <span>
-                    {product.stock === 0
-                        ? "Sold"
-                        : product.condition}
-                </span>
-            </div>
+                    {!productsError &&
+                        visibleProducts.map((product) => (
+                            <article className="product-card" key={product._id}>
+                                <div className="product-image">
+                                    <img
+                                        src={
+                                            product.images?.[0]?.url ||
+                                            "https://images.unsplash.com/photo-1523170335258-f5ed11844a49"
+                                        }
+                                        alt={product.name}
+                                    />
+                                    <span>
+                                        {product.stock === 0
+                                            ? "Sold"
+                                            : product.condition}
+                                    </span>
+                                </div>
 
-            <div className="product-info">
-                <p className="product-brand">
-                    {product.brand}
-                </p>
+                                <div className="product-info">
+                                    <p className="product-brand">{product.brand}</p>
 
-                <h3>{product.name}</h3>
+                                    <h3>{product.name}</h3>
 
-                <div className="product-bottom">
-                    <strong>
-                        {formatPrice(product.price)}
-                    </strong>
+                                    <div className="product-bottom">
+                                        <strong>{formatPrice(product.price)}</strong>
 
-                    <button
-                        type="button"
-                        onClick={() =>
-                            showNotice(`${product.name} selected.`)
-                        }
-                    >
-                        View piece
-                    </button>
+                                        <Link to={`/product/${product._id}`}>View piece</Link>
+                                    </div>
+                                </div>
+                            </article>
+                        ))}
                 </div>
-            </div>
-        </article>
-    ))}
-                </div>
+
+                {/* Quiz 3: infinite scroll sentinel. It loads the next page
+                    when it scrolls into view. */}
+                {hasMore && (
+                    <div ref={sentinelRef} className="infinite-scroll-sentinel" aria-hidden="true" />
+                )}
+
+                {/* Quiz 3: homepage pagination */}
+                {totalPages > 1 && (
+                    <div className="pagination-bar">
+                        <button
+                            type="button"
+                            className="pagination-btn"
+                            disabled={page <= 1}
+                            onClick={() => setPage(1)}
+                        >
+                            ← Previous
+                        </button>
+                        <span className="page-indicator">
+                            Page {page} of {totalPages} &bull; {visibleProducts.length} loaded
+                        </span>
+                        <button
+                            type="button"
+                            className="pagination-btn"
+                            disabled={!hasMore}
+                            onClick={loadMore}
+                        >
+                            Next →
+                        </button>
+                    </div>
+                )}
             </section>
 
             <section id="services" className="service-strip">
@@ -272,19 +357,17 @@ useEffect(() => {
                 <span>Watches with a point of view.</span>
                 <span>Local showroom / Online collection</span>
             </footer>
-
-            {notice && <div className="toast">{notice}</div>}
         </main>
-        
+
     );
 }
 
 function App() {
     return (
         <BrowserRouter>
-            <Routes>
-                <Route path="/" element={<StoreLanding />} />
-                <Route path="/login" element={<LoginPage />} />
+            <Suspense fallback={<RouteFallback />}>
+                <Routes>
+                    <Route path="/" element={<StoreLanding />} />                <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route
                     path="/me"
@@ -320,6 +403,70 @@ function App() {
                         </AdminRoute>
                     }
                 />
+                <Route
+                    path="/admin/orders"
+                    element={
+                        <AdminRoute>
+                            <AdminOrdersPage />
+                        </AdminRoute>
+                    }
+                />
+                <Route
+                    path="/admin/appraisals"
+                    element={
+                        <AdminRoute>
+                            <AdminAppraisalsPage />
+                        </AdminRoute>
+                    }
+                />
+                <Route
+                    path="/sell"
+                    element={
+                        <PrivateRoute>
+                            <SellWatchPage />
+                        </PrivateRoute>
+                    }
+                />
+                <Route
+                    path="/appraisals"
+                    element={
+                        <PrivateRoute>
+                            <MyAppraisalsPage />
+                        </PrivateRoute>
+                    }
+                />
+                <Route
+                    path="/services"
+                    element={
+                        <PrivateRoute>
+                            <ServicesPage />
+                        </PrivateRoute>
+                    }
+                />
+                <Route
+                    path="/admin/services"
+                    element={
+                        <AdminRoute>
+                            <AdminServicesPage />
+                        </AdminRoute>
+                    }
+                />
+                <Route
+                    path="/admin/tickets"
+                    element={
+                        <AdminRoute>
+                            <AdminTicketsPage />
+                        </AdminRoute>
+                    }
+                />
+                <Route
+                    path="/admin/dashboard"
+                    element={
+                        <AdminRoute>
+                            <AdminDashboardPage />
+                        </AdminRoute>
+                    }
+                />
                 <Route path="/cart" element={<CartPage />} />
                 <Route
                     path="/checkout"
@@ -345,7 +492,10 @@ function App() {
                         </PrivateRoute>
                     }
                 />
-            </Routes>
+                </Routes>
+            </Suspense>
+
+            <ChatWidget />
         </BrowserRouter>
     );
 }

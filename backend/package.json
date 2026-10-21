@@ -7,15 +7,17 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
+    "production": "node server.js",
     "seed": "node seeder/seed.js",
     "clear:users": "node seeder/clearUsers.js",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand --setupFiles ./tests/setupEnv.js --setupFilesAfterEnv ./tests/setup.js --forceExit"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
+    "bad-words": "^3.0.4",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.11.0",
     "cors": "^2.8.6",
@@ -25,7 +27,8 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.10.3",
     "multer": "^2.4.0",
-    "nodemailer": "^10.0.14"
+    "nodemailer": "^10.0.14",
+    "pdfkit": "^0.20.2"
   },
   "devDependencies": {
     "jest": "^30.5.2",

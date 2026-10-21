@@ -17,6 +17,12 @@ api.interceptors.request.use(
             config.headers.Authorization = `Bearer ${token}`;
         }
 
+        // Multipart uploads must not carry an explicit Content-Type, the
+        // browser adds the multipart boundary itself.
+        if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+            delete config.headers["Content-Type"];
+        }
+
         return config;
     },
     (error) => Promise.reject(error)

@@ -5,6 +5,8 @@ import {
     ORDER_DETAILS_REQUEST, ORDER_DETAILS_SUCCESS, ORDER_DETAILS_FAIL,
     ORDER_CANCEL_REQUEST, ORDER_CANCEL_SUCCESS, ORDER_CANCEL_FAIL,
     ADMIN_ORDERS_REQUEST, ADMIN_ORDERS_SUCCESS, ADMIN_ORDERS_FAIL,
+    ADMIN_ORDER_UPDATE_REQUEST, ADMIN_ORDER_UPDATE_SUCCESS, ADMIN_ORDER_UPDATE_FAIL,
+    ADMIN_ORDER_DELETE_REQUEST, ADMIN_ORDER_DELETE_SUCCESS, ADMIN_ORDER_DELETE_FAIL,
     ORDER_CLEAR_ERRORS
 } from "../constants/orderConstants";
 
@@ -69,6 +71,40 @@ export const getAdminOrders = () => async (dispatch) => {
         dispatch({
             type: ADMIN_ORDERS_FAIL,
             payload: err.response?.data?.message || "Failed to load admin orders"
+        });
+    }
+};
+
+// FR 4.2: the admin moves an order through the status flow.
+export const updateAdminOrder = (id, status) => async (dispatch) => {
+    dispatch({ type: ADMIN_ORDER_UPDATE_REQUEST });
+    try {
+        const { data } = await api.put(`/admin/order/${id}`, { status });
+        dispatch({
+            type: ADMIN_ORDER_UPDATE_SUCCESS,
+            payload: data.order
+        });
+    } catch (err) {
+        dispatch({
+            type: ADMIN_ORDER_UPDATE_FAIL,
+            payload: err.response?.data?.message || "Failed to update the order status"
+        });
+    }
+};
+
+// FR 4.2: the admin removes an invalid or test order.
+export const deleteAdminOrder = (id) => async (dispatch) => {
+    dispatch({ type: ADMIN_ORDER_DELETE_REQUEST });
+    try {
+        const { data } = await api.delete(`/admin/order/${id}`);
+        dispatch({
+            type: ADMIN_ORDER_DELETE_SUCCESS,
+            payload: { id, message: data.message }
+        });
+    } catch (err) {
+        dispatch({
+            type: ADMIN_ORDER_DELETE_FAIL,
+            payload: err.response?.data?.message || "Failed to delete the order"
         });
     }
 };

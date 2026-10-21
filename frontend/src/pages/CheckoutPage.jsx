@@ -11,7 +11,11 @@ function CheckoutPage() {
     const { user } = useSelector((state) => state.auth);
     const { loading, success, error, order } = useSelector((state) => state.orderCreate);
 
-    const [cartItems, setCartItems] = useState([]);
+    const [cartItems] = useState(() => {
+        const raw = localStorage.getItem("aureoCart");
+        return raw ? JSON.parse(raw) : [];
+    });
+
     const [shipping, setShipping] = useState({
         address: user?.address?.addressLine || "",
         city: user?.address?.city || "",
@@ -26,19 +30,15 @@ function CheckoutPage() {
     const [cardCvv, setCardCvv] = useState("888");
 
     useEffect(() => {
-        const raw = localStorage.getItem("aureoCart");
-        const items = raw ? JSON.parse(raw) : [];
-        if (items.length === 0) {
+        if (cartItems.length === 0) {
             navigate("/cart");
-        } else {
-            setCartItems(items);
         }
-    }, [navigate]);
+    }, [cartItems.length, navigate]);
 
     useEffect(() => {
         if (success && order) {
             localStorage.removeItem("aureoCart");
-            window.dispatchEvent(new Event("storage"));
+            window.dispatchEvent(new Event("aureo:cart-updated"));
             dispatch({ type: ORDER_CREATE_RESET });
             navigate("/orders", { state: { newOrderPlaced: true } });
         }

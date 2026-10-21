@@ -1,36 +1,54 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { updateProfile, uploadAvatar, logoutUser, clearAuthError } from "../redux/actions/authActions";
+import { ValidatedField } from "../components/ui/ValidatedField";
+import { profileSchema } from "../utils/validationSchemas";
+import { showError } from "../utils/sweetAlert";
 
 function ProfilePage() {
     const dispatch = useDispatch();
     const { user, updateLoading, error } = useSelector((state) => state.auth);
 
-    const [form, setForm] = useState({
-        name: "",
-        contactNumber: "",
-        addressLine: "",
-        city: "",
-        postalCode: "",
-        country: ""
-    });
-
     const [savedMsg, setSavedMsg] = useState("");
     const [avatarPreview, setAvatarPreview] = useState(null);
 
-    useEffect(() => {
-        if (user) {
-            setForm({
-                name: user.name || "",
-                contactNumber: user.contactNumber || "",
-                addressLine: user.address?.addressLine || "",
-                city: user.address?.city || "",
-                postalCode: user.address?.postalCode || "",
-                country: user.address?.country || ""
-            });
+    const {
+        control,
+        handleSubmit,
+        reset,
+        formState: { errors }
+    } = useForm({
+        resolver: yupResolver(profileSchema),
+        mode: "onBlur",
+        defaultValues: {
+            name: "",
+            contactNumber: "",
+            addressLine: "",
+            city: "",
+            postalCode: "",
+            country: ""
         }
-    }, [user]);
+    });
+
+    // The form mirrors the loaded profile. It is reset whenever a different
+    // profile arrives.
+    useEffect(() => {
+        if (!user) {
+            return;
+        }
+
+        reset({
+            name: user.name || "",
+            contactNumber: user.contactNumber || "",
+            addressLine: user.address?.addressLine || "",
+            city: user.address?.city || "",
+            postalCode: user.address?.postalCode || "",
+            country: user.address?.country || ""
+        });
+    }, [user, reset]);
 
     useEffect(() => {
         return () => {
@@ -38,22 +56,17 @@ function ProfilePage() {
         };
     }, [dispatch]);
 
-    const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-    };
-
-    const handleProfileSubmit = (e) => {
-        e.preventDefault();
+    const onProfileSubmit = (values) => {
         setSavedMsg("");
         dispatch(
             updateProfile({
-                name: form.name,
-                contactNumber: form.contactNumber,
+                name: values.name,
+                contactNumber: values.contactNumber,
                 address: {
-                    addressLine: form.addressLine,
-                    city: form.city,
-                    postalCode: form.postalCode,
-                    country: form.country
+                    addressLine: values.addressLine,
+                    city: values.city,
+                    postalCode: values.postalCode,
+                    country: values.country
                 }
             })
         );
@@ -66,7 +79,7 @@ function ProfilePage() {
         if (!file) return;
 
         if (file.size > 2 * 1024 * 1024) {
-            alert("File size exceeds 2MB limit.");
+            showError("File size exceeds 2MB limit.");
             return;
         }
 
@@ -133,18 +146,16 @@ function ProfilePage() {
 
                     <hr className="profile-divider" />
 
-                    <form onSubmit={handleProfileSubmit} className="profile-form">
+                    <form onSubmit={handleSubmit(onProfileSubmit)} className="profile-form" noValidate>
                         <h3>Personal Details</h3>
 
-                        <label>
-                            Full Name
-                            <input
-                                name="name"
-                                value={form.name}
-                                onChange={handleChange}
-                                required
-                            />
-                        </label>
+                        <ValidatedField
+                            control={control}
+                            name="name"
+                            label="Full Name"
+                            autoComplete="name"
+                            error={errors.name?.message}
+                        />
 
                         <label>
                             Email (Cannot be changed)
@@ -155,58 +166,49 @@ function ProfilePage() {
                             />
                         </label>
 
-                        <label>
-                            Contact Number
-                            <input
-                                name="contactNumber"
-                                value={form.contactNumber}
-                                onChange={handleChange}
-                                placeholder="+63 900 000 0000"
-                            />
-                        </label>
+                        <ValidatedField
+                            control={control}
+                            name="contactNumber"
+                            label="Contact Number"
+                            placeholder="+63 900 000 0000"
+                            hint="Optional. Used for delivery updates."
+                            error={errors.contactNumber?.message}
+                        />
 
                         <h3>Delivery Address</h3>
 
-                        <label>
-                            Street Address
-                            <input
-                                name="addressLine"
-                                value={form.addressLine}
-                                onChange={handleChange}
-                                placeholder="Unit 4B, Emerald Tower, Ayala Ave"
-                            />
-                        </label>
+                        <ValidatedField
+                            control={control}
+                            name="addressLine"
+                            label="Street Address"
+                            placeholder="Unit 4B, Emerald Tower, Ayala Ave"
+                            error={errors.addressLine?.message}
+                        />
 
                         <div className="form-row-3">
-                            <label>
-                                City
-                                <input
-                                    name="city"
-                                    value={form.city}
-                                    onChange={handleChange}
-                                    placeholder="Makati"
-                                />
-                            </label>
+                            <ValidatedField
+                                control={control}
+                                name="city"
+                                label="City"
+                                placeholder="Makati"
+                                error={errors.city?.message}
+                            />
 
-                            <label>
-                                Postal Code
-                                <input
-                                    name="postalCode"
-                                    value={form.postalCode}
-                                    onChange={handleChange}
-                                    placeholder="1226"
-                                />
-                            </label>
+                            <ValidatedField
+                                control={control}
+                                name="postalCode"
+                                label="Postal Code"
+                                placeholder="1226"
+                                error={errors.postalCode?.message}
+                            />
 
-                            <label>
-                                Country
-                                <input
-                                    name="country"
-                                    value={form.country}
-                                    onChange={handleChange}
-                                    placeholder="Philippines"
-                                />
-                            </label>
+                            <ValidatedField
+                                control={control}
+                                name="country"
+                                label="Country"
+                                placeholder="Philippines"
+                                error={errors.country?.message}
+                            />
                         </div>
 
                         <button

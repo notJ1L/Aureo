@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { registerUser, verifyEmail, googleLogin, clearAuthError } from "../redux/actions/authActions";
+import { ValidatedField } from "../components/ui/ValidatedField";
+import { registerSchema, verifyCodeSchema } from "../utils/validationSchemas";
+import "../styles/aureo.css";
 
 function RegisterPage() {
     const navigate = useNavigate();
@@ -10,27 +15,46 @@ function RegisterPage() {
     const { isAuthenticated, loading, error, registeredEmail, verified } = useSelector((state) => state.auth);
 
     const [stage, setStage] = useState("register");
-    const [form, setForm] = useState({
-        name: "",
-        email: "",
-        password: "",
-        code: ""
-    });
     const [infoMsg, setInfoMsg] = useState("");
+
+    const {
+        control: registerControl,
+        handleSubmit: handleRegisterSubmit,
+        formState: { errors: registerErrors }
+    } = useForm({
+        resolver: yupResolver(registerSchema),
+        mode: "onBlur",
+        defaultValues: { name: "", email: "", password: "" }
+    });
+
+    const {
+        control: verifyControl,
+        handleSubmit: handleVerifySubmit,
+        setValue: setVerifyValue,
+        formState: { errors: verifyErrors }
+    } = useForm({
+        resolver: yupResolver(verifyCodeSchema),
+        mode: "onBlur",
+        defaultValues: { email: "", code: "" }
+    });
+
+    // Move to the verification step as soon as the registration succeeded.
+    // React's "adjust state while rendering" pattern avoids the extra render
+    // pass an effect would cause.
+    const [handledEmail, setHandledEmail] = useState(null);
+
+    if (registeredEmail && registeredEmail !== handledEmail) {
+        setHandledEmail(registeredEmail);
+        setStage("verify");
+        setVerifyValue("email", registeredEmail, { shouldValidate: false });
+        setInfoMsg(`Verification code sent to ${registeredEmail}. Please check your inbox.`);
+    }
 
     useEffect(() => {
         if (isAuthenticated) {
             navigate("/");
         }
     }, [isAuthenticated, navigate]);
-
-    useEffect(() => {
-        if (registeredEmail) {
-            setStage("verify");
-            setForm((prev) => ({ ...prev, email: registeredEmail }));
-            setInfoMsg(`Verification code sent to ${registeredEmail}. Please check your inbox.`);
-        }
-    }, [registeredEmail]);
 
     useEffect(() => {
         if (verified) {
@@ -44,25 +68,16 @@ function RegisterPage() {
         };
     }, [dispatch]);
 
-    const handleChange = (event) => {
-        setForm({
-            ...form,
-            [event.target.name]: event.target.value
-        });
-    };
-
-    const handleRegister = (event) => {
-        event.preventDefault();
+    const onRegister = (values) => {
         dispatch(registerUser({
-            name: form.name,
-            email: form.email,
-            password: form.password
+            name: values.name,
+            email: values.email,
+            password: values.password
         }));
     };
 
-    const handleVerify = (event) => {
-        event.preventDefault();
-        dispatch(verifyEmail(form.email, form.code));
+    const onVerify = (values) => {
+        dispatch(verifyEmail(values.email, values.code));
     };
 
     const handleGoogleSignIn = () => {
@@ -108,42 +123,36 @@ function RegisterPage() {
                             <span>or register with email</span>
                         </div>
 
-                        <form onSubmit={handleRegister}>
-                            <label>
-                                Name
-                                <input
-                                    name="name"
-                                    value={form.name}
-                                    onChange={handleChange}
-                                    placeholder="Marcus Aristain"
-                                    required
-                                />
-                            </label>
+                        <form onSubmit={handleRegisterSubmit(onRegister)} noValidate>
+                            <ValidatedField
+                                control={registerControl}
+                                name="name"
+                                label="Name"
+                                placeholder="Marcus Aristain"
+                                autoComplete="name"
+                                error={registerErrors.name?.message}
+                            />
 
-                            <label>
-                                Email
-                                <input
-                                    name="email"
-                                    type="email"
-                                    value={form.email}
-                                    onChange={handleChange}
-                                    placeholder="you@example.com"
-                                    required
-                                />
-                            </label>
+                            <ValidatedField
+                                control={registerControl}
+                                name="email"
+                                label="Email"
+                                type="email"
+                                placeholder="you@example.com"
+                                autoComplete="email"
+                                error={registerErrors.email?.message}
+                            />
 
-                            <label>
-                                Password
-                                <input
-                                    name="password"
-                                    type="password"
-                                    value={form.password}
-                                    onChange={handleChange}
-                                    placeholder="At least 6 characters"
-                                    minLength={6}
-                                    required
-                                />
-                            </label>
+                            <ValidatedField
+                                control={registerControl}
+                                name="password"
+                                label="Password"
+                                type="password"
+                                placeholder="At least 8 characters"
+                                autoComplete="new-password"
+                                hint="Use at least 8 characters."
+                                error={registerErrors.password?.message}
+                            />
 
                             <button
                                 type="submit"
@@ -175,31 +184,24 @@ function RegisterPage() {
                             <div className="auth-error">{error}</div>
                         )}
 
-                        <form onSubmit={handleVerify}>
-                            <label>
-                                Email
-                                <input
-                                    name="email"
-                                    type="email"
-                                    value={form.email}
-                                    onChange={handleChange}
-                                    required
-                                    readOnly
-                                />
-                            </label>
+                        <form onSubmit={handleVerifySubmit(onVerify)} noValidate>
+                            <ValidatedField
+                                control={verifyControl}
+                                name="email"
+                                label="Email"
+                                type="email"
+                                readOnly
+                                error={verifyErrors.email?.message}
+                            />
 
-                            <label>
-                                Verification Code
-                                <input
-                                    name="code"
-                                    value={form.code}
-                                    onChange={handleChange}
-                                    placeholder="e.g. 123456"
-                                    maxLength={6}
-                                    style={{ letterSpacing: "0.3rem", fontSize: "1.2rem", textAlign: "center" }}
-                                    required
-                                />
-                            </label>
+                            <ValidatedField
+                                control={verifyControl}
+                                name="code"
+                                label="Verification Code"
+                                placeholder="e.g. 123456"
+                                hint="Six digits sent to your inbox."
+                                error={verifyErrors.code?.message}
+                            />
 
                             <button
                                 type="submit"

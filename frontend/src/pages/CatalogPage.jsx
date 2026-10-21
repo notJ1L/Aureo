@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
 import { getProducts, addToWishlist, removeFromWishlist, getWishlist } from "../redux/actions/productActions";
+import { AureoChip, AureoRating } from "../components/ui";
+import "../styles/aureo.css";
 
 function CatalogPage() {
     const dispatch = useDispatch();
@@ -15,11 +18,39 @@ function CatalogPage() {
     const [brand, setBrand] = useState(searchParams.get("brand") || "");
     const [movement, setMovement] = useState(searchParams.get("movement") || "");
     const [condition, setCondition] = useState(searchParams.get("condition") || "");
+    const [category, setCategory] = useState(searchParams.get("category") || "");
     const [minPrice, setMinPrice] = useState(searchParams.get("minPrice") || "");
     const [maxPrice, setMaxPrice] = useState(searchParams.get("maxPrice") || "");
+    const [caseSize, setCaseSize] = useState(searchParams.get("caseSize") || "");
+    const [minRating, setMinRating] = useState(searchParams.get("minRating") || "");
+    const [minReviews, setMinReviews] = useState(searchParams.get("minReviews") || "");
     const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
 
     const brandsList = ["Rolex", "Patek Philippe", "Audemars Piguet", "Omega", "Cartier", "Grand Seiko", "Tudor", "IWC"];
+    const caseSizesList = [36, 38, 39, 40, 41, 42, 44];
+
+    // MP2: the category filter uses the same values the product form stores.
+    const categoriesList = [
+        { value: "dress", label: "Dress" },
+        { value: "diver", label: "Diver" },
+        { value: "chronograph", label: "Chronograph" },
+        { value: "sports", label: "Sports" },
+        { value: "luxury", label: "Luxury" }
+    ];
+
+    const ratingOptions = [
+        { value: "", label: "Any" },
+        { value: "4", label: "4.0 & up" },
+        { value: "3", label: "3.0 & up" },
+        { value: "2", label: "2.0 & up" }
+    ];
+
+    const reviewOptions = [
+        { value: "", label: "Any" },
+        { value: "1", label: "1+ review" },
+        { value: "5", label: "5+ reviews" },
+        { value: "10", label: "10+ reviews" }
+    ];
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -27,19 +58,59 @@ function CatalogPage() {
         }
     }, [dispatch, isAuthenticated]);
 
+    // Keep the filter controls in step with the URL. The homepage links into
+    // the catalog with a query string, so the filters have to follow it even
+    // when the catalog page is already mounted. The state is adjusted while
+    // rendering, which is the React pattern for reacting to a changed input.
+    const paramsString = searchParams.toString();
+    const [syncedParams, setSyncedParams] = useState(paramsString);
+
+    if (paramsString !== syncedParams) {
+        setSyncedParams(paramsString);
+        setKeyword(searchParams.get("keyword") || "");
+        setBrand(searchParams.get("brand") || "");
+        setMovement(searchParams.get("movement") || "");
+        setCondition(searchParams.get("condition") || "");
+        setCategory(searchParams.get("category") || "");
+        setMinPrice(searchParams.get("minPrice") || "");
+        setMaxPrice(searchParams.get("maxPrice") || "");
+        setCaseSize(searchParams.get("caseSize") || "");
+        setMinRating(searchParams.get("minRating") || "");
+        setMinReviews(searchParams.get("minReviews") || "");
+        setPage(Number(searchParams.get("page")) || 1);
+    }
+
     useEffect(() => {
         const params = {};
         if (keyword) params.keyword = keyword;
         if (brand) params.brand = brand;
         if (movement) params.movement = movement;
         if (condition) params.condition = condition;
+        if (category) params.category = category;
         if (minPrice) params.minPrice = minPrice;
         if (maxPrice) params.maxPrice = maxPrice;
+        if (caseSize) params.caseSize = caseSize;
+        if (minRating) params.minRating = minRating;
+        if (minReviews) params.minReviews = minReviews;
         if (page > 1) params.page = page;
 
         setSearchParams(params);
         dispatch(getProducts(params));
-    }, [dispatch, keyword, brand, movement, condition, minPrice, maxPrice, page, setSearchParams]);
+    }, [
+        dispatch,
+        keyword,
+        brand,
+        movement,
+        condition,
+        category,
+        minPrice,
+        maxPrice,
+        caseSize,
+        minRating,
+        minReviews,
+        page,
+        setSearchParams
+    ]);
 
     const formatPrice = (price) => {
         return new Intl.NumberFormat("en-PH", {
@@ -57,7 +128,7 @@ function CatalogPage() {
         e.preventDefault();
         e.stopPropagation();
         if (!isAuthenticated) {
-            alert("Please sign in to save watches to your wishlist.");
+            toast.info("Please sign in to save watches to your wishlist.");
             return;
         }
         if (isWishlisted(productId)) {
@@ -72,8 +143,12 @@ function CatalogPage() {
         setBrand("");
         setMovement("");
         setCondition("");
+        setCategory("");
         setMinPrice("");
         setMaxPrice("");
+        setCaseSize("");
+        setMinRating("");
+        setMinReviews("");
         setPage(1);
     };
 
@@ -167,6 +242,20 @@ function CatalogPage() {
                     </div>
 
                     <div className="filter-group">
+                        <label className="filter-title">Case Size (mm)</label>
+                        <select
+                            value={caseSize}
+                            onChange={(e) => { setCaseSize(e.target.value); setPage(1); }}
+                            className="catalog-select"
+                        >
+                            <option value="">Any size</option>
+                            {caseSizesList.map((size) => (
+                                <option key={size} value={size}>{size}mm</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="filter-group">
                         <label className="filter-title">Price Range (PHP)</label>
                         <div className="price-inputs">
                             <input
@@ -184,6 +273,66 @@ function CatalogPage() {
                                 onChange={(e) => { setMaxPrice(e.target.value); setPage(1); }}
                                 className="catalog-input"
                             />
+                        </div>
+                    </div>
+
+                    {/* MP2: category filter */}
+                    <div className="filter-group">
+                        <label className="filter-title">Category</label>
+                        <select
+                            value={category}
+                            onChange={(e) => { setCategory(e.target.value); setPage(1); }}
+                            className="catalog-select"
+                        >
+                            <option value="">All Categories</option>
+                            {categoriesList.map((c) => (
+                                <option key={c.value} value={c.value}>{c.label}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* MP2: ratings filter */}
+                    <div className="filter-group">
+                        <label className="filter-title">Minimum Rating</label>
+                        <div className="radio-pill-group">
+                            {ratingOptions.map((option) => (
+                                <button
+                                    key={option.value}
+                                    type="button"
+                                    className={`pill-btn ${minRating === option.value ? "active" : ""}`}
+                                    onClick={() => { setMinRating(option.value); setPage(1); }}
+                                >
+                                    {option.value ? (
+                                        <>
+                                            <AureoRating value={Number(option.value)} readOnly size="small" />
+                                            <span className="pill-rating-label">{option.label}</span>
+                                        </>
+                                    ) : (
+                                        option.label
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* MP2: review count filter */}
+                    <div className="filter-group">
+                        <label className="filter-title">Review Count</label>
+                        <div className="radio-pill-group">
+                            {reviewOptions.map((option) => (
+                                <AureoChip
+                                    key={option.value}
+                                    label={option.label}
+                                    color={minReviews === option.value ? "default" : "muted"}
+                                    onClick={() => { setMinReviews(option.value); setPage(1); }}
+                                    sx={{
+                                        cursor: "pointer",
+                                        border: minReviews === option.value
+                                            ? "1px solid var(--gold)"
+                                            : "1px solid var(--border)"
+                                    }}
+                                />
+                            ))}
                         </div>
                     </div>
                 </aside>
@@ -265,6 +414,14 @@ function CatalogPage() {
                                             <p className="product-meta">
                                                 {watch.movement} &bull; {watch.caseSize}mm &bull; {watch.condition}
                                             </p>
+                                            {watch.numOfReviews > 0 ? (
+                                                <div className="product-rating-row">
+                                                    <AureoRating value={watch.ratings || 0} readOnly size="small" />
+                                                    <span className="product-rating-count">
+                                                        {(watch.ratings || 0).toFixed(1)} ({watch.numOfReviews})
+                                                    </span>
+                                                </div>
+                                            ) : null}
                                             <div className="card-footer-price">
                                                 <span className="product-price">
                                                     {formatPrice(watch.price)}

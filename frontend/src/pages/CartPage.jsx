@@ -1,38 +1,45 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
 
 function CartPage() {
     const navigate = useNavigate();
     const { isAuthenticated, user } = useSelector((state) => state.auth);
 
-    const [cartItems, setCartItems] = useState([]);
-
-    const loadCart = () => {
+    const readCart = () => {
         const raw = localStorage.getItem("aureoCart");
-        setCartItems(raw ? JSON.parse(raw) : []);
+        return raw ? JSON.parse(raw) : [];
     };
 
+    const [cartItems, setCartItems] = useState(readCart);
+
     useEffect(() => {
-        loadCart();
-        window.addEventListener("storage", loadCart);
-        return () => window.removeEventListener("storage", loadCart);
+        const handleCartUpdate = () => setCartItems(readCart());
+
+        window.addEventListener("storage", handleCartUpdate);
+        window.addEventListener("aureo:cart-updated", handleCartUpdate);
+
+        return () => {
+            window.removeEventListener("storage", handleCartUpdate);
+            window.removeEventListener("aureo:cart-updated", handleCartUpdate);
+        };
     }, []);
 
     const saveCart = (items) => {
         setCartItems(items);
         localStorage.setItem("aureoCart", JSON.stringify(items));
-        window.dispatchEvent(new Event("storage"));
+        window.dispatchEvent(new Event("aureo:cart-updated"));
     };
 
     const handleQuantityChange = (productId, newQty, condition, stock) => {
         if (newQty < 1) return;
         if (condition === "second-hand" && newQty > 1) {
-            alert("This certified pre-owned timepiece is a unique archival piece (maximum 1).");
+            toast.error("This certified pre-owned timepiece is a unique archival piece (maximum 1).");
             return;
         }
         if (newQty > stock) {
-            alert(`Maximum stock available in vault is ${stock}.`);
+            toast.error(`Maximum stock available in vault is ${stock}.`);
             return;
         }
 

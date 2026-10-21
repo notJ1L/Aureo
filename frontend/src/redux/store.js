@@ -13,8 +13,26 @@ import {
     myOrdersReducer,
     orderDetailsReducer,
     orderCancelReducer,
-    adminOrdersReducer
+    adminOrdersReducer,
+    adminOrderMutationReducer
 } from "./reducers/orderReducer";
+import {
+    appraisalListReducer,
+    appraisalDetailsReducer,
+    appraisalCreateReducer,
+    appraisalRespondReducer,
+    adminAppraisalsReducer,
+    adminAppraisalActionReducer
+} from "./reducers/appraisalReducer";
+import {
+    serviceListReducer,
+    serviceMutationReducer,
+    ticketListReducer,
+    ticketCreateReducer,
+    adminTicketStatusReducer,
+    dashboardReducer,
+    chatReducer
+} from "./reducers/serviceReducer";
 
 const rootReducer = combineReducers({
     auth: authReducer,
@@ -27,7 +45,21 @@ const rootReducer = combineReducers({
     myOrders: myOrdersReducer,
     orderDetails: orderDetailsReducer,
     orderCancel: orderCancelReducer,
-    adminOrders: adminOrdersReducer
+    adminOrders: adminOrdersReducer,
+    adminOrderMutation: adminOrderMutationReducer,
+    appraisalList: appraisalListReducer,
+    appraisalDetails: appraisalDetailsReducer,
+    appraisalCreate: appraisalCreateReducer,
+    appraisalRespond: appraisalRespondReducer,
+    adminAppraisals: adminAppraisalsReducer,
+    adminAppraisalAction: adminAppraisalActionReducer,
+    serviceList: serviceListReducer,
+    serviceMutation: serviceMutationReducer,
+    ticketList: ticketListReducer,
+    ticketCreate: ticketCreateReducer,
+    adminTicketStatus: adminTicketStatusReducer,
+    dashboard: dashboardReducer,
+    chat: chatReducer
 });
 
 const store = createStore(rootReducer, applyMiddleware(thunk));

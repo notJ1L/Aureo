@@ -168,7 +168,9 @@ React component
 
 Authentication uses Supabase for email/password and Firebase for Google identity. The backend verifies the provider token, links the identity to a MongoDB User document, and returns an Aureo JWT. Axios sends that JWT in the `Authorization: Bearer <token>` header; provider secrets and the Firebase admin credential remain backend-only.
 
-The Redux store currently contains product, authentication, user, forgot-password, and new-product state. Cart items and shipping information are initialized from `localStorage` in `store.js`, while several cart and order reducers remain commented out and are not yet part of the active store.
+The Redux store contains the authentication, product, order, appraisal, service, ticket, and dashboard slices. The cart is not in the store: it lives in `localStorage` under `aureoCart` and the pages listen for the custom `aureo:cart-updated` window event. Requests never send cookies; every protected call carries the Bearer header.
+
+Form input is validated with React Hook Form and Yup. The schemas live in `frontend/src/utils/validationSchemas.js` and the shared field component is `frontend/src/components/ui/ValidatedField.jsx`. The shared UI kit in `frontend/src/components/ui/` wraps React Bootstrap and Material UI components in the Aureo black and gold theme.
 
 ---
 
@@ -183,30 +185,80 @@ backend/
 |-- app.js
 |
 |-- config/
-|   |-- database.js
+|   |-- db.js
+|   |-- cloudinary.js
+|   |-- supabase.js
+|   |-- firebase.js
+|   |-- .env
 |
 |-- routes/
-|   |-- product.js
+|   |-- health.js
 |   |-- auth.js
+|   |-- product.js
 |   |-- order.js
+|   |-- review.js
+|   |-- appraisal.js
+|   |-- service.js
+|   |-- ticket.js
+|   |-- dashboard.js
+|   |-- chat.js
 |
 |-- controllers/
-|   |-- product.js
-|   |-- auth.js
-|   |-- order.js
+|   |-- healthController.js
+|   |-- authController.js
+|   |-- productController.js
+|   |-- orderController.js
+|   |-- reviewController.js
+|   |-- appraisalController.js
+|   |-- serviceController.js
+|   |-- ticketController.js
+|   |-- dashboardController.js
+|   |-- chatController.js
 |
 |-- models/
-|   |-- product.js
 |   |-- user.js
+|   |-- product.js
 |   |-- order.js
+|   |-- review.js
+|   |-- appraisal.js
+|   |-- service.js
+|   |-- ticket.js
+|   |-- emailLog.js
+|   |-- chatHistory.js
 |
 |-- middlewares/
 |   |-- auth.js
+|   |-- error.js
 |
 |-- utils/
     |-- apiFeatures.js
     |-- multer.js
+    |-- cloudinaryUpload.js
+    |-- mockEmail.js
     |-- sendEmail.js
+    |-- verificationCode.js
+    |-- filterBadWords.js
+    |-- generateReceipt.js
+    |-- chatEngine.js
+    |-- generateToken.js
+    |-- catchAsyncErrors.js
+    |-- ErrorHandler.js
+|
+|-- seeder/
+|   |-- seed.js
+|   |-- clearUsers.js
+|
+|-- tests/
+    |-- setupEnv.js
+    |-- setup.js
+    |-- helpers.js
+    |-- auth.test.js
+    |-- product.test.js
+    |-- order.test.js
+    |-- review.test.js
+    |-- appraisal.test.js
+    |-- service.test.js
+    |-- dashboard.test.js
 ```
 
 ## 4.1 server.js
@@ -377,18 +429,63 @@ frontend/src/
 |-- App.css
 |-- index.css
 |
-|-- Components/
-|   |-- Home.jsx
-|   |-- Product/
-|   |-- Cart/
-|   |-- User/
-|   |-- Order/
-|   |-- Admin/
-|   |-- Layout/
-|   |-- Route/
+|-- components/
+|   |-- ChatWidget.jsx
+|   |-- ProductReviews.jsx
+|   |-- three/
+|   |   |-- WatchHero.jsx
+|   |   |-- WatchModel.jsx
+|   |   |-- hero.css
+|   |-- ui/
+|       |-- index.jsx
+|       |-- AureoProvider.jsx
+|       |-- aureoTheme.js
+|       |-- ValidatedField.jsx
+|       |-- ui.css
 |
-|-- Utils/
-    |-- helpers.jsx
+|-- hooks/
+|   |-- useInfiniteScroll.js
+|
+|-- pages/
+|   |-- CatalogPage.jsx
+|   |-- ProductDetailPage.jsx
+|   |-- CartPage.jsx
+|   |-- CheckoutPage.jsx
+|   |-- OrdersPage.jsx
+|   |-- OrderDetailPage.jsx
+|   |-- WishlistPage.jsx
+|   |-- ProfilePage.jsx
+|   |-- SellWatchPage.jsx
+|   |-- MyAppraisalsPage.jsx
+|   |-- ServicesPage.jsx
+|   |-- LoginPage.jsx
+|   |-- RegisterPage.jsx
+|   |-- admin/
+|       |-- AdminProductsPage.jsx
+|       |-- AdminServicesPage.jsx
+|       |-- AdminOrdersPage.jsx
+|       |-- AdminAppraisalsPage.jsx
+|       |-- AdminTicketsPage.jsx
+|       |-- AdminDashboardPage.jsx
+|
+|-- routes/
+|   |-- ProtectedRoutes.jsx
+|
+|-- redux/
+|   |-- store.js
+|   |-- actions/
+|   |-- reducers/
+|   |-- constants/
+|
+|-- services/
+|   |-- api.js
+|
+|-- styles/
+|   |-- aureo.css
+|
+|-- utils/
+|   |-- sweetAlert.js
+|   |-- validationSchemas.js
 ```
 
 ## 5.1 main.jsx
@@ -480,7 +577,9 @@ Components
     -> component re-render
 ```
 
-The active store is configured in `store.js` with product and user reducers. User actions handle login, logout, loading the current user, profile updates, password updates, and password recovery. Login, logout, and protected user requests send cookies with `withCredentials: true`.
+The active store is configured in `store.js`. It holds the `auth`, `productList`, `productDetails`, `wishlist`, `adminProducts`, `productMutation`, `orderCreate`, `myOrders`, `orderDetails`, `orderCancel`, `adminOrders`, `adminOrderMutation`, `appraisal*`, `service*`, `ticket*`, and `dashboard` slices.
+
+Auth actions handle registration, login, logout, loading the current user, profile updates, and the verification code. Every protected request sends the Aureo JWT in the `Authorization` header. Cookies are never used for authentication.
 
 ## 5.7 Props
 
@@ -665,40 +764,77 @@ DELETE /api/v1/admin/product/:id
 The current backend also exposes these feature groups:
 
 ```text
+Health
+GET    /api/v1/health
+
 Authentication and users
 POST   /api/v1/register
+POST   /api/v1/verify-email
 POST   /api/v1/login
+POST   /api/v1/auth/google
 GET    /api/v1/logout
 GET    /api/v1/me
 PUT    /api/v1/me/update
-PUT    /api/v1/password/update
-POST   /api/v1/password/forgot
-PUT    /api/v1/password/reset/:token
-GET    /api/v1/admin/users
-GET    /api/v1/admin/user/:id
-PUT    /api/v1/admin/user/:id
-DELETE /api/v1/admin/user/:id
+PUT    /api/v1/me/avatar
+
+Products and wishlist
+GET    /api/v1/products
+GET    /api/v1/product/:id
+GET    /api/v1/admin/products
+POST   /api/v1/admin/product/new
+PUT    /api/v1/admin/product/:id
+DELETE /api/v1/admin/product/:id
+POST   /api/v1/admin/products/bulk-delete
+GET    /api/v1/wishlist
+POST   /api/v1/wishlist/:productId
+DELETE /api/v1/wishlist/:productId
 
 Orders
 POST   /api/v1/order/new
 GET    /api/v1/orders/me
 GET    /api/v1/order/:id
-GET    /api/v1/admin/orders/
+PUT    /api/v1/order/:id/cancel
+GET    /api/v1/admin/orders
 PUT    /api/v1/admin/order/:id
 DELETE /api/v1/admin/order/:id
 
-Reviews and reporting
-PUT    /api/v1/review
-GET    /api/v1/reviews
-DELETE /api/v1/reviews
-GET    /api/v1/admin/product-sales
-GET    /api/v1/admin/total-orders
-GET    /api/v1/admin/total-sales
-GET    /api/v1/admin/customer-sales
-GET    /api/v1/admin/sales-per-month
+Reviews
+GET    /api/v1/product/:id/reviews
+POST   /api/v1/product/:id/review
+PUT    /api/v1/review/:id
+DELETE /api/v1/review/:id
+
+Appraisals
+POST   /api/v1/appraisal/new
+GET    /api/v1/appraisals/me
+GET    /api/v1/appraisal/:id
+PUT    /api/v1/appraisal/:id/respond
+GET    /api/v1/admin/appraisals
+PUT    /api/v1/admin/appraisal/:id
+POST   /api/v1/admin/appraisal/:id/convert
+
+Services and tickets
+GET    /api/v1/services
+GET    /api/v1/service/:id
+POST   /api/v1/admin/service/new
+PUT    /api/v1/admin/service/:id
+DELETE /api/v1/admin/service/:id
+POST   /api/v1/admin/services/bulk-delete
+POST   /api/v1/ticket/new
+GET    /api/v1/tickets/me
+GET    /api/v1/ticket/:id
+GET    /api/v1/admin/tickets
+PUT    /api/v1/admin/ticket/:id
+
+Dashboard and chat
+GET    /api/v1/admin/dashboard
+POST   /api/v1/chat
+GET    /api/v1/chat/history
 ```
 
-The product image flow accepts image data from the frontend and uploads it to Cloudinary. Multer is registered on relevant routes, but the active product form converts selected images to data URLs; this is different from storing uploaded files in MongoDB.
+Every `/admin` route uses both `isAuthenticatedUser` and `authorizeRoles("admin")`.
+
+The product image flow accepts image data from the frontend and uploads it to Cloudinary. The admin product form converts the selected images to data URLs and the backend stores the returned `{ public_id, url }` pairs, so the images never live in MongoDB. Appraisal photos use a different path: `backend/utils/multer.js` accepts a real multipart upload of one to six files at a maximum of five MB each, and `backend/utils/cloudinaryUpload.js` sends them to Cloudinary.
 
 The same structure can be adapted to another project.
 

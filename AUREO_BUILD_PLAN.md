@@ -1,4 +1,4 @@
-﻿# Aureo Build Plan
+# Aureo Build Plan
 
 Aureo will be built as a MERN watch-commerce system with managed authentication, media storage, and a final Render deployment. The project specification is the source of truth for requirements, while the architecture reference defines the implementation style and layering.
 
@@ -28,6 +28,46 @@ The professor's requirements in `PROJECT_REQUIREMENTS.md` are acceptance criteri
 | Term Test LEC | Functional completeness, error-free execution, and documented team contribution | Phase 12 |
 
 Every assessment item must have a visible UI path, an enforced backend rule where applicable, and a verification step before its phase is complete.
+
+## Implementation Status
+
+Status as of **2026-10-22**. This section tracks the build against the phases below. It records
+what is already implemented and verified; it does not replace the phase definitions.
+
+Legend: **Done** = implemented and exercised. **Partial** = core path works, listed gaps remain.
+**Pending** = not started.
+
+| Phase | Status | Evidence |
+|---|---|---|
+| 0. Tooling and Contracts | Partial | CommonJS backend, all provider SDKs, `dev`/`start`/`production`/`seed`/`clear:users`/`test` scripts, `backend/config/.env.example`, shared Axios instance with Bearer interceptor (`frontend/src/services/api.js`), and the `render.yaml` deployment blueprint. Gap: no backend `lint` script. |
+| 1. Scaffold and Health | Done | `backend/server.js` vs `backend/app.js` split, `GET /api/v1/health`, `ErrorHandler`/`catchAsyncErrors`/404/final error middleware, all prescribed folders present. |
+| 2. Models and Seed | Partial | User, Product, Order, Review, Appraisal, Service, Ticket, MockEmail, ChatHistory models exist with validation, indexes, and status enums. Gaps: `MockEmail` is implemented as `backend/models/emailLog.js`; `Order.totalPrice` is not persisted (total is computed); second-hand stock rule is enforced in the controller, not in the model `pre("validate")` hook; seed covers admin, products, and services only. |
+| 3. Authentication and Access Control | Done | Supabase register/login/logout/verify, Firebase Google sign-in, provider-token verification, email-normalised account linking, Aureo JWT issuance, user reloaded per request, `authorizeRoles("admin")`, `requireVerified`, Cloudinary avatar, Redux auth slice, route guards. |
+| 4. Products and Wishlist | Done | Public list/detail, keyword search, combined filters, pagination, query sanitisation, admin CRUD with Cloudinary image metadata, datatable, multi-photo, checkbox bulk delete, soft delete when referenced by orders, wishlist `$addToSet`/`$pull`. The catalog exposes the price, brand, movement, condition, case size, category, ratings, and review-count filters. |
+| 5. Cart, Orders, Payments, Notifications | Partial | Cart with local persistence, server-side price recalculation, conditional `findOneAndUpdate` stock reduction, item snapshots, mock Cash/Dummy Card/E-Wallet payments, decline card `4000 0000 0000 0002`, order history/detail/cancellation, admin order list and status updates, strict status flow, stock restore on cancel, `MockEmail` on status change, PDF receipt generation. Gaps: payment logic is inlined in the controller instead of `utils/mockPayment.js`; E-Wallet has no GCash/Maya choice; a declined card creates no order so `paymentStatus: "Failed"` is unused; the PDF bytes are not persisted so the receipt cannot be re-downloaded. |
+| 6. Reviews | Done | Purchaser-only check, `Paid`/`Shipped`/`Completed` gate, second-hand rejection, one review per user and product, owner update, admin delete, `bad-words` masking on create and update, rating recalculation. |
+| 7. Appraisals and User Selling | Done | Multipart appraisal submission with 1�6 Cloudinary photos at 5 MB each, user appraisal list/detail, offer accept/reject, admin review and offer, conversion into a second-hand product with stock 1, sell-watch and admin appraisal pages. |
+| 8. Services and Tickets | Done | `GET /api/v1/services`, admin service CRUD with a datatable and checkbox bulk delete, positive price rule, verified-user ticket creation, unique ticket numbers, admin ticket listing and status updates, timestamped status history, `MockEmail` ticket notifications, service pages and ticket timelines. |
+| 9. Admin Dashboard | Done | `GET /api/v1/admin/dashboard` reports sales (Paid or later), order counts by status, inventory, and appraisal expenses. The Recharts dashboard draws a bar chart and a line chart with a from/to date-range filter. |
+| 10. Rule-Based AI Chat | Done | `POST /api/v1/chat` and `GET /api/v1/chat/history`, one `ChatHistory` document per user, backend keyword extraction for budget, style, brand, and movement, matching against in-stock products, and a logged-in-only chat widget. |
+| 11. 3D Experience and UI Completion | Partial | Responsive pages, gold theme, Toastify, SweetAlert2, and a lazy-loaded Three.js home hero with a primitive-watch model, a CSS watch fallback for devices without WebGL and on small screens, `prefers-reduced-motion` support, and resource disposal on unmount. Gap: the product detail page has no 3D viewer and no product-level 3D gallery. |
+| 12. Hardening, Testing, Documentation | Partial | 7 backend test suites (117 cases) run against a dedicated test database and cover auth, products, orders, reviews, appraisals, services, and dashboard metrics. `README.md` documents the setup, the scripts, the seed commands, the API conventions, the assumptions, the assessment coverage, and the local development flow. Gaps: no frontend test script, and no chat isolation coverage. |
+| 13. Deployment on Render | Partial | `render.yaml` defines the Express API service and the static Vite site with the health check, the build and start commands, and the SPA rewrite. `frontend/public/_redirects` provides the SPA fallback. The production environment variables are declared but not filled in, so the deployment has not been run or verified yet. |
+
+### Assessment coverage
+
+| Assessment | Status | Notes |
+|---|---|---|
+| MP1 | Done | Product datatable, multi-photo upload, checkbox bulk delete, service CRUD datatable, and service checkbox bulk delete. |
+| MP2 | Done | Price, category, ratings, and review filters in the catalog, all backed by `backend/utils/apiFeatures.js`. |
+| MP3 | Done | Purchaser review and rate, owner update, admin delete. |
+| Term Test Lab | Done | Completed transactions, admin status updates, customer email with item list, subtotals, and grand total, PDF receipt attachment. |
+| Unit 1 | Done | `bad-words` masking on review create and update. React Hook Form plus Yup validation on the login, registration, profile, and product CRUD forms via `frontend/src/utils/validationSchemas.js`. |
+| Unit 2 | Done | Responsive CSS with the black/gold tokens, React Bootstrap components, and Material UI components in `frontend/src/components/ui/`. |
+| Quiz 2 | Done | Recharts bar chart and line chart on the admin dashboard with a from/to date-range filter. |
+| Quiz 3 | Done | Homepage pagination plus infinite scroll through `frontend/src/hooks/useInfiniteScroll.js`. |
+| Quiz 4 | Done | Google sign-in through Firebase with the backend issuing the Aureo JWT. |
+| Term Test LEC | Partial | Functional completeness covers FR 1.x through FR 7.x, and `README.md` documents the project end to end. The remaining gaps are the frontend test suite and the unverified Render deployment. See `PROJECT_REQUIREMENTS.md` for the per-item coverage matrix. |
 
 ## Phase 0: Tooling and Contracts
 
@@ -209,10 +249,28 @@ Every assessment item must have a visible UI path, an enforced backend rule wher
 - Dashboard expenses initially mean accepted appraisal offers only.
 - Local development comes first. Render deployment is planned only in Phase 13 after hardening and documentation.
 
+### Recorded deviations
+
+These are deliberate departures from the literal wording of `AUREO_PROJECT_SPEC.md`. Each one keeps
+the observable behaviour required by the FRD intact.
+
+| Deviation | Reason |
+|---|---|
+| Email verification is `POST /api/v1/verify-email` with an `{ email, code }` body instead of `GET /api/v1/verify-email/:token`. | The provider sends a six-digit code, not a link token. A `GET` with a code in the path would leak the code into server logs and browser history. |
+| The provider id for Google sign-in is stored as `googleId` on the User model. | `firebaseUserId` was reserved for a future provider switch. The field remains `select: false`. |
+| `MockEmail` is implemented as `backend/models/emailLog.js` exporting an `EmailLog` model. | The collection keeps its original name so seeded and existing records stay readable. The FRD-visible behaviour (emails are logged and stored) is unchanged. |
+| The `MockEmail.attachments` field stores attachment filenames, not file bytes. | Mocked email must not persist binary payloads. The receipt is still generated and attached to the mocked send. |
+| `PUT /api/v1/me/update` accepts JSON, and the avatar is uploaded through a separate `PUT /api/v1/me/avatar` route. | One route cannot cleanly accept both a multipart form and a JSON profile update. Splitting them keeps each validator simple. |
+| The second-hand stock rule is enforced in the product controller, not in the model `pre("validate")` hook. | A second-hand watch reaches stock 0 once it is sold, so the model permits 0 and the controller forces 1 on create and update. |
+| `utils/mockPayment.js` is planned but not yet extracted. | Payment logic currently lives inside the order controller. Extraction happens with the Phase 12 cleanup. |
+| The service CRUD datatable and service bulk delete use `POST /api/v1/admin/services/bulk-delete`, mirroring the product route. | The specification's REST table lists only the single-service delete. MP1 requires a bulk delete, so the batch route follows the product pattern. |
+
 ## Reference Files
 
 - [AUREO_PROJECT_SPEC.md](AUREO_PROJECT_SPEC.md) - functional requirements, data model, API table, design requirements, assumptions, and build order.
 - [PROJECT_ARCHITECTURE_REFERENCE.md](PROJECT_ARCHITECTURE_REFERENCE.md) - reference layering, backend responsibilities, frontend responsibilities, and request flow.
+- [PROJECT_REQUIREMENTS.md](PROJECT_REQUIREMENTS.md) - the assessment items and the coverage matrix that maps them to the implementation.
+- [AUREO_CHANGE_LOG.md](AUREO_CHANGE_LOG.md) - what was changed, why each change was needed, and the commands that were run.
 - [backend/package.json](backend/package.json) - current backend module configuration and dependency list.
 - [backend/app.js](backend/app.js) - current backend starter application.
 - [backend/config/db.js](backend/config/db.js) - current MongoDB connection helper.
@@ -229,3 +287,7 @@ The first implementation slice is Phase 0 and Phase 1:
 3. Add API middleware and centralized errors.
 4. Add `GET /api/v1/health`.
 5. Confirm the backend starts successfully before implementing models or authentication.
+
+Both are complete. Phases 0 through 10 are implemented, and Phase 13 has its Render blueprint in
+`render.yaml`. The remaining work is Phase 11's product-level 3D viewer, the frontend test suite and
+the chat isolation test in Phase 12, and running the Render deployment itself.

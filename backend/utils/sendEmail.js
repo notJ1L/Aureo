@@ -16,14 +16,20 @@ const sendEmail = async ({
     subject,
     text,
     type,
-    relatedId = null
+    relatedId = null,
+    attachments = []
 }) => {
+    const attachmentNames = attachments
+        .map((attachment) => attachment.filename)
+        .filter(Boolean);
+
     try {
         const emailInfo = await transporter.sendMail({
             from: process.env.EMAIL_FROM,
             to,
             subject,
-            text
+            text,
+            attachments
         });
 
         await EmailLog.create({
@@ -35,6 +41,7 @@ const sendEmail = async ({
             provider: "smtp",
             providerMessageId: emailInfo.messageId,
             relatedId,
+            attachments: attachmentNames,
             sentAt: new Date()
         });
 
@@ -49,6 +56,7 @@ const sendEmail = async ({
             provider: "smtp",
             errorMessage: error.message,
             relatedId,
+            attachments: attachmentNames,
             sentAt: new Date()
         });
 

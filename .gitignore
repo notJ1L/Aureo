@@ -4,4 +4,9 @@
 backend/config/.env
 frontend/dist/
 coverage/
-frontend/.env   
+frontend/.env
+
+# Local runtime logs
+backend-start.log
+backend-start.err.log
+*.log

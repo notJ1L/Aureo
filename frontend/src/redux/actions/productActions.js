@@ -6,6 +6,7 @@ import {
     PRODUCT_CREATE_REQUEST, PRODUCT_CREATE_SUCCESS, PRODUCT_CREATE_FAIL,
     PRODUCT_UPDATE_REQUEST, PRODUCT_UPDATE_SUCCESS, PRODUCT_UPDATE_FAIL,
     PRODUCT_DELETE_REQUEST, PRODUCT_DELETE_SUCCESS, PRODUCT_DELETE_FAIL,
+    PRODUCT_BULK_DELETE_REQUEST, PRODUCT_BULK_DELETE_SUCCESS, PRODUCT_BULK_DELETE_FAIL,
     WISHLIST_GET_REQUEST, WISHLIST_GET_SUCCESS, WISHLIST_GET_FAIL,
     WISHLIST_TOGGLE_REQUEST, WISHLIST_TOGGLE_SUCCESS, WISHLIST_TOGGLE_FAIL,
     PRODUCT_CLEAR_ERRORS
@@ -103,6 +104,27 @@ export const deleteProduct = (id) => async (dispatch) => {
         dispatch({
             type: PRODUCT_DELETE_FAIL,
             payload: err.response?.data?.message || "Failed to delete product"
+        });
+    }
+};
+
+// MP1: bulk delete from the admin datatable.
+export const bulkDeleteProducts = (ids) => async (dispatch) => {
+    dispatch({ type: PRODUCT_BULK_DELETE_REQUEST });
+    try {
+        const { data } = await api.post("/admin/products/bulk-delete", { ids });
+        dispatch({
+            type: PRODUCT_BULK_DELETE_SUCCESS,
+            payload: {
+                deleted: data.deleted,
+                deactivated: data.deactivated,
+                message: data.message
+            }
+        });
+    } catch (err) {
+        dispatch({
+            type: PRODUCT_BULK_DELETE_FAIL,
+            payload: err.response?.data?.message || "Failed to delete the selected products"
         });
     }
 };

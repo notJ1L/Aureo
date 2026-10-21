@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
 import api from "../services/api";
+import { confirmAction } from "../utils/sweetAlert";
 
 function ProductReviews({ productId, onReviewAdded }) {
     const { isAuthenticated, user } = useSelector((state) => state.auth);
@@ -12,6 +14,7 @@ function ProductReviews({ productId, onReviewAdded }) {
     const [submitting, setSubmitting] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
     const [successMsg, setSuccessMsg] = useState("");
+    const [editingReview, setEditingReview] = useState(null);
 
     const loadReviews = async () => {
         try {
@@ -25,8 +28,36 @@ function ProductReviews({ productId, onReviewAdded }) {
     };
 
     useEffect(() => {
-        loadReviews();
+        let active = true;
+
+        api
+            .get(`/product/${productId}/reviews`)
+            .then(({ data }) => {
+                if (active) {
+                    setReviews(data.reviews || []);
+                }
+            })
+            .catch((err) => {
+                console.error("Failed to fetch reviews", err);
+            })
+            .finally(() => {
+                if (active) {
+                    setLoading(false);
+                }
+            });
+
+        return () => {
+            active = false;
+        };
     }, [productId]);
+
+    const resetForm = () => {
+        setRating(5);
+        setComment("");
+        setEditingReview(null);
+        setErrorMsg("");
+        setSuccessMsg("");
+    };
 
     const handleSubmitReview = async (e) => {
         e.preventDefault();
@@ -35,32 +66,64 @@ function ProductReviews({ productId, onReviewAdded }) {
         setSubmitting(true);
 
         try {
-            await api.post(`/product/${productId}/review`, {
-                rating: Number(rating),
-                comment
-            });
-            setSuccessMsg("Your review has been submitted to the Aureo register.");
-            setComment("");
+            if (editingReview) {
+                // FR 6.1 / MP3: the owner updates their own review.
+                await api.put(`/review/${editingReview._id}`, {
+                    rating: Number(rating),
+                    comment
+                });
+                setSuccessMsg("Your review has been updated.");
+                toast.success("Review updated");
+            } else {
+                await api.post(`/product/${productId}/review`, {
+                    rating: Number(rating),
+                    comment
+                });
+                setSuccessMsg("Your review has been submitted to the Aureo register.");
+                toast.success("Review submitted");
+            }
+
+            resetForm();
             loadReviews();
             if (onReviewAdded) onReviewAdded();
         } catch (err) {
-            setErrorMsg(
+            const message =
                 err.response?.data?.message ||
-                "Failed to submit review. Note: Only verified customers who acquired this piece may leave a review."
-            );
+                "Failed to submit review. Note: Only verified customers who acquired this piece may leave a review.";
+
+            setErrorMsg(message);
+            toast.error(message);
         } finally {
             setSubmitting(false);
         }
     };
 
+    const handleStartEdit = (review) => {
+        setEditingReview(review);
+        setRating(review.rating);
+        setComment(review.comment);
+        setErrorMsg("");
+        setSuccessMsg("");
+    };
+
     const handleDeleteReview = async (reviewId) => {
-        if (!window.confirm("Remove your review?")) return;
+        const confirmed = await confirmAction({
+            title: "Remove this review?",
+            message: "The review will be removed from the product page.",
+            confirmText: "Remove review"
+        });
+
+        if (!confirmed) {
+            return;
+        }
+
         try {
             await api.delete(`/review/${reviewId}`);
+            toast.success("Review removed");
             loadReviews();
             if (onReviewAdded) onReviewAdded();
         } catch (err) {
-            alert(err.response?.data?.message || "Failed to remove review");
+            toast.error(err.response?.data?.message || "Failed to remove review");
         }
     };
 
@@ -88,6 +151,12 @@ function ProductReviews({ productId, onReviewAdded }) {
                     {successMsg && <div className="auth-info">{successMsg}</div>}
 
                     <form onSubmit={handleSubmitReview} className="review-form">
+                        {editingReview && (
+                            <p className="field-hint">
+                                You are editing your existing review. Submitting updates it.
+                            </p>
+                        )}
+
                         <div className="star-rating-select">
                             <label>Rating:</label>
                             <div className="star-buttons">
@@ -171,6 +240,15 @@ function ProductReviews({ productId, onReviewAdded }) {
 
                                 {(isOwner || isAdmin) && (
                                     <div className="review-actions">
+                                        {isOwner && (
+                                            <button
+                                                type="button"
+                                                className="edit-review-link"
+                                                onClick={() => handleStartEdit(rev)}
+                                            >
+                                                Edit Review
+                                            </button>
+                                        )}
                                         <button
                                             type="button"
                                             className="delete-review-link"

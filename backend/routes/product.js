@@ -7,6 +7,7 @@ const {
     createProduct,
     updateProduct,
     deleteProduct,
+    bulkDeleteProducts,
     getWishlist,
     addToWishlist,
     removeFromWishlist
@@ -30,5 +31,6 @@ router.get("/admin/products", isAuthenticatedUser, authorizeRoles("admin"), getA
 router.post("/admin/product/new", isAuthenticatedUser, authorizeRoles("admin"), createProduct);
 router.put("/admin/product/:id", isAuthenticatedUser, authorizeRoles("admin"), updateProduct);
 router.delete("/admin/product/:id", isAuthenticatedUser, authorizeRoles("admin"), deleteProduct);
+router.post("/admin/products/bulk-delete", isAuthenticatedUser, authorizeRoles("admin"), bulkDeleteProducts);
 
 module.exports = router;

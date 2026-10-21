@@ -98,7 +98,7 @@ const productSchema = new mongoose.Schema(
     }
 );
 
-productSchema.pre("validate", function (next) {
+productSchema.pre("validate", function () {
     if (
         this.condition === "second-hand" &&
         ![0, 1].includes(this.stock)
@@ -108,8 +108,6 @@ productSchema.pre("validate", function (next) {
             "Second-hand products can only have zero or one unit in stock"
         );
     }
-
-    next();
 });
 
 productSchema.index({

@@ -52,6 +52,13 @@ const emailLogSchema = new mongoose.Schema(
             default: null
         },
 
+        // Names of the files that were attached to the message (for example the
+        // PDF receipt that is generated for a completed transaction).
+        attachments: {
+            type: [String],
+            default: []
+        },
+
         sentAt: {
             type: Date,
             default: Date.now

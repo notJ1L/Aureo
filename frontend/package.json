@@ -10,6 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@hookform/resolvers": "^5.9.2",
+    "@mui/material": "^9.5.0",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.1",
     "@supabase/supabase-js": "^2.118.0",
@@ -19,6 +23,7 @@
     "react": "^19.2.8",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.2.8",
+    "react-hook-form": "^7.90.0",
     "react-redux": "^9.3.0",
     "react-router-dom": "^7.18.4",
     "react-toastify": "^11.1.0",
@@ -26,7 +31,8 @@
     "redux": "^5.0.1",
     "redux-thunk": "^3.1.0",
     "sweetalert2": "^11.26.25",
-    "three": "^0.186.1"
+    "three": "^0.186.1",
+    "yup": "^1.7.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -1,0 +1,155 @@
+/* Aureo component styles that are scoped to a page.
+ *
+ * `src/App.css` holds the main stylesheet. These rules are added on top of it
+ * with page-level scoping so the specificity is higher and the result does not
+ * depend on the order the stylesheets happen to be bundled in.
+ *
+ * Every colour comes from the tokens in `src/index.css`.
+ */
+
+/* -------------------------------------------------------------------------- */
+/* Product cards                                                              */
+/* -------------------------------------------------------------------------- */
+
+/* The image sits inside a fixed-ratio wrapper so the badges and the wishlist
+ * button can be positioned over it. */
+.catalog-page .product-image-wrap,
+.wishlist-page .wishlist-img-wrap {
+    position: relative;
+    aspect-ratio: 0.82;
+    overflow: hidden;
+    background: var(--bg-elevated);
+    border-radius: 10px;
+}
+
+/* The image itself fills the wrapper and is cropped to a cover fit. */
+.catalog-page .product-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: saturate(0.7);
+    transition: transform 300ms ease;
+}
+
+.catalog-page .product-card:hover .product-image {
+    transform: scale(1.04);
+}
+
+.catalog-page .product-placeholder,
+.wishlist-page .product-placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--bg-elevated);
+}
+
+/* Gold is the single accent colour, so the pre-owned badge uses the gold
+ * family instead of a blue tone. */
+.catalog-page .preowned-badge {
+    background: rgba(201, 164, 92, 0.18);
+    color: var(--gold);
+    border: 1px solid var(--gold);
+}
+
+.catalog-page .wishlist-heart-btn:hover,
+.catalog-page .wishlist-heart-btn.active {
+    color: var(--danger);
+    border-color: var(--danger);
+    background: rgba(229, 72, 77, 0.15);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Catalog filters                                                            */
+/* -------------------------------------------------------------------------- */
+
+.catalog-page .radio-pill-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.catalog-page .pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.catalog-page .pill-rating-label {
+    font-size: 0.78rem;
+}
+
+.catalog-page .product-rating-row {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.35rem;
+}
+
+.catalog-page .product-rating-count {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Auth pages                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/* The Google button is part of the dark theme, not a white Google widget. */
+.auth-page .google-btn {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.auth-page .google-btn:hover {
+    background: #262a33;
+    border-color: var(--gold);
+    box-shadow: none;
+    color: var(--text-primary);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Infinite scroll                                                            */
+/* -------------------------------------------------------------------------- */
+
+/* The sentinel is an empty element that is watched by an
+ * IntersectionObserver. It has to be in the document flow so the observer
+ * can measure it. */
+.storefront .infinite-scroll-sentinel {
+    width: 100%;
+    height: 1px;
+    margin-top: 1rem;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Form fields                                                                */
+/* -------------------------------------------------------------------------- */
+
+/* The Aureo field component is used inside the auth and profile forms, so it
+ * inherits the surrounding form spacing. */
+.auth-card .aureo-field,
+.profile-form .aureo-field {
+    margin-bottom: 0;
+}
+
+.auth-card .aureo-field-label,
+.profile-form .aureo-field-label {
+    color: var(--text-secondary);
+}
+
+.admin-form .aureo-field-label {
+    color: var(--text-secondary);
+}
+
+.admin-form .aureo-field-input {
+    min-height: 44px;
+}

@@ -127,12 +127,13 @@ aureo/
 |
 |-- frontend/src/
     |-- main.jsx, App.jsx
-    |-- components/          # Layout, Product, Cart, Order, User, Review, Chat, Admin, three (3D)
+    |-- components/          # Layout, Product, Cart, Order, User, Review, Chat, Admin, three, ui
     |-- pages/
-    |-- routes/              # ProtectedRoute.jsx, AdminRoute.jsx
+    |-- routes/              # ProtectedRoutes.jsx (PrivateRoute, AdminRoute)
     |-- redux/               # store.js, actions/, reducers/, constants/
     |-- services/            # api.js (single Axios instance)
-    |-- utils/
+    |-- hooks/               # useInfiniteScroll.js
+    |-- utils/               # sweetAlert.js, validationSchemas.js
 ```
 
 **Layer rules:** routes only map URL → controller. Controllers hold business logic. Models hold schema, validation, queries. Middleware guards access. Utils hold reusable code.
@@ -356,50 +357,73 @@ Every message and reply is saved. When the user returns, the assistant loads pre
 
 ## 8. REST API (all under `/api/v1`)
 
-| Area | Method | Endpoint | Access |
-|---|---|---|---|
-| Auth | POST | `/register` | Public |
-| | POST | `/login` | Public |
-| | GET | `/logout` | Logged in (client discards token) |
-| | GET | `/verify-email/:token` | Public |
-| | GET | `/me` | Logged in |
-| | PUT | `/me/update` (multipart) | Logged in |
-| Users (admin) | GET | `/admin/users` | Admin |
-| | GET/PUT/DELETE | `/admin/user/:id` | Admin |
-| | GET | `/admin/mock-emails` | Admin |
-| Products | GET | `/products?brand=&movement=&caseSize=&condition=&minPrice=&maxPrice=&keyword=&page=` | Public |
-| | GET | `/product/:id` | Public |
-| | POST | `/admin/product/new` | Admin |
-| | PUT/DELETE | `/admin/product/:id` | Admin |
-| Wishlist | GET | `/wishlist` | Logged in |
-| | POST/DELETE | `/wishlist/:productId` | Logged in |
-| Orders | POST | `/order/new` | Verified user |
-| | GET | `/orders/me` | Logged in |
-| | GET | `/order/:id` | Owner or admin |
-| | PUT | `/order/:id/cancel` | Owner, Pending only |
-| | GET | `/admin/orders` | Admin |
-| | PUT/DELETE | `/admin/order/:id` | Admin |
-| Reviews | GET | `/product/:id/reviews` | Public |
-| | POST | `/product/:id/review` | Verified purchaser |
-| | PUT/DELETE | `/review/:id` | Owner (admin may delete any) |
-| Appraisals | POST | `/appraisal/new` (multipart) | Verified user |
-| | GET | `/appraisals/me` | Logged in |
-| | GET | `/appraisal/:id` | Owner or admin |
-| | PUT | `/appraisal/:id/respond` | Owner (status = Offer Made) |
-| | GET | `/admin/appraisals` | Admin |
-| | PUT | `/admin/appraisal/:id` | Admin (offer or reject) |
-| | POST | `/admin/appraisal/:id/convert` | Admin (Accepted only) |
-| Services | GET | `/services` | Public |
-| | POST | `/admin/service/new` | Admin |
-| | PUT/DELETE | `/admin/service/:id` | Admin |
-| Tickets | POST | `/ticket/new` | Verified user |
-| | GET | `/tickets/me` | Logged in |
-| | GET | `/ticket/:id` | Owner or admin |
-| | GET | `/admin/tickets` | Admin |
-| | PUT | `/admin/ticket/:id` | Admin |
-| Dashboard | GET | `/admin/dashboard` | Admin |
-| Chat | POST | `/chat` | Logged in |
-| | GET | `/chat/history` | Logged in |
+Status as of **2026-10-22**. The last column records what is implemented. See
+`AUREO_BUILD_PLAN.md` for the recorded deviations.
+
+| Area | Method | Endpoint | Access | Status |
+|---|---|---|---|---|
+| Health | GET | `/health` | Public | Implemented |
+| Auth | POST | `/register` | Public | Implemented |
+| | POST | `/login` | Public | Implemented |
+| | GET | `/logout` | Logged in (client discards token) | Implemented |
+| | POST | `/verify-email` | Public | Implemented (the code is sent in the body, not the path) |
+| | POST | `/auth/google` | Public | Implemented (Firebase Google sign-in) |
+| | GET | `/me` | Logged in | Implemented |
+| | PUT | `/me/update` | Logged in | Implemented (JSON body; the avatar uses `PUT /me/avatar`) |
+| | PUT | `/me/avatar` | Logged in | Implemented |
+| Products | GET | `/products?brand=&movement=&caseSize=&condition=&category=&minPrice=&maxPrice=&minRating=&minReviews=&keyword=&page=` | Public | Implemented |
+| | GET | `/product/:id` | Public | Implemented |
+| | GET | `/admin/products` | Admin | Implemented |
+| | POST | `/admin/product/new` | Admin | Implemented |
+| | PUT/DELETE | `/admin/product/:id` | Admin | Implemented |
+| | POST | `/admin/products/bulk-delete` | Admin | Implemented (MP1 bulk delete) |
+| Wishlist | GET | `/wishlist` | Logged in | Implemented |
+| | POST/DELETE | `/wishlist/:productId` | Logged in | Implemented |
+| Orders | POST | `/order/new` | Verified user | Implemented |
+| | GET | `/orders/me` | Logged in | Implemented |
+| | GET | `/order/:id` | Owner or admin | Implemented |
+| | PUT | `/order/:id/cancel` | Owner, Pending only | Implemented |
+| | GET | `/admin/orders` | Admin | Implemented |
+| | PUT/DELETE | `/admin/order/:id` | Admin | Implemented (the delete cancels the order and restores the stock) |
+| Reviews | GET | `/product/:id/reviews` | Public | Implemented |
+| | POST | `/product/:id/review` | Verified purchaser | Implemented |
+| | PUT/DELETE | `/review/:id` | Owner (admin may delete any) | Implemented |
+| Appraisals | POST | `/appraisal/new` (multipart) | Verified user | Implemented |
+| | GET | `/appraisals/me` | Logged in | Implemented |
+| | GET | `/appraisal/:id` | Owner or admin | Implemented |
+| | PUT | `/appraisal/:id/respond` | Owner (status = Offer Made) | Implemented |
+| | GET | `/admin/appraisals` | Admin | Implemented |
+| | PUT | `/admin/appraisal/:id` | Admin (offer or reject) | Implemented |
+| | POST | `/admin/appraisal/:id/convert` | Admin (Accepted only) | Implemented |
+| Services | GET | `/services` | Public | Implemented |
+| | GET | `/service/:id` | Public | Implemented |
+| | POST | `/admin/service/new` | Admin | Implemented |
+| | PUT/DELETE | `/admin/service/:id` | Admin | Implemented |
+| | POST | `/admin/services/bulk-delete` | Admin | Implemented (MP1 bulk delete) |
+| Tickets | POST | `/ticket/new` | Verified user | Implemented |
+| | GET | `/tickets/me` | Logged in | Implemented |
+| | GET | `/ticket/:id` | Owner or admin | Implemented |
+| | GET | `/admin/tickets` | Admin | Implemented |
+| | PUT | `/admin/ticket/:id` | Admin | Implemented |
+| Dashboard | GET | `/admin/dashboard` | Admin | Implemented (accepts `from` and `to` date filters) |
+| Chat | POST | `/chat` | Logged in | Implemented |
+| | GET | `/chat/history` | Logged in | Implemented |
+| Users (admin) | GET | `/admin/users` | Admin | Not built |
+| | GET/PUT/DELETE | `/admin/user/:id` | Admin | Not built |
+| | GET | `/admin/mock-emails` | Admin | Not built |
+
+### Recorded deviations
+
+The implementation departs from the literal wording of this specification in a few places. The
+reason for each one is recorded in `AUREO_BUILD_PLAN.md` under **Recorded deviations**. In short:
+
+- Email verification is `POST /verify-email` with an `{ email, code }` body instead of
+  `GET /verify-email/:token`.
+- `PUT /me/update` accepts JSON. The avatar is uploaded through a separate `PUT /me/avatar` route.
+- The provider id for Google sign-in is stored as `googleId` on the User model.
+- `MockEmail` is implemented in `backend/models/emailLog.js`.
+- The second-hand stock rule lives in the product controller, because a sold second-hand piece
+  legitimately reaches stock 0.
 
 ---
 

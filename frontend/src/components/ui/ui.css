@@ -1,0 +1,378 @@
+/* Unit 2: styling for the shared Aureo UI kit.
+ *
+ * React Bootstrap ships markup and behaviour; the theme lives here. Only the
+ * rules the components actually need are defined, so the Bootstrap reboot
+ * never touches the rest of the Aureo design.
+ *
+ * Every colour comes from the tokens in `src/index.css`.
+ */
+
+.aureo-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-primary);
+}
+
+.aureo-card-content {
+    padding: 1.25rem !important;
+    color: var(--text-primary);
+}
+
+.aureo-dialog-title {
+    color: var(--gold);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.aureo-dialog-content {
+    color: var(--text-secondary);
+}
+
+.aureo-dialog-actions {
+    border-top: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+}
+
+/* -------------------------------------------------------------------------- */
+/* React Bootstrap - table                                                    */
+/* -------------------------------------------------------------------------- */
+
+.aureo-table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--text-primary);
+    --bs-table-border-color: var(--border);
+    --bs-table-striped-bg: rgba(31, 35, 43, 0.55);
+    --bs-table-striped-color: var(--text-primary);
+    --bs-table-hover-bg: rgba(201, 164, 92, 0.07);
+    --bs-table-hover-color: var(--text-primary);
+
+    width: 100%;
+    margin-bottom: 0;
+    color: var(--text-primary);
+    border-collapse: collapse;
+    vertical-align: middle;
+}
+
+.aureo-table thead th {
+    color: var(--gold);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    padding: 0.85rem 1rem;
+    white-space: nowrap;
+}
+
+.aureo-table tbody td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+    font-size: 0.92rem;
+}
+
+.aureo-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* -------------------------------------------------------------------------- */
+/* React Bootstrap - modal                                                    */
+/* -------------------------------------------------------------------------- */
+
+.aureo-modal .modal-dialog {
+    max-width: 640px;
+}
+
+.aureo-modal .modal-content {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-primary);
+}
+
+.aureo-modal-header {
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+}
+
+.aureo-modal-title {
+    color: var(--gold);
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.aureo-modal-body {
+    padding: 1.25rem;
+    color: var(--text-secondary);
+}
+
+.aureo-modal-footer {
+    border-top: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+}
+
+.aureo-modal .btn-close {
+    filter: invert(1) grayscale(1) brightness(1.6);
+}
+
+/* -------------------------------------------------------------------------- */
+/* React Bootstrap - pagination                                               */
+/* -------------------------------------------------------------------------- */
+
+.aureo-pagination {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.aureo-pagination .page-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.35rem;
+    padding: 0.4rem 0.65rem;
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.aureo-pagination .page-link:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+.aureo-pagination .page-item.active .page-link {
+    background-color: var(--gold);
+    border-color: var(--gold);
+    color: #111;
+    font-weight: 700;
+}
+
+.aureo-pagination .page-item.disabled .page-link {
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+/* -------------------------------------------------------------------------- */
+/* React Bootstrap - buttons, badges, alerts, spinner, forms                  */
+/* -------------------------------------------------------------------------- */
+
+.aureo-btn {
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.5rem 1.1rem;
+    border: 1px solid transparent;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.aureo-btn-primary {
+    background-color: var(--gold);
+    border-color: var(--gold);
+    color: #111;
+}
+
+.aureo-btn-primary:hover,
+.aureo-btn-primary:focus {
+    background-color: var(--gold-hover);
+    border-color: var(--gold-hover);
+    color: #111;
+}
+
+.aureo-btn-outline-secondary {
+    background-color: transparent;
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+.aureo-btn-outline-secondary:hover,
+.aureo-btn-outline-secondary:focus {
+    background-color: rgba(201, 164, 92, 0.1);
+    border-color: var(--gold-hover);
+    color: var(--gold-hover);
+}
+
+.aureo-btn-danger {
+    background-color: transparent;
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.aureo-btn-danger:hover,
+.aureo-btn-danger:focus {
+    background-color: rgba(229, 72, 77, 0.12);
+    color: var(--danger);
+}
+
+.aureo-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.aureo-badge .badge {
+    background-color: var(--gold);
+    color: #111;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 0.35em 0.6em;
+    border-radius: 999px;
+}
+
+.aureo-alert {
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+.aureo-alert-info {
+    background-color: rgba(201, 164, 92, 0.1);
+    border-color: rgba(201, 164, 92, 0.35);
+    color: var(--gold);
+}
+
+.aureo-alert-success {
+    background-color: rgba(63, 185, 127, 0.1);
+    border-color: rgba(63, 185, 127, 0.35);
+    color: var(--success);
+}
+
+.aureo-alert-danger {
+    background-color: rgba(229, 72, 77, 0.1);
+    border-color: rgba(229, 72, 77, 0.35);
+    color: var(--danger);
+}
+
+.aureo-alert-warning {
+    background-color: rgba(201, 164, 92, 0.1);
+    border-color: rgba(201, 164, 92, 0.35);
+    color: var(--gold);
+}
+
+.aureo-spinner {
+    color: var(--gold);
+}
+
+.aureo-form-group {
+    margin-bottom: 1rem;
+}
+
+.aureo-form-label {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+}
+
+.aureo-form-group .form-control {
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.92rem;
+    padding: 0.55rem 0.75rem;
+}
+
+.aureo-form-group .form-control:focus {
+    background-color: var(--bg-elevated);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201, 164, 92, 0.16);
+    color: var(--text-primary);
+}
+
+.aureo-form-group .form-control::placeholder {
+    color: var(--text-muted);
+}
+
+.aureo-form-group .form-control.is-invalid {
+    border-color: var(--danger);
+}
+
+.aureo-form-feedback {
+    color: var(--danger);
+    font-size: 0.8rem;
+    margin-top: 0.3rem;
+}
+
+.aureo-progress {
+    height: 0.5rem;
+    background-color: var(--bg-elevated);
+    border-radius: 999px;
+}
+
+.aureo-progress .progress-bar {
+    background-color: var(--gold);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Validated fields (React Hook Form + Yup)                                   */
+/* -------------------------------------------------------------------------- */
+
+.aureo-field {
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.aureo-field-label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+}
+
+.aureo-field-input {
+    width: 100%;
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.92rem;
+    padding: 0.55rem 0.75rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.aureo-field-input::placeholder {
+    color: var(--text-muted);
+}
+
+.aureo-field-input:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201, 164, 92, 0.16);
+}
+
+.aureo-field-input[aria-invalid="true"] {
+    border-color: var(--danger);
+}
+
+.aureo-field-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.aureo-field-error {
+    display: block;
+    color: var(--danger);
+    font-size: 0.8rem;
+    margin-top: 0.3rem;
+}
+
+.aureo-field-hint {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-top: 0.3rem;
+}

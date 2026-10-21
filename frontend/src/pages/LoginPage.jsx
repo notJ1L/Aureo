@@ -1,7 +1,12 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { loginUser, googleLogin, clearAuthError } from "../redux/actions/authActions";
+import { ValidatedField } from "../components/ui/ValidatedField";
+import { loginSchema } from "../utils/validationSchemas";
+import "../styles/aureo.css";
 
 function LoginPage() {
     const navigate = useNavigate();
@@ -10,9 +15,14 @@ function LoginPage() {
 
     const { isAuthenticated, loading, error } = useSelector((state) => state.auth);
 
-    const [form, setForm] = useState({
-        email: "",
-        password: ""
+    const {
+        control,
+        handleSubmit,
+        formState: { errors }
+    } = useForm({
+        resolver: yupResolver(loginSchema),
+        mode: "onBlur",
+        defaultValues: { email: "", password: "" }
     });
 
     const from = location.state?.from?.pathname || "/";
@@ -29,16 +39,8 @@ function LoginPage() {
         };
     }, [dispatch]);
 
-    const handleChange = (event) => {
-        setForm({
-            ...form,
-            [event.target.name]: event.target.value
-        });
-    };
-
-    const handleSubmit = (event) => {
-        event.preventDefault();
-        dispatch(loginUser(form.email, form.password));
+    const onSubmit = (values) => {
+        dispatch(loginUser(values.email, values.password));
     };
 
     const handleGoogleSignIn = () => {
@@ -83,30 +85,26 @@ function LoginPage() {
                     <span>or sign in with email</span>
                 </div>
 
-                <form onSubmit={handleSubmit}>
-                    <label>
-                        Email
-                        <input
-                            name="email"
-                            type="email"
-                            value={form.email}
-                            onChange={handleChange}
-                            placeholder="you@example.com"
-                            required
-                        />
-                    </label>
+                <form onSubmit={handleSubmit(onSubmit)} noValidate>
+                    <ValidatedField
+                        control={control}
+                        name="email"
+                        label="Email"
+                        type="email"
+                        placeholder="you@example.com"
+                        autoComplete="email"
+                        error={errors.email?.message}
+                    />
 
-                    <label>
-                        Password
-                        <input
-                            name="password"
-                            type="password"
-                            value={form.password}
-                            onChange={handleChange}
-                            placeholder="••••••••"
-                            required
-                        />
-                    </label>
+                    <ValidatedField
+                        control={control}
+                        name="password"
+                        label="Password"
+                        type="password"
+                        placeholder="••••••••"
+                        autoComplete="current-password"
+                        error={errors.password?.message}
+                    />
 
                     <button
                         type="submit"

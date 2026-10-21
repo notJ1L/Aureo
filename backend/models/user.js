@@ -18,11 +18,19 @@ const userSchema = new mongoose.Schema(
             trim: true
         },
 
+        // Passwords are owned by the identity provider (Supabase) for provider
+        // accounts, so it is only required for locally seeded accounts.
         password: {
             type: String,
-            required: [true, "Password is required"],
+            required: false,
             minlength: [8, "Password must be at least 8 characters"],
             select: false
+        },
+
+        authSource: {
+            type: String,
+            enum: ["local", "supabase", "google"],
+            default: "local"
         },
 
         contactNumber: {
@@ -59,6 +67,8 @@ const userSchema = new mongoose.Schema(
             default: false
         },
 
+        // Fallback verification code. Supabase is the primary sender of the
+        // verification message, this guarantees the flow always completes.
         verificationCodeHash: {
             type: String,
             select: false,
@@ -84,7 +94,7 @@ const userSchema = new mongoose.Schema(
             select: false
         },
 
-        supabaseId: {
+        supabaseUserId: {
             type: String,
             default: null,
             select: false
@@ -95,8 +105,15 @@ const userSchema = new mongoose.Schema(
     }
 );
 
+userSchema.pre("validate", function () {
+    // Only locally managed accounts (the seeded administrator) keep a password.
+    if (this.authSource === "local" && !this.password) {
+        this.invalidate("password", "Password is required");
+    }
+});
+
 userSchema.pre("save", async function () {
-    if (!this.isModified("password")) {
+    if (!this.isModified("password") || !this.password) {
         return;
     }
 

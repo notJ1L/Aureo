@@ -12,7 +12,7 @@ const isAuthenticatedUser = catchAsyncErrors(async (req, res, next) => {
         !authorizationHeader.startsWith('Bearer ')
     ) {
         return next(
-            new ErrorHandler("Please log in to access this resourced", 401)
+            new ErrorHandler("Please log in to access this resource", 401)
         );
     }
 
@@ -63,7 +63,10 @@ const authorizeRoles = (...roles) => {
 const requireVerified = (req, res, next) => {
     if (!req.user.isVerified) {
         return next(
-            new ErrorHandler("Please verify your email before using this fearture", 403)
+            new ErrorHandler(
+                "Please verify your email before using this feature",
+                403
+            )
         );
     }
     next();
