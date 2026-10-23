@@ -41,12 +41,14 @@ const seedAdmin = async () => {
 
             console.log("Admin account created");
         } else {
+            admin.name = "Aureo Administrator";
+            admin.password = adminPassword;
             admin.role = "admin";
             admin.authSource = "local";
             admin.isVerified = true;
             await admin.save();
 
-            console.log("Admin account updated");
+            console.log("Admin account updated and password reset");
         }
 
         const sampleProducts = [

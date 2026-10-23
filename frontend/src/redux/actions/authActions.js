@@ -121,22 +121,21 @@ export const loginUser = (email, password) => async (dispatch) => {
         let accessToken = data?.session?.access_token;
 
         if (error || !accessToken) {
-            // FR 1.5: an unverified account can still sign in. Supabase blocks
-            // the client sign-in while the address is unconfirmed, so the
-            // backend authenticates the account instead.
-            const isUnconfirmed =
-                error?.code === "email_not_confirmed" ||
-                /not confirmed/i.test(error?.message || "");
+            // Fall back to backend authentication: handles local accounts (e.g. seeded
+            // administrator), unconfirmed accounts, and accounts managed server-side.
+            try {
+                const { data: response } = await api.post("/login", { email, password });
 
-            if (!isUnconfirmed) {
-                throw new Error(translateSupabaseError(error));
+                localStorage.setItem("aureoToken", response.token);
+                dispatch({ type: AUTH_LOGIN_SUCCESS, payload: response.user });
+                return;
+            } catch (backendErr) {
+                const message =
+                    backendErr.response?.data?.message ||
+                    translateSupabaseError(error) ||
+                    "Invalid email or password";
+                throw new Error(message);
             }
-
-            const { data: response } = await api.post("/login", { email, password });
-
-            localStorage.setItem("aureoToken", response.token);
-            dispatch({ type: AUTH_LOGIN_SUCCESS, payload: response.user });
-            return;
         }
 
         const { data: response } = await api.post("/login", {
