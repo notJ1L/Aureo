@@ -20,6 +20,7 @@ import {
 import { confirmAction } from "../../utils/sweetAlert";
 import { ValidatedField } from "../../components/ui/ValidatedField";
 import { productSchema } from "../../utils/validationSchemas";
+import AdminHeader from "../../components/layout/AdminHeader";
 
 const CATEGORY_OPTIONS = [
     { value: "dress", label: "Dress" },
@@ -280,16 +281,7 @@ function AdminProductsPage() {
 
     return (
         <main className="admin-page">
-            <header className="admin-header-bar">
-                <div>
-                    <Link to="/" className="logo">AUREO</Link>
-                    <span className="admin-tag">ADMIN VAULT</span>
-                </div>
-                <div className="admin-nav-actions">
-                    <Link to="/catalog" className="outline-button">View Storefront</Link>
-                    <Link to="/me" className="nav-action">Account</Link>
-                </div>
-            </header>
+            <AdminHeader />
 
             <div className="admin-container">
                 <div className="admin-page-title-row">

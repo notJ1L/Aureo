@@ -1,0 +1,432 @@
+/* ==========================================================================
+   Aureo — Executive Admin Vault Dashboard & Management Styles
+   Theme: Obsidian Black, Polished Gold Borders, Rich Carbon Accents
+   ========================================================================== */
+
+.admin-vault-page {
+    min-height: 100vh;
+    background: #08090c;
+    color: var(--text-primary);
+    padding-bottom: 5rem;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Header                                                                     */
+/* -------------------------------------------------------------------------- */
+
+.admin-vault-header {
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    width: 100%;
+    background: rgba(10, 12, 16, 0.88);
+    backdrop-filter: blur(20px) saturate(160%);
+    border-bottom: 1px solid rgba(226, 187, 118, 0.2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.admin-vault-header__inner {
+    width: min(1440px, calc(100% - 48px));
+    height: 72px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+}
+
+.admin-vault-header__brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.admin-vault-badge {
+    padding: 0.25rem 0.65rem;
+    border-radius: 4px;
+    background: var(--gold-grad);
+    color: #14110b;
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.admin-vault-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.admin-nav-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.95rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: all 250ms ease;
+}
+
+.admin-nav-item svg {
+    width: 16px;
+    height: 16px;
+}
+
+.admin-nav-item:hover {
+    color: var(--ivory);
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(244, 239, 230, 0.1);
+}
+
+.admin-nav-item.is-active {
+    background: rgba(226, 187, 118, 0.12);
+    border-color: rgba(226, 187, 118, 0.35);
+    color: var(--gold-light);
+    box-shadow: 0 0 14px rgba(226, 187, 118, 0.1);
+}
+
+.admin-vault-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.admin-quick-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-secondary);
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: all 200ms ease;
+}
+
+.admin-quick-btn:hover {
+    border-color: var(--gold-bright);
+    color: var(--gold-light);
+}
+
+.admin-user-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.3rem 0.9rem 0.3rem 0.35rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-primary);
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.admin-user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--gold-35);
+}
+
+.admin-user-avatar--initials {
+    display: grid;
+    place-items: center;
+    color: #14110b;
+    background: var(--gold-grad);
+    font-size: 0.65rem;
+    font-weight: 700;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Main Container & Top Row                                                   */
+/* -------------------------------------------------------------------------- */
+
+.admin-vault-container {
+    width: min(1440px, calc(100% - 48px));
+    margin: 2.4rem auto 0;
+}
+
+.admin-title-panel {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-bottom: 2.2rem;
+    padding-bottom: 1.6rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.admin-title-panel h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 3.4vw, 3rem);
+    font-weight: 500;
+    color: var(--ivory);
+    margin: 0.4rem 0 0;
+}
+
+/* Filter Controls Toolbar */
+.admin-toolbar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+.admin-date-input,
+.admin-select-input {
+    padding: 0.55rem 0.9rem;
+    border-radius: 8px;
+    background: rgba(18, 20, 26, 0.85);
+    border: 1px solid rgba(226, 187, 118, 0.22);
+    color: var(--text-primary);
+    font-size: 0.76rem;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 200ms ease;
+}
+
+.admin-date-input:focus,
+.admin-select-input:focus {
+    border-color: var(--gold-bright);
+    box-shadow: 0 0 12px rgba(226, 187, 118, 0.2);
+}
+
+.admin-date-sep {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Metric Cards Grid                                                          */
+/* -------------------------------------------------------------------------- */
+
+.vault-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.vault-metric-card {
+    position: relative;
+    padding: 1.8rem;
+    border-radius: 14px;
+    background: rgba(14, 16, 22, 0.75);
+    border: 1px solid rgba(226, 187, 118, 0.18);
+    backdrop-filter: blur(16px);
+    overflow: hidden;
+    transition: transform 300ms var(--ease-lux), border-color 300ms ease, box-shadow 300ms ease;
+}
+
+.vault-metric-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(226, 187, 118, 0.4);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(226, 187, 118, 0.08);
+}
+
+.vault-metric-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--gold-grad);
+}
+
+.vault-metric-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.2rem;
+}
+
+.vault-metric-head span {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.vault-metric-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: rgba(226, 187, 118, 0.1);
+    color: var(--gold-bright);
+    border: 1px solid rgba(226, 187, 118, 0.2);
+}
+
+.vault-metric-val {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--gold-light);
+    line-height: 1;
+    margin-bottom: 0.6rem;
+}
+
+.vault-metric-hint {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    display: block;
+    line-height: 1.4;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Charts Area                                                                */
+/* -------------------------------------------------------------------------- */
+
+.vault-charts-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1.2fr;
+    gap: 1.8rem;
+    margin-bottom: 2.5rem;
+}
+
+.vault-chart-panel {
+    padding: 2.2rem;
+    border-radius: 14px;
+    background: rgba(14, 16, 22, 0.75);
+    border: 1px solid var(--line);
+    backdrop-filter: blur(16px);
+}
+
+.vault-chart-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.8rem;
+}
+
+.vault-chart-panel-head h2 {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: var(--ivory);
+    margin: 0;
+}
+
+.vault-chart-tag {
+    font-size: 0.7rem;
+    color: var(--gold-bright);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Inventory Breakdown Panel                                                  */
+/* -------------------------------------------------------------------------- */
+
+.vault-inventory-panel {
+    padding: 2.2rem;
+    border-radius: 14px;
+    background: rgba(14, 16, 22, 0.75);
+    border: 1px solid var(--line);
+    backdrop-filter: blur(16px);
+}
+
+.vault-inventory-panel h2 {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: var(--ivory);
+    margin: 0 0 1.6rem;
+}
+
+.vault-inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.4rem;
+}
+
+.vault-inventory-box {
+    padding: 1.4rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+}
+
+.vault-inventory-box span {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+}
+
+.vault-inventory-box strong {
+    font-size: 1.8rem;
+    color: var(--gold-light);
+    font-weight: 700;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Responsive Tweaks                                                          */
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 1200px) {
+    .vault-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .vault-charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .vault-inventory-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .admin-vault-header__inner {
+        height: auto;
+        padding: 1rem 0;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .admin-vault-nav {
+        flex-wrap: wrap;
+    }
+
+    .admin-title-panel {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .admin-vault-container {
+        width: calc(100% - 32px);
+    }
+}
+
+@media (max-width: 600px) {
+    .vault-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .vault-inventory-grid {
+        grid-template-columns: 1fr;
+    }
+}

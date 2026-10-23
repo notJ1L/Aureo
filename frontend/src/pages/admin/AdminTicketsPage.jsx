@@ -8,6 +8,7 @@ import {
 } from "../../redux/actions/serviceActions";
 import { ADMIN_TICKET_STATUS_RESET } from "../../redux/constants/serviceConstants";
 import { confirmAction } from "../../utils/sweetAlert";
+import AdminHeader from "../../components/layout/AdminHeader";
 
 // FR 5.3: the ticket state tracking.
 const TICKET_STATUS_FLOW = {
@@ -66,18 +67,7 @@ function AdminTicketsPage() {
 
     return (
         <main className="admin-page">
-            <header className="admin-header-bar">
-                <div>
-                    <Link to="/" className="logo">AUREO</Link>
-                    <span className="admin-tag">ADMIN VAULT</span>
-                </div>
-                <div className="admin-nav-actions">
-                    <Link to="/admin/products" className="outline-button">Inventory</Link>
-                    <Link to="/admin/orders" className="outline-button">Orders</Link>
-                    <Link to="/admin/services" className="outline-button">Services</Link>
-                    <Link to="/me" className="nav-action">Account</Link>
-                </div>
-            </header>
+            <AdminHeader />
 
             <div className="admin-container">
                 <div className="admin-page-title-row">

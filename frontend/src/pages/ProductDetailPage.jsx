@@ -3,10 +3,21 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getProductDetails, addToWishlist, removeFromWishlist, getWishlist } from "../redux/actions/productActions";
 import ProductReviews from "../components/ProductReviews";
+import SiteHeader from "../components/layout/SiteHeader";
+import SiteFooter from "../components/layout/SiteFooter";
+import {
+    IconArrow,
+    IconHeart,
+    IconShield,
+    IconSparkle,
+    IconStar,
+    IconTool,
+    IconWatch
+} from "../components/layout/icons";
 import { toast } from "react-toastify";
+import "../styles/productDetail.css";
 
-// The 3D viewer is lazy loaded, so Three.js is only fetched when the
-// visitor actually asks for it.
+// The 3D viewer is lazy loaded so Three.js is only fetched when needed.
 const ProductViewer = lazy(() => import("../components/three/ProductViewer"));
 
 function ProductDetailPage() {
@@ -16,7 +27,7 @@ function ProductDetailPage() {
 
     const { product, loading, error } = useSelector((state) => state.productDetails);
     const { wishlist } = useSelector((state) => state.wishlist);
-    const { isAuthenticated, user } = useSelector((state) => state.auth);
+    const { isAuthenticated } = useSelector((state) => state.auth);
 
     const [selectedImage, setSelectedImage] = useState(0);
     const [addedNotice, setAddedNotice] = useState("");
@@ -54,15 +65,12 @@ function ProductDetailPage() {
     const handleAddToCart = () => {
         if (!product || product.stock <= 0) return;
 
-        // Retrieve existing cart items from localStorage
         const rawCart = localStorage.getItem("aureoCart");
         let cartItems = rawCart ? JSON.parse(rawCart) : [];
 
-        // Check if item exists in cart
         const existingIndex = cartItems.findIndex((item) => item.product === product._id);
 
         if (existingIndex > -1) {
-            // Check second hand limit (max 1) or stock
             if (product.condition === "second-hand" || cartItems[existingIndex].quantity >= product.stock) {
                 toast.info(
                     `Cannot add more. Maximum available stock reached (${product.stock}).`
@@ -84,27 +92,39 @@ function ProductDetailPage() {
         }
 
         localStorage.setItem("aureoCart", JSON.stringify(cartItems));
-        // Dispatch custom storage event so other components update cart count
         window.dispatchEvent(new Event("storage"));
+        window.dispatchEvent(new Event("aureo:cart-updated"));
 
-        setAddedNotice(`${product.name} added to your bag.`);
-        setTimeout(() => setAddedNotice(""), 3000);
+        setAddedNotice(`${product.name} added to your shopping bag.`);
+        setTimeout(() => setAddedNotice(""), 3500);
     };
 
     if (loading) {
         return (
-            <main className="detail-page-loading">
-                <p>Inspecting timepiece in Aureo archives...</p>
+            <main className="pdp-page">
+                <SiteHeader variant="solid" />
+                <div className="pdp-loading-screen">
+                    <p className="lx-kicker">ARCHIVAL RETRIEVAL</p>
+                    <h2>Inspecting Timepiece in Vault...</h2>
+                </div>
+                <SiteFooter />
             </main>
         );
     }
 
     if (error || !product) {
         return (
-            <main className="detail-page-error">
-                <h2>Timepiece Unavailable</h2>
-                <p>{error || "This watch may have been archived or does not exist."}</p>
-                <Link to="/catalog" className="gold-button">Return to Catalog</Link>
+            <main className="pdp-page">
+                <SiteHeader variant="solid" />
+                <div className="pdp-error-screen">
+                    <p className="lx-kicker">VAULT ARCHIVE</p>
+                    <h2>Timepiece Unavailable</h2>
+                    <p>{error || "This specific watch may have been archived or does not exist."}</p>
+                    <Link to="/catalog" className="btn-gold" style={{ marginTop: "1.5rem" }}>
+                        Return to Collection <IconArrow />
+                    </Link>
+                </div>
+                <SiteFooter />
             </main>
         );
     }
@@ -113,193 +133,239 @@ function ProductDetailPage() {
     const isSecondHand = product.condition === "second-hand";
 
     return (
-        <main className="product-detail-page">
-            <header className="navbar">
-                <Link className="logo" to="/">AUREO</Link>
+        <main className="pdp-page">
+            <SiteHeader variant="solid" />
 
-                <nav className="nav-links">
+            <div className="pdp-container">
+                {/* Breadcrumbs */}
+                <nav className="pdp-breadcrumb" aria-label="Breadcrumb">
+                    <Link to="/">The Vault</Link>
+                    <span className="separator">/</span>
                     <Link to="/catalog">Collection</Link>
-                    <Link to="/wishlist">Wishlist</Link>
+                    <span className="separator">/</span>
+                    <span>{product.brand}</span>
+                    <span className="separator">/</span>
+                    <span className="current">{product.name}</span>
                 </nav>
 
-                <div className="nav-actions">
-                    {isAuthenticated ? (
-                        <Link className="nav-action" to="/me" style={{ color: "var(--gold)" }}>
-                            {user?.name?.split(" ")[0] || "Account"}
-                        </Link>
-                    ) : (
-                        <Link className="nav-action" to="/login">Sign in</Link>
-                    )}
-                </div>
-            </header>
+                <div className="pdp-grid">
+                    {/* Visual Stage (Sticky Left Column) */}
+                    <div className="pdp-visual-stage">
+                        <div className="pdp-frame">
+                            {showViewer ? (
+                                <Suspense
+                                    fallback={
+                                        <div
+                                            className="product-viewer product-viewer-loading"
+                                            aria-hidden="true"
+                                        />
+                                    }
+                                >
+                                    <ProductViewer productName={product.name} />
+                                </Suspense>
+                            ) : product.images?.[selectedImage]?.url ? (
+                                <img
+                                    src={product.images[selectedImage].url}
+                                    alt={product.name}
+                                    className="pdp-main-photo"
+                                />
+                            ) : (
+                                <div className="detail-placeholder">Photograph Archiving in Progress</div>
+                            )}
 
-            <div className="detail-breadcrumb">
-                <Link to="/catalog">Collection</Link> &gt; <span>{product.brand}</span> &gt; <span>{product.name}</span>
-            </div>
+                            <span className={`pdp-badge-tag ${isSold ? "pdp-badge-tag--sold" : ""}`}>
+                                {isSold
+                                    ? "Archived / Sold"
+                                    : isSecondHand
+                                    ? "1 of 1 · Certified Pre-Owned"
+                                    : "Factory Vault New"}
+                            </span>
+                        </div>
 
-            <div className="product-detail-grid">
-                {/* Visual Gallery */}
-                <div className="detail-gallery">
-                    <div className="detail-main-image-wrap">
-                        {showViewer ? (
-                            <Suspense
-                                fallback={
-                                    <div
-                                        className="product-viewer product-viewer-loading"
-                                        aria-hidden="true"
-                                    />
-                                }
+                        {/* Mode Switcher */}
+                        <div className="pdp-view-mode-bar">
+                            <button
+                                type="button"
+                                className={`pdp-mode-btn ${!showViewer ? "is-active" : ""}`}
+                                onClick={() => setShowViewer(false)}
+                                disabled={!product.images?.length}
                             >
-                                <ProductViewer productName={product.name} />
-                            </Suspense>
-                        ) : product.images?.[selectedImage]?.url ? (
-                            <img
-                                src={product.images[selectedImage].url}
-                                alt={product.name}
-                                className="detail-main-image"
-                            />
-                        ) : (
-                            <div className="detail-placeholder">No photograph available</div>
+                                Photographs ({product.images?.length || 1})
+                            </button>
+                            <button
+                                type="button"
+                                className={`pdp-mode-btn ${showViewer ? "is-active" : ""}`}
+                                onClick={() => setShowViewer(true)}
+                            >
+                                3D Orbit Simulation ↺
+                            </button>
+                        </div>
+
+                        {/* Photographs Thumbnails */}
+                        {!showViewer && product.images?.length > 1 && (
+                            <div className="pdp-thumbs-row">
+                                {product.images.map((img, idx) => (
+                                    <button
+                                        key={idx}
+                                        type="button"
+                                        className={`pdp-thumb-btn ${selectedImage === idx ? "is-active" : ""}`}
+                                        onClick={() => setSelectedImage(idx)}
+                                        aria-label={`View angle ${idx + 1}`}
+                                    >
+                                        <img src={img.url} alt="" />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Information & Actions (Right Column) */}
+                    <div className="pdp-info-panel">
+                        <span className="pdp-brand-kicker">{product.brand} · ARCHIVAL PIECE</span>
+                        <h1 className="pdp-title">{product.name}</h1>
+
+                        <div className="pdp-meta-strip">
+                            <span className="rating">
+                                <IconStar /> {product.ratings ? Number(product.ratings).toFixed(1) : "5.0"}
+                            </span>
+                            <span>·</span>
+                            <span>{product.numOfReviews || 0} Collector Reviews</span>
+                            <span>·</span>
+                            <span>Movement: {product.movement?.toUpperCase() || "AUTOMATIC"}</span>
+                        </div>
+
+                        {/* Price Row */}
+                        <div className="pdp-price-row">
+                            <div className="pdp-price-wrap">
+                                <span className="pdp-price">{formatPrice(product.price)}</span>
+                                <span className="pdp-price-tax">
+                                    Includes complimentary insured white-glove courier &amp; vault dossier
+                                </span>
+                            </div>
+
+                            <button
+                                type="button"
+                                className={`pdp-wishlist-toggle ${isWishlisted ? "is-active" : ""}`}
+                                onClick={handleWishlistToggle}
+                            >
+                                <IconHeart /> {isWishlisted ? "In Wishlist" : "Wishlist"}
+                            </button>
+                        </div>
+
+                        {addedNotice && (
+                            <div className="pdp-notice-alert">
+                                <span>{addedNotice}</span>
+                                <Link to="/cart">View Shopping Bag →</Link>
+                            </div>
                         )}
 
-                        <div className="detail-badge-wrap">
+                        {/* Stock Banner */}
+                        <div className={`pdp-stock-banner ${isSold ? "pdp-stock-banner--sold" : ""}`}>
                             {isSold ? (
-                                <span className="badge sold-badge">ARCHIVED / SOLD</span>
+                                <span>✕ This timepiece has been acquired and archived into a private collection.</span>
                             ) : isSecondHand ? (
-                                <span className="badge preowned-badge">CERTIFIED PRE-OWNED</span>
+                                <span>⚡ Singular Piece — Exactly 1 available in our vault.</span>
                             ) : (
-                                <span className="badge new-badge">BRAND NEW</span>
+                                <span>✓ Available in Vault — {product.stock} units ready for immediate courier dispatch.</span>
                             )}
                         </div>
-                    </div>
 
-                    {/* The 3D viewer and the photograph gallery share the same
-                        frame, so the visitor can switch between them. */}
-                    <div className="detail-viewer-toggle">
-                        <button
-                            type="button"
-                            className={`viewer-tab ${!showViewer ? "active" : ""}`}
-                            onClick={() => setShowViewer(false)}
-                            disabled={!product.images?.length}
-                        >
-                            Photographs
-                        </button>
-                        <button
-                            type="button"
-                            className={`viewer-tab ${showViewer ? "active" : ""}`}
-                            onClick={() => setShowViewer(true)}
-                        >
-                            3D View
-                        </button>
-                    </div>
-
-                    {!showViewer && product.images?.length > 1 && (
-                        <div className="detail-thumbnails">
-                            {product.images.map((img, idx) => (
-                                <button
-                                    key={idx}
-                                    type="button"
-                                    className={`thumb-btn ${selectedImage === idx ? "active" : ""}`}
-                                    onClick={() => setSelectedImage(idx)}
-                                >
-                                    <img src={img.url} alt={`Angle ${idx + 1}`} />
-                                </button>
-                            ))}
+                        {/* CTA Actions */}
+                        <div className="pdp-actions-row">
+                            <button
+                                type="button"
+                                className="btn-gold pdp-cta-btn"
+                                disabled={isSold}
+                                onClick={handleAddToCart}
+                            >
+                                {isSold ? "Piece Has Sold Out" : isSecondHand ? "Acquire This Unique Piece (1 of 1)" : "Add Timepiece to Bag"}
+                            </button>
+                            <Link to="/catalog" className="btn-ghost">
+                                Explore Other Watches in Catalog <IconArrow />
+                            </Link>
                         </div>
-                    )}
-                </div>
 
-                {/* Information & Action Area */}
-                <div className="detail-content">
-                    <p className="eyebrow">{product.brand} / ARCHIVAL PIECE</p>
-                    <h1 className="detail-title">{product.name}</h1>
-
-                    <div className="detail-price-row">
-                        <span className="detail-price">{formatPrice(product.price)}</span>
-                        <button
-                            type="button"
-                            className={`detail-wishlist-btn ${isWishlisted ? "active" : ""}`}
-                            onClick={handleWishlistToggle}
-                        >
-                            {isWishlisted ? "♥ In Wishlist" : "♡ Add to Wishlist"}
-                        </button>
-                    </div>
-
-                    {addedNotice && (
-                        <div className="auth-info" style={{ marginTop: "1rem" }}>
-                            {addedNotice} &bull; <Link to="/cart" style={{ textDecoration: "underline" }}>View Bag</Link>
+                        {/* 4-Box Luxury Assurance */}
+                        <div className="pdp-assurance-grid">
+                            <div className="assurance-item">
+                                <IconShield />
+                                <div>
+                                    <strong>100% Genuine Escapement</strong>
+                                    <span>Verified against manufacturer archives and international stolen registers.</span>
+                                </div>
+                            </div>
+                            <div className="assurance-item">
+                                <IconTool />
+                                <div>
+                                    <strong>2-Year Vault Warranty</strong>
+                                    <span>Full mechanical coverage by our master watchmaking atelier.</span>
+                                </div>
+                            </div>
+                            <div className="assurance-item">
+                                <IconSparkle />
+                                <div>
+                                    <strong>Armored Air Courier</strong>
+                                    <span>Complimentary tracked and insured delivery worldwide.</span>
+                                </div>
+                            </div>
+                            <div className="assurance-item">
+                                <IconWatch />
+                                <div>
+                                    <strong>Complimentary Sizing</strong>
+                                    <span>Bracelet link adjustments tailored to your wrist prior to shipment.</span>
+                                </div>
+                            </div>
                         </div>
-                    )}
 
-                    <div className="detail-actions">
-                        <button
-                            type="button"
-                            className="gold-button detail-cta"
-                            disabled={isSold}
-                            onClick={handleAddToCart}
-                        >
-                            {isSold ? "Piece Has Sold Out" : isSecondHand ? "Acquire This Unique Piece (1 of 1)" : "Add to Shopping Bag"}
-                        </button>
-                        <Link to="/catalog" className="outline-button detail-secondary-cta">
-                            Explore Other Watches
-                        </Link>
+                        {/* Specifications Table */}
+                        <section className="pdp-specs-card">
+                            <h3>Chronometric Specifications</h3>
+                            <dl className="pdp-specs-table">
+                                <div className="pdp-spec-cell">
+                                    <dt>Maison / Brand</dt>
+                                    <dd>{product.brand}</dd>
+                                </div>
+                                <div className="pdp-spec-cell">
+                                    <dt>Movement Type</dt>
+                                    <dd>{product.movement?.toUpperCase() || "AUTOMATIC CHRONOMETER"}</dd>
+                                </div>
+                                <div className="pdp-spec-cell">
+                                    <dt>Case Diameter</dt>
+                                    <dd>{product.caseSize ? `${product.caseSize} mm` : "40 mm"}</dd>
+                                </div>
+                                <div className="pdp-spec-cell">
+                                    <dt>Condition Classification</dt>
+                                    <dd>{isSecondHand ? "Certified Pre-Owned (Audited)" : "Factory Brand New"}</dd>
+                                </div>
+                                <div className="pdp-spec-cell">
+                                    <dt>Crystal &amp; Lens</dt>
+                                    <dd>Anti-Reflective Scratch-Proof Sapphire</dd>
+                                </div>
+                                <div className="pdp-spec-cell">
+                                    <dt>Vault ID</dt>
+                                    <dd>{product._id.slice(-8).toUpperCase()}</dd>
+                                </div>
+                            </dl>
+                        </section>
+
+                        {/* Provenance & Description */}
+                        <section className="pdp-description-card">
+                            <h3>Provenance &amp; Description</h3>
+                            <p>{product.description}</p>
+                        </section>
+
+                        {/* Product Reviews */}
+                        <div className="pdp-reviews-wrap">
+                            <ProductReviews
+                                productId={product._id}
+                                onReviewAdded={() => dispatch(getProductDetails(id))}
+                            />
+                        </div>
                     </div>
-
-                    {/* Stock Status Info */}
-                    <div className="stock-notice">
-                        {isSold ? (
-                            <span className="stock-out">This piece is sold out and no longer available in inventory.</span>
-                        ) : isSecondHand ? (
-                            <span className="stock-single">⚡ Unique Piece — Exactly 1 available in our vault.</span>
-                        ) : (
-                            <span className="stock-in">✓ In stock ({product.stock} units available)</span>
-                        )}
-                    </div>
-
-                    <hr className="profile-divider" />
-
-                    {/* Specifications Table */}
-                    <div className="specs-section">
-                        <h3>Timepiece Specifications</h3>
-                        <dl className="specs-grid">
-                            <div>
-                                <dt>Brand</dt>
-                                <dd>{product.brand}</dd>
-                            </div>
-                            <div>
-                                <dt>Movement</dt>
-                                <dd>{product.movement?.toUpperCase()}</dd>
-                            </div>
-                            <div>
-                                <dt>Case Diameter</dt>
-                                <dd>{product.caseSize} mm</dd>
-                            </div>
-                            <div>
-                                <dt>Condition</dt>
-                                <dd>{product.condition === "second-hand" ? "Pre-owned / Inspected" : "Factory New"}</dd>
-                            </div>
-                            <div>
-                                <dt>Rating</dt>
-                                <dd>★ {product.ratings || 0} ({product.numOfReviews || 0} reviews)</dd>
-                            </div>
-                        </dl>
-                    </div>
-
-                    <hr className="profile-divider" />
-
-                    <div className="detail-description">
-                        <h3>Provenance & Description</h3>
-                        <p>{product.description}</p>
-                    </div>
-
-                    <hr className="profile-divider" />
-
-                    <ProductReviews
-                        productId={product._id}
-                        onReviewAdded={() => dispatch(getProductDetails(id))}
-                    />
                 </div>
             </div>
+
+            <SiteFooter />
         </main>
     );
 }

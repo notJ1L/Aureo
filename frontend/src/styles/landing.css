@@ -1,0 +1,747 @@
+/* ==========================================================================
+   Aureo — Ultra-Luxury Storefront Landing Page Styles
+   Theme: Deep Obsidian Black, 18K Polished Gold, Champagne Accents & Crisp White
+   ========================================================================== */
+
+.storefront-luxury {
+    position: relative;
+    min-height: 100vh;
+    background: #07080a;
+    color: var(--text-primary);
+    overflow-x: hidden;
+}
+
+/* Background atmospheric glows */
+.storefront-luxury::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 20%;
+    width: 60vw;
+    height: 60vh;
+    background: radial-gradient(circle, rgba(226, 187, 118, 0.045) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 3D Stage & Story Pinned Section                                            */
+/* -------------------------------------------------------------------------- */
+
+.stage-container {
+    position: relative;
+    width: 100%;
+}
+
+.stage-pinned {
+    position: sticky;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stage-pinned .hero-3d {
+    pointer-events: auto;
+    width: 100%;
+    height: 100%;
+}
+
+/* Floating 3D Controls Pill */
+.stage-control-bar {
+    position: absolute;
+    bottom: 2.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.45rem 1rem 0.45rem 1.2rem;
+    border-radius: 999px;
+    background: rgba(13, 15, 19, 0.72);
+    border: 1px solid rgba(226, 187, 118, 0.28);
+    backdrop-filter: blur(20px) saturate(160%);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 24px rgba(226, 187, 118, 0.12);
+    pointer-events: auto;
+}
+
+.stage-control-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--gold-bright);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.stage-control-indicator::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--gold-bright);
+    box-shadow: 0 0 10px var(--gold-bright);
+    animation: stage-pulse 2s infinite ease-in-out;
+}
+
+@keyframes stage-pulse {
+    0%, 100% { opacity: 0.4; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+.stage-mode-btn {
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid rgba(226, 187, 118, 0.25);
+    background: rgba(226, 187, 118, 0.08);
+    color: var(--text-primary);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: all 250ms ease;
+}
+
+.stage-mode-btn:hover,
+.stage-mode-btn.is-active {
+    background: var(--gold-grad);
+    color: #14110b;
+    border-color: transparent;
+}
+
+/* Story Chapters layered over the pinned 3D canvas */
+.story-scroll-track {
+    position: relative;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.story-chapter {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    padding: 6rem 5vw;
+}
+
+.story-chapter--left {
+    justify-content: flex-start;
+}
+
+.story-chapter--right {
+    justify-content: flex-end;
+}
+
+.chapter-card {
+    pointer-events: auto;
+    width: min(520px, 92vw);
+    padding: 3rem 2.5rem;
+    border-radius: 16px;
+    background: rgba(12, 14, 18, 0.75);
+    border: 1px solid rgba(226, 187, 118, 0.18);
+    backdrop-filter: blur(24px) saturate(160%);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    position: relative;
+    overflow: hidden;
+}
+
+.chapter-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--gold-grad);
+}
+
+.chapter-number {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--gold-bright);
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.1em;
+}
+
+.chapter-card h2,
+.chapter-card h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 3.8vw, 3.6rem);
+    font-weight: 500;
+    line-height: 1.05;
+    margin: 0.4rem 0 1.2rem;
+    color: var(--ivory);
+}
+
+.chapter-card p {
+    color: var(--text-secondary);
+    font-size: 0.96rem;
+    line-height: 1.8;
+    margin: 0 0 2rem;
+}
+
+.chapter-specs-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.2rem;
+    padding: 1.4rem 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 2rem;
+}
+
+.chapter-spec-item span {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+}
+
+.chapter-spec-item strong {
+    font-size: 0.92rem;
+    color: var(--gold-light);
+    font-weight: 600;
+}
+
+.chapter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+}
+
+/* Hero First Chapter specific */
+.hero-chapter-card {
+    width: min(640px, 94vw);
+    padding: 3.5rem 3rem;
+}
+
+.hero-chapter-card h1 {
+    font-size: clamp(2.8rem, 5.2vw, 4.8rem);
+    line-height: 0.98;
+}
+
+.hero-trust-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.6rem;
+    margin-top: 2.2rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--line);
+    color: var(--text-muted);
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.hero-trust-bar span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.hero-trust-bar span::before {
+    content: "•";
+    color: var(--gold-bright);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Curated Collection Section                                                 */
+/* -------------------------------------------------------------------------- */
+
+.collection-lux-section {
+    position: relative;
+    z-index: 10;
+    padding: 8rem 0;
+    background: linear-gradient(180deg, transparent 0%, #0a0b0e 25%, #0a0b0e 100%);
+    border-top: 1px solid var(--line);
+}
+
+.lux-container {
+    width: min(1360px, calc(100% - 64px));
+    margin: 0 auto;
+}
+
+.lux-section-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-bottom: 3rem;
+    padding-bottom: 1.8rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.lux-section-header h2 {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 4vw, 3.4rem);
+    font-weight: 500;
+    line-height: 1.1;
+    margin: 0.5rem 0 0;
+    color: var(--ivory);
+}
+
+.filter-pills-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.6rem;
+}
+
+.filter-pill {
+    padding: 0.55rem 1.15rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-secondary);
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: all 300ms ease;
+}
+
+.filter-pill:hover,
+.filter-pill.is-active {
+    border-color: var(--gold-bright);
+    color: var(--gold-bright);
+    background: rgba(226, 187, 118, 0.08);
+}
+
+.filter-pill.is-active {
+    box-shadow: 0 0 18px rgba(226, 187, 118, 0.18);
+}
+
+.filter-count {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+/* Watch Cards Grid */
+.lux-product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.8rem;
+}
+
+.lux-watch-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: #0f1116;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 400ms var(--ease-lux), border-color 400ms ease, box-shadow 400ms ease;
+    isolation: isolate;
+}
+
+.lux-watch-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(226, 187, 118, 0.4);
+    box-shadow: 0 24px 60px -15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(226, 187, 118, 0.08);
+}
+
+.lux-card-image-wrap {
+    position: relative;
+    aspect-ratio: 0.95;
+    background: radial-gradient(circle at 50% 50%, #1a1e27 0%, #0d0f13 100%);
+    overflow: hidden;
+}
+
+.lux-card-image-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    filter: contrast(1.05) saturate(0.95);
+    transition: transform 600ms var(--ease-lux), filter 600ms ease;
+}
+
+.lux-watch-card:hover .lux-card-image-wrap img {
+    transform: scale(1.06);
+    filter: contrast(1.08) saturate(1.05);
+}
+
+.lux-card-badge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(10, 12, 16, 0.85);
+    border: 1px solid rgba(226, 187, 118, 0.35);
+    backdrop-filter: blur(10px);
+    color: var(--gold-light);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.lux-card-badge--sold {
+    border-color: rgba(229, 72, 77, 0.4);
+    color: #ff8588;
+}
+
+.lux-card-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 1.5rem;
+}
+
+.lux-card-brand {
+    font-size: 0.68rem;
+    color: var(--gold-bright);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+}
+
+.lux-card-title {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 500;
+    color: var(--ivory);
+    margin: 0 0 1.2rem;
+    line-height: 1.2;
+    min-height: 2.4em;
+    transition: color 250ms ease;
+}
+
+.lux-watch-card:hover .lux-card-title {
+    color: var(--gold-light);
+}
+
+.lux-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+}
+
+.lux-card-price {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--gold-light);
+}
+
+.lux-card-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: color 200ms ease;
+}
+
+.lux-card-link:hover {
+    color: var(--gold-bright);
+}
+
+/* Pagination Row */
+.lux-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 4rem;
+    padding-top: 2rem;
+}
+
+.lux-page-btn {
+    padding: 0.65rem 1.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    transition: all 250ms ease;
+}
+
+.lux-page-btn:hover:not(:disabled) {
+    border-color: var(--gold-bright);
+    color: var(--gold-bright);
+    background: rgba(226, 187, 118, 0.08);
+}
+
+.lux-page-info {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Master Horology Atelier Section                                            */
+/* -------------------------------------------------------------------------- */
+
+.atelier-section {
+    position: relative;
+    padding: 8rem 0;
+    background: #08090b;
+    border-top: 1px solid var(--line);
+    overflow: hidden;
+}
+
+.atelier-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+    align-items: center;
+}
+
+.atelier-visual {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(226, 187, 118, 0.2);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
+}
+
+.atelier-visual img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    filter: contrast(1.08) brightness(0.96);
+}
+
+.atelier-visual-badge {
+    position: absolute;
+    bottom: 2rem;
+    right: 2rem;
+    padding: 1.2rem 1.6rem;
+    border-radius: 12px;
+    background: rgba(10, 12, 16, 0.85);
+    border: 1px solid rgba(226, 187, 118, 0.3);
+    backdrop-filter: blur(20px);
+    max-width: 280px;
+}
+
+.atelier-visual-badge strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    color: var(--gold-light);
+    margin-bottom: 0.2rem;
+}
+
+.atelier-visual-badge span {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.atelier-content h2 {
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 4.4vw, 3.8rem);
+    font-weight: 500;
+    line-height: 1.08;
+    margin: 0.8rem 0 1.5rem;
+    color: var(--ivory);
+}
+
+.atelier-content p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.85;
+    margin-bottom: 2.4rem;
+}
+
+.atelier-pillars {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.6rem;
+    margin-bottom: 2.8rem;
+}
+
+.atelier-pillar {
+    padding: 1.4rem;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.015);
+}
+
+.atelier-pillar strong {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    color: var(--gold-light);
+    margin-bottom: 0.4rem;
+}
+
+.atelier-pillar p {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Maison Services Strip                                                      */
+/* -------------------------------------------------------------------------- */
+
+.services-strip-lux {
+    padding: 6rem 0;
+    border-top: 1px solid var(--line);
+    background:
+        radial-gradient(ellipse 70% 60% at 50% 50%, rgba(226, 187, 118, 0.05), transparent 75%),
+        #07080a;
+}
+
+.services-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-top: 3.5rem;
+}
+
+.service-card-lux {
+    padding: 2.5rem;
+    border-radius: 14px;
+    background: rgba(14, 16, 21, 0.6);
+    border: 1px solid var(--line);
+    backdrop-filter: blur(16px);
+    transition: all 400ms var(--ease-lux);
+    display: flex;
+    flex-direction: column;
+}
+
+.service-card-lux:hover {
+    border-color: rgba(226, 187, 118, 0.4);
+    transform: translateY(-6px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+
+.service-card-lux .service-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background: rgba(226, 187, 118, 0.1);
+    color: var(--gold-bright);
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(226, 187, 118, 0.2);
+}
+
+.service-card-lux h3 {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: var(--ivory);
+    margin: 0 0 0.8rem;
+}
+
+.service-card-lux p {
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    line-height: 1.7;
+    margin: 0 0 1.8rem;
+    flex: 1;
+}
+
+.service-card-lux a {
+    color: var(--gold-bright);
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Responsive Tweaks                                                          */
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 1200px) {
+    .lux-product-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 960px) {
+    .lux-product-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .atelier-grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+
+    .services-cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stage-pinned {
+        position: relative;
+        height: 600px;
+    }
+
+    .story-chapter {
+        min-height: auto;
+        padding: 3rem 1.5rem;
+    }
+
+    .chapter-card,
+    .hero-chapter-card {
+        width: 100%;
+        padding: 2.2rem 1.8rem;
+    }
+
+    .lux-container {
+        width: calc(100% - 32px);
+    }
+}
+
+@media (max-width: 600px) {
+    .lux-product-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chapter-specs-row {
+        grid-template-columns: 1fr;
+    }
+
+    .atelier-pillars {
+        grid-template-columns: 1fr;
+    }
+
+    .stage-control-bar {
+        bottom: 1rem;
+        padding: 0.35rem 0.8rem;
+    }
+}

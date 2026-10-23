@@ -13,6 +13,7 @@ import {
     ADMIN_APPRAISAL_CONVERT_RESET
 } from "../../redux/constants/appraisalConstants";
 import { confirmAction } from "../../utils/sweetAlert";
+import AdminHeader from "../../components/layout/AdminHeader";
 
 const STATUS_CLASS = {
     Pending: "unverified-badge",
@@ -114,17 +115,7 @@ function AdminAppraisalsPage() {
 
     return (
         <main className="admin-page">
-            <header className="admin-header-bar">
-                <div>
-                    <Link to="/" className="logo">AUREO</Link>
-                    <span className="admin-tag">ADMIN VAULT</span>
-                </div>
-                <div className="admin-nav-actions">
-                    <Link to="/admin/products" className="outline-button">Inventory</Link>
-                    <Link to="/admin/orders" className="outline-button">Orders</Link>
-                    <Link to="/me" className="nav-action">Account</Link>
-                </div>
-            </header>
+            <AdminHeader />
 
             <div className="admin-container">
                 <div className="admin-page-title-row">

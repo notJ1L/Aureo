@@ -1,0 +1,488 @@
+/* ==========================================================================
+   Aureo — Ultra-Luxury Product Detail Page Styles
+   Theme: Obsidian, 18K Gold, Champagne & Ivory
+   ========================================================================== */
+
+.pdp-page {
+    min-height: 100vh;
+    background: #08090c;
+    color: var(--text-primary);
+    padding-bottom: 6rem;
+}
+
+.pdp-container {
+    width: min(1360px, calc(100% - 64px));
+    margin: 0 auto;
+}
+
+/* Breadcrumb */
+.pdp-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1.8rem 0;
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.pdp-breadcrumb a {
+    color: var(--text-secondary);
+    transition: color 200ms ease;
+}
+
+.pdp-breadcrumb a:hover {
+    color: var(--gold-bright);
+}
+
+.pdp-breadcrumb .separator {
+    color: rgba(226, 187, 118, 0.4);
+}
+
+.pdp-breadcrumb .current {
+    color: var(--gold-light);
+    font-weight: 600;
+}
+
+/* Two-Column Master Grid */
+.pdp-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 4.5rem;
+    align-items: start;
+    margin-bottom: 5rem;
+}
+
+/* Left Column: Visual Showcase (Gallery & 3D Viewer) */
+.pdp-visual-stage {
+    position: sticky;
+    top: 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+}
+
+.pdp-frame {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 16px;
+    background: radial-gradient(circle at 50% 45%, #181c25 0%, #0a0b0e 90%);
+    border: 1px solid rgba(226, 187, 118, 0.22);
+    box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.9), 0 0 40px rgba(226, 187, 118, 0.06);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pdp-frame img.pdp-main-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    filter: contrast(1.06) saturate(1.02);
+    transition: transform 600ms var(--ease-lux);
+}
+
+.pdp-frame:hover img.pdp-main-photo {
+    transform: scale(1.04);
+}
+
+.pdp-badge-tag {
+    position: absolute;
+    top: 1.4rem;
+    left: 1.4rem;
+    z-index: 5;
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    background: rgba(10, 12, 16, 0.85);
+    border: 1px solid rgba(226, 187, 118, 0.35);
+    backdrop-filter: blur(12px);
+    color: var(--gold-light);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.pdp-badge-tag--sold {
+    border-color: rgba(229, 72, 77, 0.4);
+    color: #ff8588;
+}
+
+/* Mode Switcher (Photographs vs 3D Simulation) */
+.pdp-view-mode-bar {
+    display: inline-flex;
+    align-self: center;
+    gap: 0.4rem;
+    padding: 0.35rem;
+    border-radius: 999px;
+    background: rgba(18, 20, 26, 0.85);
+    border: 1px solid rgba(226, 187, 118, 0.22);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.pdp-mode-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.55rem 1.3rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: all 250ms ease;
+}
+
+.pdp-mode-btn:hover {
+    color: var(--ivory);
+}
+
+.pdp-mode-btn.is-active {
+    background: var(--gold-grad);
+    color: #14110b;
+    box-shadow: 0 4px 18px rgba(226, 187, 118, 0.35);
+}
+
+/* Thumbnails Strip */
+.pdp-thumbs-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+.pdp-thumb-btn {
+    width: 68px;
+    height: 68px;
+    border-radius: 10px;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: #111317;
+    transition: all 250ms ease;
+}
+
+.pdp-thumb-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.pdp-thumb-btn:hover,
+.pdp-thumb-btn.is-active {
+    border-color: var(--gold-bright);
+    box-shadow: 0 0 16px rgba(226, 187, 118, 0.25);
+    transform: translateY(-2px);
+}
+
+/* Right Column: Timepiece Identity & Actions */
+.pdp-info-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.pdp-brand-kicker {
+    font-size: 0.72rem;
+    color: var(--gold-bright);
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.pdp-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 4vw, 3.6rem);
+    font-weight: 500;
+    line-height: 1.1;
+    color: var(--ivory);
+    margin: 0 0 1.2rem;
+}
+
+.pdp-meta-strip {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    margin-bottom: 1.8rem;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+}
+
+.pdp-meta-strip .rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--gold-bright);
+    font-weight: 600;
+}
+
+/* Price & Wishlist Row */
+.pdp-price-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.6rem 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 2rem;
+}
+
+.pdp-price-wrap {
+    display: flex;
+    flex-direction: column;
+}
+
+.pdp-price {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--gold-light);
+    line-height: 1;
+}
+
+.pdp-price-tax {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    margin-top: 0.35rem;
+}
+
+.pdp-wishlist-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-secondary);
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: all 250ms ease;
+}
+
+.pdp-wishlist-toggle:hover,
+.pdp-wishlist-toggle.is-active {
+    border-color: var(--gold-bright);
+    color: var(--gold-bright);
+    background: rgba(226, 187, 118, 0.08);
+}
+
+.pdp-wishlist-toggle.is-active svg {
+    fill: var(--gold-bright);
+}
+
+/* Stock Notification Banner */
+.pdp-stock-banner {
+    padding: 0.9rem 1.4rem;
+    border-radius: 10px;
+    background: rgba(226, 187, 118, 0.08);
+    border: 1px solid rgba(226, 187, 118, 0.25);
+    color: var(--gold-light);
+    font-size: 0.84rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 2rem;
+}
+
+.pdp-stock-banner--sold {
+    background: rgba(229, 72, 77, 0.08);
+    border-color: rgba(229, 72, 77, 0.3);
+    color: #ff8588;
+}
+
+/* Primary Action Buttons */
+.pdp-actions-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+}
+
+.pdp-cta-btn {
+    min-height: 58px;
+    font-size: 0.88rem;
+    letter-spacing: 0.16em;
+}
+
+.pdp-notice-alert {
+    padding: 0.9rem 1.2rem;
+    border-radius: 8px;
+    background: rgba(63, 185, 127, 0.12);
+    border: 1px solid rgba(63, 185, 127, 0.3);
+    color: #63d99d;
+    font-size: 0.82rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.pdp-notice-alert a {
+    color: var(--ivory);
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+/* Luxury Assurance 4-Box Guarantee */
+.pdp-assurance-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    padding: 1.8rem;
+    border-radius: 12px;
+    background: rgba(14, 16, 22, 0.7);
+    border: 1px solid var(--line);
+    margin-bottom: 3rem;
+}
+
+.assurance-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.assurance-item svg {
+    color: var(--gold-bright);
+    flex: none;
+    margin-top: 2px;
+}
+
+.assurance-item div strong {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--ivory);
+    margin-bottom: 0.15rem;
+}
+
+.assurance-item div span {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+/* Timepiece Chronometric Specifications */
+.pdp-specs-card {
+    background: rgba(12, 14, 18, 0.75);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 2.2rem;
+    margin-bottom: 2.5rem;
+}
+
+.pdp-specs-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--gold-light);
+    margin: 0 0 1.4rem;
+}
+
+.pdp-specs-table {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.2rem;
+}
+
+.pdp-spec-cell dt {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+}
+
+.pdp-spec-cell dd {
+    font-size: 0.94rem;
+    color: var(--ivory);
+    font-weight: 500;
+    margin: 0;
+}
+
+/* Provenance & Description */
+.pdp-description-card {
+    background: rgba(12, 14, 18, 0.75);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 2.2rem;
+    margin-bottom: 2.5rem;
+}
+
+.pdp-description-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--gold-light);
+    margin: 0 0 1.2rem;
+}
+
+.pdp-description-card p {
+    color: var(--text-secondary);
+    font-size: 0.96rem;
+    line-height: 1.85;
+    margin: 0;
+}
+
+/* Reviews Wrapper */
+.pdp-reviews-wrap {
+    margin-top: 2rem;
+}
+
+/* Loading & Error States */
+.pdp-loading-screen,
+.pdp-error-screen {
+    min-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 3rem 1.5rem;
+}
+
+.pdp-loading-screen h2,
+.pdp-error-screen h2 {
+    font-family: var(--font-display);
+    font-size: 2.6rem;
+    color: var(--ivory);
+    margin: 1rem 0;
+}
+
+@media (max-width: 992px) {
+    .pdp-grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+
+    .pdp-visual-stage {
+        position: static;
+    }
+
+    .pdp-container {
+        width: calc(100% - 32px);
+    }
+}
+
+@media (max-width: 600px) {
+    .pdp-specs-table {
+        grid-template-columns: 1fr;
+    }
+
+    .pdp-assurance-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pdp-price-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

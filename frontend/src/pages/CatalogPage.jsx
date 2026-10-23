@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { getProducts, addToWishlist, removeFromWishlist, getWishlist } from "../redux/actions/productActions";
 import { AureoChip, AureoRating } from "../components/ui";
+import SiteHeader from "../components/layout/SiteHeader";
+import SiteFooter from "../components/layout/SiteFooter";
 import "../styles/aureo.css";
 
 function CatalogPage() {
@@ -154,25 +156,7 @@ function CatalogPage() {
 
     return (
         <main className="catalog-page">
-            <header className="navbar">
-                <Link className="logo" to="/">AUREO</Link>
-
-                <nav className="nav-links">
-                    <Link to="/catalog" style={{ color: "var(--gold)" }}>Collection</Link>
-                    <Link to="/#services">Services</Link>
-                    <Link to="/wishlist">Wishlist</Link>
-                </nav>
-
-                <div className="nav-actions">
-                    {isAuthenticated ? (
-                        <Link className="nav-action" to="/me" style={{ color: "var(--gold)", fontWeight: 600 }}>
-                            {user?.name?.split(" ")[0] || "Account"}
-                        </Link>
-                    ) : (
-                        <Link className="nav-action" to="/login">Sign in</Link>
-                    )}
-                </div>
-            </header>
+            <SiteHeader variant="solid" />
 
             <div className="catalog-container">
                 {/* Filter Sidebar */}
@@ -463,6 +447,7 @@ function CatalogPage() {
                     )}
                 </section>
             </div>
+            <SiteFooter />
         </main>
     );
 }

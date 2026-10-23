@@ -1,60 +1,19 @@
-// Phase 11 / spec 3.2: a small 3D viewer on the product detail page.
+// A 3D viewer on the product detail page.
 //
-// The specification calls this "a small 3D viewer or a rotatable gallery for
-// the selected watch". The gallery is already there, so this adds the 3D
-// half: the visitor can drag the watch to look at it from any angle.
-//
-// The viewer follows the same rules as the home hero: one canvas per page,
-// a fallback when WebGL is missing, `prefers-reduced-motion` support, and
-// resources released on unmount.
+// The visitor can drag to orbit and scroll to zoom. The viewer follows the
+// same rules as the home hero: one canvas per page, a fallback when WebGL is
+// missing, `prefers-reduced-motion` support, and resources released on
+// unmount.
 
-import { Suspense, useEffect, useRef, useState } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { Suspense, useEffect, useState } from "react";
+import { Canvas } from "@react-three/fiber";
+import { ContactShadows, Float, OrbitControls } from "@react-three/drei";
 import { WatchModel } from "./WatchModel";
+import { RendererCleanup, StudioEnvironment } from "./Studio";
 import { prefersReducedMotion, supportsWebGL } from "./capabilities";
 import "./hero.css";
 
-/**
- * Releases the WebGL renderer when the viewer unmounts.
- */
-function RendererCleanup() {
-    const { gl } = useThree();
-
-    useEffect(() => {
-        return () => {
-            gl.dispose();
-        };
-    }, [gl]);
-
-    return null;
-}
-
-/**
- * A very slow idle turn, so the watch reads as a physical object when the
- * visitor is not dragging it.
- */
-function IdleTurn({ enabled }) {
-    const group = useRef(null);
-
-    useFrame((_, delta) => {
-        if (!enabled || !group.current) {
-            return;
-        }
-
-        group.current.rotation.y += delta * 0.18;
-    });
-
-    return (
-        <group ref={group}>
-            <WatchModel reducedMotion={!enabled} />
-        </group>
-    );
-}
-
 export function ProductViewer({ productName = "watch" }) {
-    // The capability check runs before the canvas is created, so a device
-    // without WebGL never starts a GPU context it cannot use.
     const [webgl] = useState(() => supportsWebGL());
     const [reducedMotion, setReducedMotion] = useState(() => prefersReducedMotion());
 
@@ -63,7 +22,6 @@ export function ProductViewer({ productName = "watch" }) {
         const handleMotion = (event) => setReducedMotion(event.matches);
 
         motionQuery.addEventListener("change", handleMotion);
-
         return () => motionQuery.removeEventListener("change", handleMotion);
     }, []);
 
@@ -79,7 +37,8 @@ export function ProductViewer({ productName = "watch" }) {
         <div className="product-viewer">
             <Canvas
                 dpr={[1, 2]}
-                camera={{ position: [0, 0.4, 4.6], fov: 40 }}
+                shadows
+                camera={{ position: [2.2, 1.2, 6.4], fov: 32 }}
                 gl={{ antialias: true, alpha: true }}
                 style={{ background: "transparent" }}
                 fallback={<div className="product-viewer product-viewer-fallback" />}
@@ -87,25 +46,45 @@ export function ProductViewer({ productName = "watch" }) {
             >
                 <Suspense fallback={null}>
                     <RendererCleanup />
-                    <ambientLight intensity={0.45} />
-                    <directionalLight position={[3, 5, 4]} intensity={1.8} color="#fff6e2" />
-                    <directionalLight position={[-4, -2, -3]} intensity={0.7} color="#c9a45c" />
-                    <spotLight position={[0, 6, 2]} angle={0.6} penumbra={1} intensity={0.9} />
+                    <StudioEnvironment />
+                    <ambientLight intensity={0.15} />
+                    <directionalLight position={[3, 6, 5]} intensity={1.3} color="#fff3dc" />
+                    <directionalLight position={[-5, -2, -4]} intensity={0.7} color="#c9a45c" />
 
-                    <IdleTurn enabled={!reducedMotion} />
+                    <Float
+                        speed={reducedMotion ? 0 : 1.2}
+                        rotationIntensity={reducedMotion ? 0 : 0.15}
+                        floatIntensity={reducedMotion ? 0 : 0.4}
+                    >
+                        <group scale={0.82} position={[0, 0.15, 0.6]}>
+                            <WatchModel reducedMotion={reducedMotion} />
+                        </group>
+                    </Float>
+
+                    <ContactShadows
+                        position={[0, -2.1, 0]}
+                        opacity={0.55}
+                        scale={9}
+                        blur={2.6}
+                        far={4}
+                        color="#000000"
+                    />
 
                     <OrbitControls
-                        enableZoom={false}
                         enablePan={false}
                         enableDamping
-                        dampingFactor={0.1}
-                        minPolarAngle={Math.PI / 3}
-                        maxPolarAngle={Math.PI / 1.7}
+                        dampingFactor={0.08}
+                        minDistance={4}
+                        maxDistance={10}
+                        autoRotate={!reducedMotion}
+                        autoRotateSpeed={0.8}
+                        minPolarAngle={Math.PI / 5}
+                        maxPolarAngle={Math.PI / 1.6}
                     />
                 </Suspense>
             </Canvas>
 
-            <p className="product-viewer-hint">Drag to rotate</p>
+            <p className="product-viewer-hint">Drag to rotate · Scroll to zoom</p>
         </div>
     );
 }

@@ -37,6 +37,14 @@ function RouteFallback() {
     return <div className="route-fallback">Loading the vault...</div>;
 }
 
+import { useRef } from "react";
+import SiteHeader from "./components/layout/SiteHeader";
+import SiteFooter from "./components/layout/SiteFooter";
+import { useReveal } from "./hooks/useReveal";
+import { IconArrow, IconScale, IconShield, IconSparkle, IconTool, IconWatch } from "./components/layout/icons";
+import atelierImg from "./assets/atelier.jpg";
+import "./styles/landing.css";
+
 function StoreLanding() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -49,20 +57,35 @@ function StoreLanding() {
     } = useSelector((state) => state.productList);
 
     const [page, setPage] = useState(1);
-
-    // Quiz 3: the homepage product list is paginated and also supports
-    // infinite scroll. `visibleProducts` holds every page that was loaded so
-    // the grid keeps the pieces that are already on screen.
     const [visibleProducts, setVisibleProducts] = useState([]);
     const [loadedPage, setLoadedPage] = useState(0);
+    const [isInteractive3D, setIsInteractive3D] = useState(false);
+
+    const stageRef = useRef(null);
+    const progressRef = useRef(0);
+
+    useReveal(visibleProducts.length);
 
     useEffect(() => {
         dispatch(getProducts({ page, limit: 8 }));
     }, [dispatch, page]);
 
-    // The pages that were already loaded are kept while the next page is
-    // fetched, so the grid never empties. The accumulation happens while
-    // rendering to avoid an extra render pass.
+    // Track scroll progress through the 3D stage
+    useEffect(() => {
+        const handleScroll = () => {
+            if (!stageRef.current) return;
+            const rect = stageRef.current.getBoundingClientRect();
+            const scrollDistance = rect.height - window.innerHeight;
+            if (scrollDistance <= 0) return;
+            const p = Math.min(1, Math.max(0, -rect.top / scrollDistance));
+            progressRef.current = p;
+        };
+
+        window.addEventListener("scroll", handleScroll, { passive: true });
+        handleScroll();
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
     if (products?.length && page !== loadedPage) {
         setLoadedPage(page);
 
@@ -103,262 +126,414 @@ function StoreLanding() {
         }).format(price);
     };
 
-    const { isAuthenticated, user } = useSelector((state) => state.auth);
-
-    // The cart lives in localStorage, so the badge is derived from it. The
-    // initial value is computed lazily and refreshed through the custom
-    // "aureo:cart-updated" event that the cart pages dispatch.
-    const readCartCount = () => {
-        try {
-            const raw = localStorage.getItem("aureoCart");
-            const items = raw ? JSON.parse(raw) : [];
-            return items.reduce((acc, item) => acc + (item.quantity || 1), 0);
-        } catch {
-            return 0;
-        }
-    };
-
-    const [cartCount, setCartCount] = useState(readCartCount);
-
-    useEffect(() => {
-        const handleCartUpdate = () => setCartCount(readCartCount());
-
-        window.addEventListener("storage", handleCartUpdate);
-        window.addEventListener("aureo:cart-updated", handleCartUpdate);
-
-        return () => {
-            window.removeEventListener("storage", handleCartUpdate);
-            window.removeEventListener("aureo:cart-updated", handleCartUpdate);
-        };
-    }, []);
-
     return (
-        <main className="storefront">
-            <header className="navbar">
-                <a className="logo" href="#top">AUREO</a>
+        <main className="storefront-luxury">
+            <SiteHeader variant="overlay" />
 
-                <nav className="nav-links">
-                    <Link to="/catalog">Collection</Link>
-                    <Link to="/sell">Sell your watch</Link>
-                    <Link to="/appraisals">Appraisals</Link>
-                    <Link to="/wishlist">Wishlist</Link>
-                    {isAuthenticated && <Link to="/orders">Orders</Link>}
-                    {user?.role === "admin" && (
-                        <>
-                            <Link to="/admin/products" style={{ color: "var(--gold)", fontWeight: 600 }}>
-                                Vault (Admin)
-                            </Link>
-                            <Link to="/admin/orders" style={{ color: "var(--gold)", fontWeight: 600 }}>
-                                Orders (Admin)
-                            </Link>
-                            <Link to="/admin/appraisals" style={{ color: "var(--gold)", fontWeight: 600 }}>
-                                Appraisals (Admin)
-                            </Link>
-                        </>
-                    )}
-                </nav>
-
-                <div className="nav-actions">
-                    <Link to="/catalog" className="nav-action">
-                        Browse Catalog
-                    </Link>
-                    {isAuthenticated ? (
-                        <Link className="nav-action" to="/me" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", color: "var(--gold)", fontWeight: 600 }}>
-                            {user?.avatar?.url && (
-                                <img
-                                    src={user.avatar.url}
-                                    alt="Avatar"
-                                    style={{ width: "22px", height: "22px", borderRadius: "50%", objectFit: "cover", border: "1px solid var(--gold)" }}
-                                />
-                            )}
-                            <span>{user?.name ? user.name.split(" ")[0] : "Account"}</span>
-                        </Link>
-                    ) : (
-                        <Link className="nav-action" to="/login">
-                            Account
-                        </Link>
-                    )}
-                    <Link to="/cart" className="cart-button">
-                        Bag <span>{cartCount}</span>
-                    </Link>
-                </div>
-            </header>
-
-            <section id="top" className="hero-section">
-                <div className="hero-copy">
-                    <p className="eyebrow">CURATED WATCHES / EST. 2026</p>
-                    <h1>Wear something worth remembering.</h1>
-                    <p className="hero-description">
-                        A considered collection of mechanical watches, rare finds,
-                        and trusted aftercare for the pieces that mark your time.
-                    </p>
-
-                    <div className="hero-actions">
-                        <a className="gold-button" href="#collection">
-                            Explore collection
-                        </a>
-                        <button
-                            type="button"
-                            className="outline-button"
-                            onClick={() => navigate("/sell")}
-                        >
-                            Sell your watch
-                        </button>
-                    </div>
-
-                    <div className="hero-meta">
-                        <span>Free local delivery</span>
-                        <span>Verified pieces</span>
-                        <span>Aftercare available</span>
-                    </div>
-                </div>
-
-                <div className="hero-visual">
-                    <div className="visual-label">FEATURED PIECE / 001</div>
-                    <Suspense
-                        fallback={
-                            <div className="hero-3d hero-3d-skeleton" aria-hidden="true" />
-                        }
-                    >
-                        <WatchHero />
+            {/* ---------------------------------------------------------------- */}
+            {/* 3D Showcase & Scroll Story Stage                                  */}
+            {/* ---------------------------------------------------------------- */}
+            <div ref={stageRef} className="stage-container" id="top">
+                <div className="stage-pinned">
+                    <Suspense fallback={<div className="hero-3d hero-3d-skeleton" aria-hidden="true" />}>
+                        <WatchHero
+                            progressRef={progressRef}
+                            interactive={isInteractive3D}
+                        />
                     </Suspense>
-                    <div className="visual-caption">
-                        <strong>Quiet precision.</strong>
-                        <span>Automatic movement / 40mm case</span>
-                    </div>
-                </div>
-            </section>
 
-            <section id="collection" className="collection-section">
-                <div className="section-heading">
-                    <div>
-                        <p className="eyebrow">THE CURRENT EDIT</p>
-                        <h2>Selected watches</h2>
-                    </div>
-
-                    <Link
-                        to="/catalog"
-                        className="text-link"
-                        style={{ background: "none", border: "none", cursor: "pointer" }}
-                    >
-                        View all watches
-                    </Link>
-                </div>
-
-                <div className="filter-row">
-                    <Link to="/catalog" className="filter-chip active">All pieces</Link>
-                    <Link to="/catalog?condition=new" className="filter-chip">New</Link>
-                    <Link to="/catalog?condition=second-hand" className="filter-chip">Pre-owned</Link>
-                    <Link to="/catalog?movement=automatic" className="filter-chip">Automatic</Link>
-                    <span className="result-count">
-                        {productsLoading
-                            ? "Loading..."
-                            : `${pagination?.totalProducts ?? products.length} pieces`}
-                    </span>
-                </div>
-
-                <div className="product-grid">
-                    {productsLoading && visibleProducts.length === 0 && (
-                        <p className="catalog-message">Loading the collection...</p>
-                    )}
-
-                    {productsError && (
-                        <p className="catalog-message error">{productsError}</p>
-                    )}
-
-                    {!productsError &&
-                        visibleProducts.map((product) => (
-                            <article className="product-card" key={product._id}>
-                                <div className="product-image">
-                                    <img
-                                        src={
-                                            product.images?.[0]?.url ||
-                                            "https://images.unsplash.com/photo-1523170335258-f5ed11844a49"
-                                        }
-                                        alt={product.name}
-                                    />
-                                    <span>
-                                        {product.stock === 0
-                                            ? "Sold"
-                                            : product.condition}
-                                    </span>
-                                </div>
-
-                                <div className="product-info">
-                                    <p className="product-brand">{product.brand}</p>
-
-                                    <h3>{product.name}</h3>
-
-                                    <div className="product-bottom">
-                                        <strong>{formatPrice(product.price)}</strong>
-
-                                        <Link to={`/product/${product._id}`}>View piece</Link>
-                                    </div>
-                                </div>
-                            </article>
-                        ))}
-                </div>
-
-                {/* Quiz 3: infinite scroll sentinel. It loads the next page
-                    when it scrolls into view. */}
-                {hasMore && (
-                    <div ref={sentinelRef} className="infinite-scroll-sentinel" aria-hidden="true" />
-                )}
-
-                {/* Quiz 3: homepage pagination */}
-                {totalPages > 1 && (
-                    <div className="pagination-bar">
-                        <button
-                            type="button"
-                            className="pagination-btn"
-                            disabled={page <= 1}
-                            onClick={() => setPage(1)}
-                        >
-                            ← Previous
-                        </button>
-                        <span className="page-indicator">
-                            Page {page} of {totalPages} &bull; {visibleProducts.length} loaded
+                    {/* Interactive 3D Control Pill */}
+                    <div className="stage-control-bar">
+                        <span className="stage-control-indicator">
+                            {isInteractive3D ? "Free 3D Orbit Mode" : "Scroll Choreography"}
                         </span>
                         <button
                             type="button"
-                            className="pagination-btn"
-                            disabled={!hasMore}
-                            onClick={loadMore}
+                            className={`stage-mode-btn ${!isInteractive3D ? "is-active" : ""}`}
+                            onClick={() => setIsInteractive3D(false)}
+                            title="Watch turns as you scroll through chapters"
                         >
-                            Next →
+                            Story Mode
+                        </button>
+                        <button
+                            type="button"
+                            className={`stage-mode-btn ${isInteractive3D ? "is-active" : ""}`}
+                            onClick={() => setIsInteractive3D(true)}
+                            title="Drag to rotate, scroll to zoom"
+                        >
+                            3D Orbit
                         </button>
                     </div>
-                )}
-            </section>
-
-            <section id="services" className="service-strip">
-                <div>
-                    <p className="eyebrow">BEYOND THE SALE</p>
-                    <h2>Keep your timepiece in its best condition.</h2>
                 </div>
 
-                <div className="service-items">
-                    <span>01 / Cleaning</span>
-                    <span>02 / Repair</span>
-                    <span>03 / Appraisal</span>
+                {/* Narrative Scroll Chapters Overlay */}
+                <div className="story-scroll-track">
+                    {/* Chapter 0: Hero Intro */}
+                    <section className="story-chapter story-chapter--left">
+                        <div className="chapter-card hero-chapter-card" data-reveal>
+                            <p className="lx-kicker">ARCHIVAL HOROLOGY · EST. 2026</p>
+                            <h1>The Architecture of Perpetual Time.</h1>
+                            <p>
+                                A considered sanctuary of rare mechanical chronometers, certified
+                                provenance, and dedicated aftercare for the pieces that anchor your legacy.
+                            </p>
+
+                            <div className="chapter-actions">
+                                <a href="#collection" className="btn-gold">
+                                    Explore Collection <IconArrow />
+                                </a>
+                                <button
+                                    type="button"
+                                    className="btn-ghost"
+                                    onClick={() => navigate("/sell")}
+                                >
+                                    Sell Your Watch
+                                </button>
+                            </div>
+
+                            <div className="hero-trust-bar">
+                                <span>18K Solid Gold</span>
+                                <span>Automatic Chronometer</span>
+                                <span>Verified Provenance</span>
+                                <span>Worldwide Delivery</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Chapter 1: The Dial */}
+                    <section className="story-chapter story-chapter--right">
+                        <div className="chapter-card" data-reveal>
+                            <span className="chapter-number">Chapter 01</span>
+                            <p className="lx-kicker">THE FACE OF MASTERY</p>
+                            <h2>Sunburst Lacquer Dial.</h2>
+                            <p>
+                                Deep obsidian lacquer with an ultra-fine radial sunray finish, capturing
+                                ambient light in warm golden streaks. Fitted with hand-applied 18K solid gold
+                                dauphine indices inlaid with luminescence for peerless legibility.
+                            </p>
+
+                            <div className="chapter-specs-row">
+                                <div className="chapter-spec-item">
+                                    <span>Dial Finish</span>
+                                    <strong>Radial Sunray Lacquer</strong>
+                                </div>
+                                <div className="chapter-spec-item">
+                                    <span>Indices</span>
+                                    <strong>18K Gold Faceted Batons</strong>
+                                </div>
+                                <div className="chapter-spec-item">
+                                    <span>Calendar</span>
+                                    <strong>Instantaneous Date at 3H</strong>
+                                </div>
+                                <div className="chapter-spec-item">
+                                    <span>Luminescence</span>
+                                    <strong>Swiss Super-LumiNova</strong>
+                                </div>
+                            </div>
+
+                            <div className="chapter-actions">
+                                <button
+                                    type="button"
+                                    className="stage-mode-btn is-active"
+                                    onClick={() => setIsInteractive3D(true)}
+                                >
+                                    Inspect Dial in 3D ↺
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Chapter 2: The Monobloc Case */}
+                    <section className="story-chapter story-chapter--left">
+                        <div className="chapter-card" data-reveal>
+                            <span className="chapter-number">Chapter 02</span>
+                            <p className="lx-kicker">SCULPTED IN GOLD</p>
+                            <h2>Monobloc Case &amp; Fluted Bezel.</h2>
+                            <p>
+                                Turned from a single billet of gold on high-precision lathes, then hand-mirror
+                                chamfered along the curved flanks. Protected by scratch-resistant sapphire crystal
+                                with anti-reflective treatment on both faces.
+                            </p>
+
+                            <div className="chapter-specs-row">
+                                <div className="chapter-spec-item">
+                                    <span>Case Architecture</span>
+                                    <strong>40mm Monobloc Lathe</strong>
+                                </div>
+                                <div className="chapter-spec-item">
+                                    <span>Crystal</span>
+                                    <strong>Scratch-Proof Sapphire</strong>
+                                </div>
+                                <div className="chapter-spec-item">
+                                    <span>Crown</span>
+                                    <strong>Twinlock Screw-Down</strong>
+                                </div>
+                                <div className="chapter-spec-item">
+                                    <span>Water Resistance</span>
+                                    <strong>100m / 330ft Certified</strong>
+                                </div>
+                            </div>
+
+                            <div className="chapter-actions">
+                                <a href="#collection" className="btn-ghost">
+                                    Browse 40mm Watches
+                                </a>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Chapter 3: The Bracelet */}
+                    <section className="story-chapter story-chapter--right">
+                        <div className="chapter-card" data-reveal>
+                            <span className="chapter-number">Chapter 03</span>
+                            <p className="lx-kicker">ERGONOMIC ARTICULATION</p>
+                            <h2>Integrated Three-Link Oyster.</h2>
+                            <p>
+                                Each solid link is curved to drape naturally over the wrist. Alternating satin-brushed
+                                outer shoulders and mirror-polished centre links culminate in a concealed deployment
+                                clasp adorned with the Aureo emblem.
+                            </p>
+
+                            <div className="chapter-specs-row">
+                                <div className="chapter-spec-item">
+                                    <span>Link Geometry</span>
+                                    <strong>Three-Piece Solid Gold</strong>
+                                </div>
+                                <div className="chapter-spec-item">
+                                    <span>Finish</span>
+                                    <strong>Satin Flanks &amp; Mirror Core</strong>
+                                </div>
+                                <div className="chapter-spec-item">
+                                    <span>Clasp</span>
+                                    <strong>Concealed Folding Crownclasp</strong>
+                                </div>
+                                <div className="chapter-spec-item">
+                                    <span>Movement</span>
+                                    <strong>Calibre A-2026 Automatic</strong>
+                                </div>
+                            </div>
+
+                            <div className="chapter-actions">
+                                <a href="#collection" className="btn-gold">
+                                    Acquire This Piece
+                                </a>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            {/* ---------------------------------------------------------------- */}
+            {/* The Curated Edit (Product Collection Grid)                         */}
+            {/* ---------------------------------------------------------------- */}
+            <section id="collection" className="collection-lux-section">
+                <div className="lux-container">
+                    <div className="lux-section-header" data-reveal>
+                        <div>
+                            <p className="lx-kicker">THE CURRENT EDIT</p>
+                            <h2>Selected Timepieces</h2>
+                        </div>
+                        <Link to="/catalog" className="btn-ghost">
+                            View Entire Vault <IconArrow />
+                        </Link>
+                    </div>
+
+                    <div className="filter-pills-row" data-reveal>
+                        <Link to="/catalog" className="filter-pill is-active">All Pieces</Link>
+                        <Link to="/catalog?condition=new" className="filter-pill">Factory New</Link>
+                        <Link to="/catalog?condition=second-hand" className="filter-pill">Certified Pre-Owned</Link>
+                        <Link to="/catalog?movement=automatic" className="filter-pill">Automatic</Link>
+                        <span className="filter-count">
+                            {productsLoading
+                                ? "Auditing Vault..."
+                                : `${pagination?.totalProducts ?? products.length} Available Pieces`}
+                        </span>
+                    </div>
+
+                    <div className="lux-product-grid">
+                        {productsLoading && visibleProducts.length === 0 && (
+                            <p className="catalog-message">Unlocking the vault collection...</p>
+                        )}
+
+                        {productsError && (
+                            <p className="catalog-message error">{productsError}</p>
+                        )}
+
+                        {!productsError &&
+                            visibleProducts.map((product) => (
+                                <article className="lux-watch-card" key={product._id} data-reveal>
+                                    <div className="lux-card-image-wrap">
+                                        <img
+                                            src={
+                                                product.images?.[0]?.url ||
+                                                "https://images.unsplash.com/photo-1523170335258-f5ed11844a49"
+                                            }
+                                            alt={product.name}
+                                            loading="lazy"
+                                        />
+                                        <span className={`lux-card-badge ${product.stock === 0 ? "lux-card-badge--sold" : ""}`}>
+                                            {product.stock === 0
+                                                ? "Archived / Sold"
+                                                : product.condition === "second-hand"
+                                                ? "1 of 1 · Pre-Owned"
+                                                : "Factory New"}
+                                        </span>
+                                    </div>
+
+                                    <div className="lux-card-body">
+                                        <span className="lux-card-brand">{product.brand}</span>
+                                        <h3 className="lux-card-title">{product.name}</h3>
+
+                                        <div className="lux-card-footer">
+                                            <span className="lux-card-price">{formatPrice(product.price)}</span>
+                                            <Link to={`/product/${product._id}`} className="lux-card-link">
+                                                Inspect <IconArrow />
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </article>
+                            ))}
+                    </div>
+
+                    {/* Infinite scroll sentinel */}
+                    {hasMore && (
+                        <div ref={sentinelRef} className="infinite-scroll-sentinel" aria-hidden="true" />
+                    )}
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="lux-pagination" data-reveal>
+                            <button
+                                type="button"
+                                className="lux-page-btn"
+                                disabled={page <= 1}
+                                onClick={() => setPage(1)}
+                            >
+                                ← First Page
+                            </button>
+                            <span className="lux-page-info">
+                                Page {page} of {totalPages} · {visibleProducts.length} pieces on view
+                            </span>
+                            <button
+                                type="button"
+                                className="lux-page-btn"
+                                disabled={!hasMore}
+                                onClick={loadMore}
+                            >
+                                Load Next Timepieces →
+                            </button>
+                        </div>
+                    )}
                 </div>
             </section>
 
-            <section id="story" className="story-section">
-                <p className="eyebrow">THE AUREO STANDARD</p>
-                <p className="story-copy">
-                    Every piece deserves a clear history, an honest description,
-                    and the right care after it leaves our hands.
-                </p>
+            {/* ---------------------------------------------------------------- */}
+            {/* Master Horology Atelier Section                                    */}
+            {/* ---------------------------------------------------------------- */}
+            <section id="story" className="atelier-section">
+                <div className="lux-container">
+                    <div className="atelier-grid">
+                        <div className="atelier-visual" data-reveal>
+                            <img src={atelierImg} alt="Master watchmaker inspecting movement" />
+                            <div className="atelier-visual-badge">
+                                <strong>Aureo Atelier</strong>
+                                <span>Master horologists hand-regulating every chronometer to within ±2 seconds daily.</span>
+                            </div>
+                        </div>
+
+                        <div className="atelier-content" data-reveal>
+                            <p className="lx-kicker">HOROLOGICAL CRAFTSMANSHIP</p>
+                            <h2>Where Silence Meets Micron Precision.</h2>
+                            <p>
+                                Before any timepiece enters our vault or departs for its new custodian, it undergoes
+                                an exhaustive 48-hour mechanical audit. From amplitude testing on Swiss timing
+                                machines to laser micro-welding and ultrasonic bath restoration, nothing is left to chance.
+                            </p>
+
+                            <div className="atelier-pillars">
+                                <div className="atelier-pillar">
+                                    <strong><IconWatch /> Escapement Timing</strong>
+                                    <p>Regulated across 5 positions to ensure chronometric accuracy under all conditions.</p>
+                                </div>
+                                <div className="atelier-pillar">
+                                    <strong><IconTool /> Ultrasonic Restorations</strong>
+                                    <p>Individual component cleansing preserving the untouched patina of vintage brass.</p>
+                                </div>
+                                <div className="atelier-pillar">
+                                    <strong><IconShield /> Certified Authenticity</strong>
+                                    <p>Complete serial matching against brand archives and international registries.</p>
+                                </div>
+                                <div className="atelier-pillar">
+                                    <strong><IconSparkle /> Lifetime Aftercare</strong>
+                                    <p>Comprehensive service warranty and complimentary seasonal water resistance tests.</p>
+                                </div>
+                            </div>
+
+                            <Link to="/services" className="btn-gold">
+                                Explore Atelier Services <IconArrow />
+                            </Link>
+                        </div>
+                    </div>
+                </div>
             </section>
 
-            <footer className="footer">
-                <span className="logo">AUREO</span>
-                <span>Watches with a point of view.</span>
-                <span>Local showroom / Online collection</span>
-            </footer>
+            {/* ---------------------------------------------------------------- */}
+            {/* Maison Services Strip                                              */}
+            {/* ---------------------------------------------------------------- */}
+            <section id="services" className="services-strip-lux">
+                <div className="lux-container">
+                    <div className="lux-section-header" data-reveal>
+                        <div>
+                            <p className="lx-kicker">BEYOND ACQUISITION</p>
+                            <h2>Comprehensive Watch Services</h2>
+                        </div>
+                        <Link to="/services" className="btn-ghost">
+                            View All Services <IconArrow />
+                        </Link>
+                    </div>
+
+                    <div className="services-cards-grid">
+                        <article className="service-card-lux" data-reveal>
+                            <div className="service-icon"><IconScale /></div>
+                            <h3>Private Valuation &amp; Appraisal</h3>
+                            <p>
+                                Receive an exhaustive valuation dossier authored by certified horological appraisers,
+                                backed by real-time secondary market transaction indices.
+                            </p>
+                            <Link to="/sell">
+                                Request Appraisal <IconArrow />
+                            </Link>
+                        </article>
+
+                        <article className="service-card-lux" data-reveal>
+                            <div className="service-icon"><IconTool /></div>
+                            <h3>Movement Overhaul &amp; Polish</h3>
+                            <p>
+                                Complete disassembly, chemical sonic cleansing, synthetic lubrication, and optional
+                                satin/mirror case re-finishing honoring factory geometry.
+                            </p>
+                            <Link to="/services">
+                                Book Servicing <IconArrow />
+                            </Link>
+                        </article>
+
+                        <article className="service-card-lux" data-reveal>
+                            <div className="service-icon"><IconShield /></div>
+                            <h3>Private Consignment &amp; Buyout</h3>
+                            <p>
+                                Sell your luxury timepiece directly to our private collector network with guaranteed
+                                escrow settlement and fully insured express collection.
+                            </p>
+                            <Link to="/sell">
+                                Sell Your Timepiece <IconArrow />
+                            </Link>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <SiteFooter />
         </main>
-
     );
 }
 
