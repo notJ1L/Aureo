@@ -455,15 +455,15 @@ main,
  * border with a small lift on hover. */
 .service-card {
     background: var(--bg-card) !important;
-    border: 1px solid rgba(201, 164, 92, 0.2) !important;
-    border-radius: 10px !important;
+    border: 1px solid var(--gold-20) !important;
+    border-radius: 12px !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
-    transition: transform 250ms ease, border-color 250ms ease, box-shadow 250ms ease !important;
+    transition: transform 300ms ease, border-color 300ms ease, box-shadow 300ms ease !important;
 }
 
 .service-card:hover {
     border-color: var(--gold) !important;
-    transform: translateY(-2px) !important;
+    transform: translateY(-4px) !important;
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6) !important;
 }
 
@@ -473,7 +473,7 @@ main,
  * and textarea in the application. The dark surface, the subtle gold border
  * at rest, the full gold border and glow on focus, and the muted placeholder
  * are defined here and nowhere else, so no page can drift out of the theme. */
-input:not([type="checkbox"]):not([type="radio"]),
+input:not([type="checkbox"]):not([type="radio"]):not(.MuiSelect-nativeInput),
 select,
 textarea {
     background: var(--bg-elevated) !important;
@@ -497,7 +497,7 @@ select option {
     color: var(--text-primary);
 }
 
-input:focus,
+input:not(.MuiSelect-nativeInput):focus,
 select:focus,
 textarea:focus {
     border-color: var(--gold) !important;
@@ -507,7 +507,7 @@ textarea:focus {
 
 /* The error state is driven by the `aria-invalid` attribute that every Yup
  * field already sets, so the red border needs no extra JavaScript. */
-input[aria-invalid="true"],
+input[aria-invalid="true"]:not(.MuiSelect-nativeInput),
 select[aria-invalid="true"],
 textarea[aria-invalid="true"] {
     border-color: var(--danger) !important;

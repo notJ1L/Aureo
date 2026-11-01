@@ -4,6 +4,7 @@
 // `useForm` call, so the same field works inside any form.
 
 import { Controller } from "react-hook-form";
+import { AureoSelect } from "./index";
 import "./ui.css";
 
 export function ValidatedField({
@@ -46,18 +47,16 @@ export function ValidatedField({
 
         if (options) {
             return (
-                <select
-                    {...field}
-                    {...sharedProps}
+                <AureoSelect
+                    id={fieldId}
+                    className="aureo-field-select"
                     value={field.value ?? ""}
+                    options={options}
+                    disabled={disabled}
+                    ariaInvalid={hasError}
                     onChange={(event) => notify(event.target.value)}
-                >
-                    {options.map((option) => (
-                        <option key={option.value} value={option.value}>
-                            {option.label}
-                        </option>
-                    ))}
-                </select>
+                    onBlur={field.onBlur}
+                />
             );
         }
 

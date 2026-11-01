@@ -14,6 +14,7 @@ import {
 } from "../../redux/constants/appraisalConstants";
 import { confirmAction } from "../../utils/sweetAlert";
 import AdminHeader from "../../components/layout/AdminHeader";
+import { AureoSelect } from "../../components/ui";
 
 const STATUS_CLASS = {
     Pending: "unverified-badge",
@@ -123,17 +124,19 @@ function AdminAppraisalsPage() {
                         <p className="eyebrow">APPRAISAL DESK</p>
                         <h1>Collector Appraisals</h1>
                     </div>
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="catalog-select"
-                        style={{ maxWidth: "220px" }}
-                    >
-                        <option value="">All statuses</option>
-                        {["Pending", "Offer Made", "Accepted", "Rejected"].map((status) => (
-                            <option key={status} value={status}>{status}</option>
-                        ))}
-                    </select>
+                    <div style={{ width: "220px" }}>
+                        <AureoSelect
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            options={[
+                                { value: "", label: "All statuses" },
+                                ...["Pending", "Offer Made", "Accepted", "Rejected"].map((status) => ({
+                                    value: status,
+                                    label: status
+                                }))
+                            ]}
+                        />
+                    </div>
                 </div>
 
                 {error && <div className="auth-error">{error}</div>}

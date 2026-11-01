@@ -20,6 +20,7 @@ import {
 import { serviceSchema } from "../../utils/validationSchemas";
 import { confirmAction } from "../../utils/sweetAlert";
 import AdminHeader from "../../components/layout/AdminHeader";
+import { AureoCheckbox } from "../../components/ui";
 
 const formatPrice = (price) =>
     new Intl.NumberFormat("en-PH", {
@@ -218,14 +219,13 @@ function AdminServicesPage() {
                             <thead>
                                 <tr>
                                     <th style={{ width: "40px" }}>
-                                        <input
-                                            type="checkbox"
+                                        <AureoCheckbox
+                                            inputProps={{ "aria-label": "Select all services" }}
                                             checked={
                                                 (services || []).length > 0 &&
                                                 (services || []).every((s) => selectedIds.includes(s._id))
                                             }
                                             onChange={handleSelectAll}
-                                            aria-label="Select all services"
                                         />
                                     </th>
                                     <th>Service</th>
@@ -238,11 +238,10 @@ function AdminServicesPage() {
                                 {(services || []).map((service) => (
                                     <tr key={service._id} className={isSelected(service._id) ? "row-selected" : ""}>
                                         <td>
-                                            <input
-                                                type="checkbox"
+                                            <AureoCheckbox
+                                                inputProps={{ "aria-label": `Select ${service.name}` }}
                                                 checked={isSelected(service._id)}
                                                 onChange={() => handleToggleSelect(service._id)}
-                                                aria-label={`Select ${service.name}`}
                                             />
                                         </td>
                                         <td>

@@ -19,7 +19,7 @@ import {
 } from "../../redux/constants/productConstants";
 import { confirmAction } from "../../utils/sweetAlert";
 import { ValidatedField } from "../../components/ui/ValidatedField";
-import { StatusBadge } from "../../components/ui";
+import { StatusBadge, AureoCheckbox } from "../../components/ui";
 import { productSchema } from "../../utils/validationSchemas";
 import AdminHeader from "../../components/layout/AdminHeader";
 
@@ -326,9 +326,8 @@ function AdminProductsPage() {
                         <thead>
                             <tr>
                                 <th className="admin-select-cell">
-                                    <input
-                                        type="checkbox"
-                                        aria-label="Select all timepieces"
+                                    <AureoCheckbox
+                                        inputProps={{ "aria-label": "Select all timepieces" }}
                                         checked={
                                             (products || []).length > 0 &&
                                             selectedIds.length === (products || []).length
@@ -350,9 +349,8 @@ function AdminProductsPage() {
                             {(products || []).map((prod) => (
                                 <tr key={prod._id} className={isSelected(prod._id) ? "admin-row-selected" : ""}>
                                     <td className="admin-select-cell">
-                                        <input
-                                            type="checkbox"
-                                            aria-label={`Select ${prod.name}`}
+                                        <AureoCheckbox
+                                            inputProps={{ "aria-label": `Select ${prod.name}` }}
                                             checked={isSelected(prod._id)}
                                             onChange={() => handleToggleSelect(prod._id)}
                                         />

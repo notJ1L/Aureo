@@ -1525,13 +1525,6 @@ a {
     text-align: center;
 }
 
-.admin-select-cell input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    accent-color: var(--gold);
-    cursor: pointer;
-}
-
 .admin-row-selected {
     background: var(--gold-08);
 }
@@ -2468,7 +2461,7 @@ a {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background: var(--bg-page);
+    background: var(--ink);
     color: var(--text-primary);
 }
 
@@ -2504,12 +2497,27 @@ a {
     gap: 0.55rem;
     font-size: 0.9rem;
     color: var(--text-secondary);
+    cursor: pointer;
 }
 
-.checkbox-label input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    accent-color: var(--gold);
+/* The luxury form surface that frames the appraisal request. */
+.sell-card {
+    padding: 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--gold-20);
+    border-radius: 12px;
+    animation: sellCardIn 400ms ease both;
+}
+
+@keyframes sellCardIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Sell page photo upload zone (Fix 2) */
@@ -2672,9 +2680,9 @@ a {
 }
 
 .service-card {
-    padding: 1.3rem 1.4rem;
-    border: 1px solid var(--border);
-    border-radius: 10px;
+    padding: 28px;
+    border: 1px solid var(--gold-20);
+    border-radius: 12px;
     background: var(--bg-card);
     display: flex;
     flex-direction: column;
@@ -2683,20 +2691,22 @@ a {
 
 .service-card h3 {
     margin: 0;
-    color: var(--text-primary);
-    font-size: 1.05rem;
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 600;
 }
 
 .service-card p {
     margin: 0;
-    color: var(--text-muted);
-    font-size: 0.85rem;
+    color: #aaa;
+    font-size: 0.9rem;
     flex: 1;
 }
 
 .service-price {
     color: var(--gold);
-    font-size: 1.05rem;
+    font-size: 1.2rem;
+    font-weight: 700;
 }
 
 .ticket-section {

@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import { getDashboard } from "../../redux/actions/serviceActions";
 import AdminHeader from "../../components/layout/AdminHeader";
+import { AureoSelect } from "../../components/ui";
 import {
     IconBox,
     IconScale,
@@ -98,15 +99,16 @@ function AdminDashboardPage() {
                             className="admin-date-input"
                             aria-label="To date"
                         />
-                        <select
-                            value={chartType}
-                            onChange={(e) => setChartType(e.target.value)}
-                            className="admin-select-input"
-                            aria-label="Chart type"
-                        >
-                            <option value="bar">Bar Chart</option>
-                            <option value="line">Line Chart</option>
-                        </select>
+                        <div className="admin-select-input" style={{ width: "150px" }}>
+                            <AureoSelect
+                                value={chartType}
+                                onChange={(e) => setChartType(e.target.value)}
+                                options={[
+                                    { value: "bar", label: "Bar Chart" },
+                                    { value: "line", label: "Line Chart" }
+                                ]}
+                            />
+                        </div>
                     </div>
                 </div>
 

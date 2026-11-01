@@ -8,6 +8,7 @@ import SiteFooter from "../components/layout/SiteFooter";
 import WatchCard from "../components/WatchCard";
 import { IconSearch } from "../components/layout/icons";
 import { WatchCardSkeleton } from "../components/ui/Skeleton";
+import { AureoSelect } from "../components/ui";
 import "../styles/watchCard.css";
 import "../styles/catalog.css";
 
@@ -47,6 +48,13 @@ const REVIEWS = [
     { value: "1", label: "1+" },
     { value: "5", label: "5+" },
     { value: "10", label: "10+" }
+];
+
+const BRAND_OPTIONS = [{ value: "", label: "All brands" }, ...BRANDS.map((b) => ({ value: b, label: b }))];
+const CATEGORY_OPTIONS = [{ value: "", label: "All categories" }, ...CATEGORIES];
+const CASE_SIZE_OPTIONS = [
+    { value: "", label: "Any size" },
+    ...CASE_SIZES.map((size) => ({ value: String(size), label: `${size} mm` }))
 ];
 
 function Chips({ options, value, onChange }) {
@@ -227,14 +235,12 @@ function CatalogPage() {
 
                     <div className="cat-field">
                         <label htmlFor="cat-brand">Brand</label>
-                        <select id="cat-brand" value={brand} onChange={(e) => change(setBrand)(e.target.value)}>
-                            <option value="">All brands</option>
-                            {BRANDS.map((b) => (
-                                <option key={b} value={b}>
-                                    {b}
-                                </option>
-                            ))}
-                        </select>
+                        <AureoSelect
+                            id="cat-brand"
+                            value={brand}
+                            options={BRAND_OPTIONS}
+                            onChange={(e) => change(setBrand)(e.target.value)}
+                        />
                     </div>
 
                     <div className="cat-field">
@@ -249,34 +255,22 @@ function CatalogPage() {
 
                     <div className="cat-field">
                         <label htmlFor="cat-category">Category</label>
-                        <select
+                        <AureoSelect
                             id="cat-category"
                             value={category}
+                            options={CATEGORY_OPTIONS}
                             onChange={(e) => change(setCategory)(e.target.value)}
-                        >
-                            <option value="">All categories</option>
-                            {CATEGORIES.map((c) => (
-                                <option key={c.value} value={c.value}>
-                                    {c.label}
-                                </option>
-                            ))}
-                        </select>
+                        />
                     </div>
 
                     <div className="cat-field">
                         <label htmlFor="cat-size">Case size</label>
-                        <select
+                        <AureoSelect
                             id="cat-size"
                             value={caseSize}
+                            options={CASE_SIZE_OPTIONS}
                             onChange={(e) => change(setCaseSize)(e.target.value)}
-                        >
-                            <option value="">Any size</option>
-                            {CASE_SIZES.map((size) => (
-                                <option key={size} value={size}>
-                                    {size} mm
-                                </option>
-                            ))}
-                        </select>
+                        />
                     </div>
 
                     <div className="cat-field">

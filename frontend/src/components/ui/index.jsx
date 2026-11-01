@@ -20,6 +20,10 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
 import TextField from "@mui/material/TextField";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import Checkbox from "@mui/material/Checkbox";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -79,6 +83,70 @@ export function AureoTextField({ label, error, helperText, sx, ...rest }) {
             error={Boolean(error)}
             helperText={error || helperText}
             sx={{ marginBottom: "1rem", ...sx }}
+            {...rest}
+        />
+    );
+}
+
+/* Fix 2: the single Select used everywhere a native <select> used to be.
+ * It is a Material UI Select so the gold theme in `aureoTheme.js` applies,
+ * and it accepts the same `value` / `onChange` shape the native element did
+ * (`onChange` receives the DOM event, so `event.target.value` still works). */
+export function AureoSelect({
+    value,
+    onChange,
+    options = [],
+    id,
+    className = "",
+    ariaInvalid = false,
+    error = false,
+    fullWidth = true,
+    ...rest
+}) {
+    return (
+        <FormControl
+            fullWidth={fullWidth}
+            size="small"
+            error={error || ariaInvalid}
+            className={`aureo-select ${className}`.trim()}
+            variant="outlined"
+        >
+            <Select
+                id={id}
+                value={value ?? ""}
+                onChange={onChange}
+                inputProps={{ "aria-invalid": ariaInvalid ? "true" : undefined }}
+                MenuProps={{
+                    disableScrollLock: true,
+                    ...rest.MenuProps
+                }}
+                {...rest}
+            >
+                {options.map((option) => (
+                    <MenuItem key={option.value} value={option.value} className="aureo-select-item">
+                        {option.label}
+                    </MenuItem>
+                ))}
+            </Select>
+        </FormControl>
+    );
+}
+
+/* Fix 3: the single checkbox used everywhere. The custom box/check glyphs
+ * replace the Material icons so the control is a gold rounded square with a
+ * dark checkmark, with no trace of the browser default. */
+export function AureoCheckbox({ className = "", ...rest }) {
+    return (
+        <Checkbox
+            className={`aureo-checkbox ${className}`.trim()}
+            icon={<span className="aureo-checkbox-box" aria-hidden="true" />}
+            checkedIcon={
+                <span className="aureo-checkbox-box aureo-checkbox-box--checked" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                        <path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                    </svg>
+                </span>
+            }
             {...rest}
         />
     );
@@ -260,6 +328,8 @@ export default {
     AureoCard,
     AureoChip,
     AureoTextField,
+    AureoSelect,
+    AureoCheckbox,
     AureoDialog,
     AureoRating,
     AureoStack,

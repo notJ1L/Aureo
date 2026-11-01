@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { toast } from "react-toastify";
 import {
@@ -12,9 +12,21 @@ import { APPRAISAL_CREATE_RESET } from "../redux/constants/appraisalConstants";
 import { appraisalSchema } from "../utils/validationSchemas";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
+import { AureoSelect, AureoCheckbox } from "../components/ui";
 
 const MAX_PHOTOS = 6;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+
+const MOVEMENT_OPTIONS = [
+    { value: "automatic", label: "Automatic" },
+    { value: "manual", label: "Manual" },
+    { value: "quartz", label: "Quartz" }
+];
+
+const CONDITION_OPTIONS = [
+    { value: "second-hand", label: "Second-hand" },
+    { value: "new", label: "New" }
+];
 
 function SellWatchPage() {
     const dispatch = useDispatch();
@@ -29,6 +41,7 @@ function SellWatchPage() {
 
     const {
         register,
+        control,
         handleSubmit,
         formState: { errors }
     } = useForm({
@@ -170,17 +183,18 @@ function SellWatchPage() {
 
             <div className="sell-container">
                 <div className="sell-heading">
-                    <p className="eyebrow">SELL YOUR WATCH</p>
-                    <h1>Request an appraisal</h1>
+                    <p className="eyebrow">CONSIGNMENT &amp; ACQUISITION</p>
+                    <h1>Sell Your Timepiece</h1>
                     <p className="auth-description">
-                        Tell us about the piece you want to sell. Our team reviews every
-                        request and comes back with an offer within two working days.
+                        Tell us about the piece you want to sell. Our specialists appraise
+                        the dial, movement, and provenance, then return a considered offer
+                        within two working days.
                     </p>
                 </div>
 
                 {error && <div className="auth-error">{error}</div>}
 
-                <form onSubmit={handleSubmit(onSubmit)} className="admin-form">
+                <form onSubmit={handleSubmit(onSubmit)} className="admin-form sell-card">
                     <div className="form-row-2">
                         <label>
                             Brand
@@ -205,11 +219,20 @@ function SellWatchPage() {
                     <div className="form-row-3">
                         <label>
                             Movement
-                            <select {...register("movement")} className="catalog-select">
-                                <option value="automatic">Automatic</option>
-                                <option value="manual">Manual</option>
-                                <option value="quartz">Quartz</option>
-                            </select>
+                            <Controller
+                                name="movement"
+                                control={control}
+                                render={({ field }) => (
+                                    <AureoSelect
+                                        id="movement"
+                                        value={field.value}
+                                        options={MOVEMENT_OPTIONS}
+                                        onChange={(e) => field.onChange(e.target.value)}
+                                        onBlur={field.onBlur}
+                                        ariaInvalid={Boolean(errors.movement)}
+                                    />
+                                )}
+                            />
                             {errors.movement && <span className="field-error">{errors.movement.message}</span>}
                         </label>
                         <label>
@@ -227,10 +250,20 @@ function SellWatchPage() {
                     <div className="form-row-2">
                         <label>
                             Condition
-                            <select {...register("condition")} className="catalog-select">
-                                <option value="second-hand">Second-hand</option>
-                                <option value="new">New</option>
-                            </select>
+                            <Controller
+                                name="condition"
+                                control={control}
+                                render={({ field }) => (
+                                    <AureoSelect
+                                        id="condition"
+                                        value={field.value}
+                                        options={CONDITION_OPTIONS}
+                                        onChange={(e) => field.onChange(e.target.value)}
+                                        onBlur={field.onBlur}
+                                        ariaInvalid={Boolean(errors.condition)}
+                                    />
+                                )}
+                            />
                             {errors.condition && <span className="field-error">{errors.condition.message}</span>}
                         </label>
                         <label>
@@ -242,11 +275,11 @@ function SellWatchPage() {
 
                     <div className="form-row-2">
                         <label className="checkbox-label" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                            <input type="checkbox" id="hasBox" />
+                            <AureoCheckbox id="hasBox" />
                             Original box included
                         </label>
                         <label className="checkbox-label" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                            <input type="checkbox" id="hasPapers" />
+                            <AureoCheckbox id="hasPapers" />
                             Original papers included
                         </label>
                     </div>

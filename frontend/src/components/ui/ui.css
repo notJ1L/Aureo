@@ -429,3 +429,64 @@
     border-color: var(--danger);
     color: var(--danger-text);
 }
+
+/* -------------------------------------------------------------------------- */
+/* Select (Fix 2)                                                             */
+/* -------------------------------------------------------------------------- */
+
+/* Material UI draws the field on an OutlinedInput, so the border, radius and
+ * glow come from the theme. Only the sizing that has to match the native
+ * inputs is set here. */
+.aureo-select .MuiOutlinedInput-root {
+    border-radius: 8px;
+    min-height: 42px;
+}
+
+.aureo-select .MuiOutlinedInput-root.Mui-focused {
+    box-shadow: var(--focus-ring);
+}
+
+.aureo-select .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+    border-color: var(--danger);
+}
+
+/* Material UI renders a hidden native input for the non-native Select. The
+ * global form-control rule must not touch it. */
+input.MuiSelect-nativeInput {
+    background: transparent !important;
+    border: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Checkbox (Fix 3)                                                           */
+/* -------------------------------------------------------------------------- */
+
+.aureo-checkbox {
+    padding: 4px !important;
+}
+
+.aureo-checkbox-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1px solid rgba(201, 164, 92, 0.4);
+    background: var(--bg-elevated);
+    transition: background 160ms ease, border-color 160ms ease;
+}
+
+.aureo-checkbox-box--checked {
+    background: var(--gold);
+    border-color: var(--gold);
+}
+
+.aureo-checkbox-box--checked svg {
+    width: 14px;
+    height: 14px;
+    fill: #0b0c10;
+}
+

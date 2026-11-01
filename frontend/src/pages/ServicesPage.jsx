@@ -10,6 +10,7 @@ import { ticketSchema } from "../utils/validationSchemas";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
 import { WatchCardSkeleton } from "../components/ui/Skeleton";
+import { AureoSelect } from "../components/ui";
 
 const formatPrice = (price) =>
     new Intl.NumberFormat("en-PH", {
@@ -136,6 +137,7 @@ function ServicesPage() {
                 )}
 
                 <section className="ticket-section" id="ticket-form" style={{ marginTop: "3.5rem" }}>
+                    <p className="eyebrow">ATELIER SUPPORT</p>
                     <h2>Open a support ticket</h2>
                     <p className="auth-description">
                         Tell us what is wrong with the watch and our horology atelier will inspect it.
@@ -155,26 +157,25 @@ function ServicesPage() {
                             ⚠ <strong>Verification Required:</strong> Please verify your email before opening a support ticket.
                         </div>
                     ) : (
-                        <form onSubmit={handleSubmit(onSubmit)} className="admin-form">
+                        <form onSubmit={handleSubmit(onSubmit)} className="admin-form sell-card">
                             <label>
                                 Service
-                                <select
-                                    {...register("service")}
-                                    className="catalog-select"
+                                <AureoSelect
+                                    id="ticket-service"
                                     value={selectedServiceId}
                                     onChange={(e) => {
                                         setSelectedServiceId(e.target.value);
                                         setValue("service", e.target.value, { shouldValidate: true });
                                     }}
-                                    aria-invalid={Boolean(errors.service)}
-                                >
-                                    <option value="">Choose a service</option>
-                                    {services.map((service) => (
-                                        <option key={service._id} value={service._id}>
-                                            {service.name} ({formatPrice(service.price)})
-                                        </option>
-                                    ))}
-                                </select>
+                                    options={[
+                                        { value: "", label: "Choose a service" },
+                                        ...services.map((service) => ({
+                                            value: service._id,
+                                            label: `${service.name} (${formatPrice(service.price)})`
+                                        }))
+                                    ]}
+                                    ariaInvalid={Boolean(errors.service)}
+                                />
                                 {errors.service && <span className="field-error">{errors.service.message}</span>}
                             </label>
 

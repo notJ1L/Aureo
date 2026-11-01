@@ -124,27 +124,27 @@ function ProductDetailPage() {
                 <div className="pdp-grid">
                     {/* Gallery */}
                     <div className="pdp-gallery">
-                        <div className="pdp-gallery__main">
+                        <div className="pdp-frame">
                             {images[selectedImage]?.url ? (
                                 <img
                                     src={images[selectedImage].url}
                                     alt={`${product.name} main view`}
-                                    className="pdp-gallery__img"
+                                    className="pdp-main-photo"
                                 />
                             ) : (
-                                <div className="pdp-gallery__empty">No photograph available</div>
+                                <div className="pdp-placeholder">No photograph available</div>
                             )}
                         </div>
 
                         {images.length > 1 && (
-                            <div className="pdp-gallery__thumbs" role="tablist">
+                            <div className="pdp-thumbs" role="tablist">
                                 {images.map((img, idx) => (
                                     <button
                                         key={img.public_id || idx}
                                         type="button"
                                         role="tab"
                                         aria-selected={idx === selectedImage}
-                                        className={`pdp-gallery__thumb ${idx === selectedImage ? "is-active" : ""}`}
+                                        className={`pdp-thumb ${idx === selectedImage ? "is-active" : ""}`}
                                         onClick={() => setSelectedImage(idx)}
                                     >
                                         <img src={img.url} alt={`Thumbnail ${idx + 1}`} />

@@ -8,7 +8,7 @@ import {
     deleteAdminOrder
 } from "../../redux/actions/orderActions";
 import { confirmAction } from "../../utils/sweetAlert";
-import { StatusBadge } from "../../components/ui";
+import { StatusBadge, AureoSelect } from "../../components/ui";
 import AdminHeader from "../../components/layout/AdminHeader";
 
 // FR 4.2: the order status flow. A completed order can never move back.
@@ -99,17 +99,19 @@ function AdminOrdersPage() {
                         <p className="eyebrow">TRANSACTION CONTROL</p>
                         <h1>Orders &amp; Status Flow</h1>
                     </div>
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="catalog-select"
-                        style={{ maxWidth: "220px" }}
-                    >
-                        <option value="">All statuses</option>
-                        {Object.keys(ORDER_STATUS_FLOW).map((status) => (
-                            <option key={status} value={status}>{status}</option>
-                        ))}
-                    </select>
+                    <div style={{ width: "220px" }}>
+                        <AureoSelect
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            options={[
+                                { value: "", label: "All statuses" },
+                                ...Object.keys(ORDER_STATUS_FLOW).map((status) => ({
+                                    value: status,
+                                    label: status
+                                }))
+                            ]}
+                        />
+                    </div>
                 </div>
 
                 {error && <div className="auth-error">{error}</div>}

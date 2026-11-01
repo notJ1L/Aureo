@@ -9,6 +9,7 @@ import {
 import { ADMIN_TICKET_STATUS_RESET } from "../../redux/constants/serviceConstants";
 import { confirmAction } from "../../utils/sweetAlert";
 import AdminHeader from "../../components/layout/AdminHeader";
+import { AureoSelect } from "../../components/ui";
 
 // FR 5.3: the ticket state tracking.
 const TICKET_STATUS_FLOW = {
@@ -75,17 +76,19 @@ function AdminTicketsPage() {
                         <p className="eyebrow">SUPPORT DESK</p>
                         <h1>Service Tickets</h1>
                     </div>
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="catalog-select"
-                        style={{ maxWidth: "240px" }}
-                    >
-                        <option value="">All statuses</option>
-                        {Object.keys(TICKET_STATUS_FLOW).map((status) => (
-                            <option key={status} value={status}>{status}</option>
-                        ))}
-                    </select>
+                    <div style={{ width: "240px" }}>
+                        <AureoSelect
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            options={[
+                                { value: "", label: "All statuses" },
+                                ...Object.keys(TICKET_STATUS_FLOW).map((status) => ({
+                                    value: status,
+                                    label: status
+                                }))
+                            ]}
+                        />
+                    </div>
                 </div>
 
                 {error && <div className="auth-error">{error}</div>}

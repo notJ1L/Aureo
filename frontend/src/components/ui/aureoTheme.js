@@ -21,8 +21,8 @@ export const aureoTheme = createTheme({
             main: "#b8b2a6"
         },
         background: {
-            default: "#0f1115",
-            paper: "#171a20"
+            default: "#0b0b0c",
+            paper: "#141416"
         },
         text: {
             primary: "#f4efe6",
@@ -97,9 +97,9 @@ export const aureoTheme = createTheme({
         MuiOutlinedInput: {
             styleOverrides: {
                 root: {
-                    backgroundColor: "#1f232b",
+                    backgroundColor: "#141416",
                     "& fieldset": {
-                        borderColor: "#2a2d33"
+                        borderColor: "rgba(201, 164, 92, 0.3)"
                     },
                     "&:hover fieldset": {
                         borderColor: gold
@@ -111,6 +111,84 @@ export const aureoTheme = createTheme({
                 },
                 input: {
                     color: "#f4efe6"
+                }
+            }
+        },
+        /* Fix 2: one gold-themed Select for every dropdown in the app. The
+         * theme-level overrides mean no component has to pass an sx prop. */
+        MuiSelect: {
+            defaultProps: {
+                size: "small"
+            },
+            styleOverrides: {
+                root: {
+                    backgroundColor: "transparent"
+                },
+                select: {
+                    color: "#f4efe6",
+                    fontSize: "0.92rem",
+                    padding: "0.5rem 0.8rem",
+                    paddingRight: "34px",
+                    boxSizing: "border-box"
+                },
+                icon: {
+                    color: gold,
+                    right: 8
+                }
+            }
+        },
+        MuiPopover: {
+            styleOverrides: {
+                paper: {
+                    backgroundColor: "#1a1a1a",
+                    backgroundImage: "none",
+                    border: "1px solid rgba(201, 164, 92, 0.3)",
+                    borderRadius: 8,
+                    boxShadow: "0 18px 44px rgba(0, 0, 0, 0.75)"
+                }
+            }
+        },
+        MuiMenu: {
+            styleOverrides: {
+                list: {
+                    backgroundColor: "#1a1a1a",
+                    padding: 6
+                },
+                paper: {
+                    backgroundColor: "#1a1a1a",
+                    backgroundImage: "none",
+                    border: "1px solid rgba(201, 164, 92, 0.3)"
+                }
+            }
+        },
+        MuiMenuItem: {
+            styleOverrides: {
+                root: {
+                    color: "#f4efe6",
+                    fontSize: "0.88rem",
+                    borderRadius: 6,
+                    "&:hover": {
+                        backgroundColor: "rgba(201, 164, 92, 0.1)"
+                    },
+                    "&.Mui-selected": {
+                        backgroundColor: "rgba(201, 164, 92, 0.15)",
+                        color: gold,
+                        "&:hover": {
+                            backgroundColor: "rgba(201, 164, 92, 0.22)"
+                        }
+                    }
+                }
+            }
+        },
+        /* Fix 3: no browser-blue checkbox anywhere. */
+        MuiCheckbox: {
+            styleOverrides: {
+                root: {
+                    color: "rgba(201, 164, 92, 0.4)",
+                    padding: 4,
+                    "&.Mui-checked": {
+                        color: gold
+                    }
                 }
             }
         },
