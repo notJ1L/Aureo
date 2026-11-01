@@ -31,6 +31,7 @@ const AdminAppraisalsPage = lazy(() => import("./pages/admin/AdminAppraisalsPage
 const AdminServicesPage = lazy(() => import("./pages/admin/AdminServicesPage"));
 const AdminTicketsPage = lazy(() => import("./pages/admin/AdminTicketsPage"));
 const AdminDashboardPage = lazy(() => import("./pages/admin/AdminDashboardPage"));
+const AdminUsersPage = lazy(() => import("./pages/admin/AdminUsersPage"));
 
 function RouteFallback() {
     return <div className="route-fallback">Loading the vault...</div>;
@@ -663,6 +664,14 @@ function App() {
                     element={
                         <AdminRoute>
                             <AdminTicketsPage />
+                        </AdminRoute>
+                    }
+                />
+                <Route
+                    path="/admin/users"
+                    element={
+                        <AdminRoute>
+                            <AdminUsersPage />
                         </AdminRoute>
                     }
                 />

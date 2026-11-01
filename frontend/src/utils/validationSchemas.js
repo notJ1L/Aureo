@@ -167,6 +167,16 @@ export const serviceSchema = Yup.object({
         .required("Price is required")
 });
 
+export const adminUserSchema = Yup.object({
+    name: requiredText("Full name", { min: 2, max: 100 }),
+    email: emailField,
+    role: Yup.string().oneOf(["user", "admin"]).required("Role is required"),
+    contactNumber: Yup.string().trim().default(""),
+    address: Yup.string().trim().default(""),
+    isVerified: Yup.boolean().default(true),
+    password: Yup.string().nullable().default("")
+});
+
 export const schemas = {
     login: loginSchema,
     register: registerSchema,
@@ -177,7 +187,8 @@ export const schemas = {
     checkout: checkoutSchema,
     appraisal: appraisalSchema,
     ticket: ticketSchema,
-    service: serviceSchema
+    service: serviceSchema,
+    adminUser: adminUserSchema
 };
 
 export default schemas;

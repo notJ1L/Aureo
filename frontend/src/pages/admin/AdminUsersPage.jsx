@@ -1,0 +1,850 @@
+import { useEffect, useState, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { toast } from "react-toastify";
+import {
+    getAdminUsers,
+    createUser,
+    updateUser,
+    deleteUser,
+    bulkDeleteUsers,
+    clearErrors
+} from "../../redux/actions/userActions";
+import {
+    USER_CREATE_RESET,
+    USER_UPDATE_RESET,
+    USER_DELETE_RESET,
+    USER_BULK_DELETE_RESET
+} from "../../redux/constants/userConstants";
+import { adminUserSchema } from "../../utils/validationSchemas";
+import { confirmAction } from "../../utils/sweetAlert";
+import AdminHeader from "../../components/layout/AdminHeader";
+import { AureoCheckbox } from "../../components/ui";
+import {
+    IconUser,
+    IconBag,
+    IconShield,
+    IconSparkle
+} from "../../components/layout/icons";
+
+const EMPTY_FORM = {
+    name: "",
+    email: "",
+    role: "user",
+    contactNumber: "",
+    address: "",
+    isVerified: true,
+    password: ""
+};
+
+export default function AdminUsersPage() {
+    const dispatch = useDispatch();
+
+    const { user: currentUser } = useSelector((state) => state.auth);
+    const { users, loading, error } = useSelector((state) => state.adminUsers);
+    const {
+        loading: mutationLoading,
+        success,
+        isUpdated,
+        isDeleted,
+        isBulkDeleted,
+        error: mutationError
+    } = useSelector((state) => state.userMutation);
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState(null);
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [activeTab, setActiveTab] = useState("all");
+
+    const {
+        register,
+        handleSubmit,
+        reset,
+        setValue,
+        watch,
+        formState: { errors }
+    } = useForm({
+        resolver: yupResolver(adminUserSchema),
+        mode: "onBlur",
+        defaultValues: EMPTY_FORM
+    });
+
+    const isVerifiedWatch = watch("isVerified");
+
+    useEffect(() => {
+        dispatch(getAdminUsers());
+    }, [dispatch]);
+
+    const mutationKey = success
+        ? "create"
+        : isUpdated
+          ? "update"
+          : isDeleted
+            ? "delete"
+            : isBulkDeleted
+              ? "bulk"
+              : null;
+
+    const [handledMutation, setHandledMutation] = useState(null);
+
+    if (mutationKey && mutationKey !== handledMutation) {
+        setHandledMutation(mutationKey);
+
+        if (mutationKey === "create" || mutationKey === "update") {
+            setIsModalOpen(false);
+            reset(EMPTY_FORM);
+            setEditingUser(null);
+        }
+
+        if (mutationKey === "bulk") {
+            setSelectedIds([]);
+        }
+    } else if (!mutationKey && handledMutation) {
+        setHandledMutation(null);
+    }
+
+    useEffect(() => {
+        if (!mutationKey) return;
+
+        if (mutationKey === "create") {
+            toast.success("User account created successfully");
+            dispatch({ type: USER_CREATE_RESET });
+        } else if (mutationKey === "update") {
+            toast.success("User account updated successfully");
+            dispatch({ type: USER_UPDATE_RESET });
+        } else if (mutationKey === "delete") {
+            toast.success("User deleted successfully");
+            dispatch({ type: USER_DELETE_RESET });
+        } else if (mutationKey === "bulk") {
+            toast.success("Selected users deleted successfully");
+            dispatch({ type: USER_BULK_DELETE_RESET });
+        }
+
+        dispatch(getAdminUsers());
+    }, [mutationKey, dispatch]);
+
+    useEffect(() => {
+        if (error) {
+            toast.error(error);
+            dispatch(clearErrors());
+        }
+        if (mutationError) {
+            toast.error(mutationError);
+            dispatch(clearErrors());
+        }
+    }, [error, mutationError, dispatch]);
+
+    // Summary counts
+    const counts = useMemo(() => {
+        const list = users || [];
+        return {
+            total: list.length,
+            clients: list.filter((u) => u.role === "user").length,
+            admins: list.filter((u) => u.role === "admin").length,
+            verified: list.filter((u) => u.isVerified).length,
+            unverified: list.filter((u) => !u.isVerified).length
+        };
+    }, [users]);
+
+    // Filter & search
+    const filteredUsers = useMemo(() => {
+        let list = users || [];
+
+        if (activeTab === "clients") {
+            list = list.filter((u) => u.role === "user");
+        } else if (activeTab === "admins") {
+            list = list.filter((u) => u.role === "admin");
+        } else if (activeTab === "verified") {
+            list = list.filter((u) => u.isVerified);
+        } else if (activeTab === "unverified") {
+            list = list.filter((u) => !u.isVerified);
+        }
+
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase().trim();
+            list = list.filter(
+                (u) =>
+                    u.name?.toLowerCase().includes(q) ||
+                    u.email?.toLowerCase().includes(q) ||
+                    u.contactNumber?.toLowerCase().includes(q) ||
+                    u.address?.toLowerCase().includes(q)
+            );
+        }
+
+        return list;
+    }, [users, activeTab, searchQuery]);
+
+    const handleOpenCreate = () => {
+        setEditingUser(null);
+        reset(EMPTY_FORM);
+        setIsModalOpen(true);
+    };
+
+    const handleOpenEdit = (targetUser) => {
+        setEditingUser(targetUser);
+        reset({
+            name: targetUser.name || "",
+            email: targetUser.email || "",
+            role: targetUser.role || "user",
+            contactNumber: targetUser.contactNumber || "",
+            address: targetUser.address || "",
+            isVerified: Boolean(targetUser.isVerified),
+            password: ""
+        });
+        setIsModalOpen(true);
+    };
+
+    const onSubmit = (formData) => {
+        const payload = { ...formData };
+        if (!payload.password) {
+            delete payload.password;
+        }
+
+        if (editingUser) {
+            dispatch(updateUser(editingUser._id, payload));
+        } else {
+            dispatch(createUser(payload));
+        }
+    };
+
+    const handleDelete = async (targetUser) => {
+        if (targetUser._id === currentUser?._id) {
+            toast.warn("You cannot delete your own administrator account.");
+            return;
+        }
+
+        const confirmed = await confirmAction({
+            title: `Delete user "${targetUser.name}"?`,
+            message: `This will permanently remove the account (${targetUser.email}). This action cannot be reversed.`,
+            confirmText: "Delete Account",
+            danger: true
+        });
+
+        if (confirmed) {
+            dispatch(deleteUser(targetUser._id));
+        }
+    };
+
+    const handleToggleRole = async (targetUser) => {
+        if (targetUser._id === currentUser?._id) {
+            toast.warn("You cannot alter your own administrator role.");
+            return;
+        }
+
+        const newRole = targetUser.role === "admin" ? "user" : "admin";
+        const roleLabel = newRole === "admin" ? "Administrator" : "Client";
+
+        const confirmed = await confirmAction({
+            title: `Change role to ${roleLabel}?`,
+            message: `Update permissions for "${targetUser.name}" (${targetUser.email}) to ${roleLabel}.`,
+            confirmText: `Promote / Demote to ${roleLabel}`,
+            danger: newRole === "user"
+        });
+
+        if (confirmed) {
+            dispatch(updateUser(targetUser._id, { role: newRole }));
+        }
+    };
+
+    const isSelected = (id) => selectedIds.includes(id);
+
+    const handleToggleSelect = (id) => {
+        if (id === currentUser?._id) return; // Prevent self-select for bulk deletion
+        setSelectedIds((prev) =>
+            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+        );
+    };
+
+    const handleSelectAll = () => {
+        const selectable = filteredUsers
+            .filter((u) => u._id !== currentUser?._id)
+            .map((u) => u._id);
+
+        const allSelected = selectable.length > 0 && selectable.every((id) => selectedIds.includes(id));
+        setSelectedIds(allSelected ? [] : selectable);
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedIds.length === 0) {
+            toast.warn("Select at least one user first.");
+            return;
+        }
+
+        const confirmed = await confirmAction({
+            title: `Delete ${selectedIds.length} selected user(s)?`,
+            message: "All selected accounts will be permanently removed. This action cannot be undone.",
+            confirmText: "Delete Accounts",
+            danger: true
+        });
+
+        if (confirmed) {
+            dispatch(bulkDeleteUsers(selectedIds));
+        }
+    };
+
+    const formatDate = (dateStr) => {
+        if (!dateStr) return "—";
+        return new Date(dateStr).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric"
+        });
+    };
+
+    return (
+        <main className="admin-page page-enter">
+            <AdminHeader />
+
+            <div className="admin-container">
+                {/* Title & Action Bar */}
+                <div className="admin-page-title-row">
+                    <div>
+                        <p className="eyebrow">ACCESS & PRIVILEGES</p>
+                        <h1>User Directory</h1>
+                    </div>
+                    <button type="button" className="gold-button" onClick={handleOpenCreate}>
+                        + Add User
+                    </button>
+                </div>
+
+                {/* Metric Summary Cards */}
+                <div className="vault-metrics-grid" style={{ marginBottom: "2rem" }}>
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Total Registered</span>
+                            <div className="vault-metric-icon"><IconUser /></div>
+                        </div>
+                        <div className="vault-metric-val">{counts.total}</div>
+                        <span className="vault-metric-hint">All authenticated accounts</span>
+                    </article>
+
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Client Accounts</span>
+                            <div className="vault-metric-icon"><IconBag /></div>
+                        </div>
+                        <div className="vault-metric-val">{counts.clients}</div>
+                        <span className="vault-metric-hint">Standard purchasing collectors</span>
+                    </article>
+
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Administrators</span>
+                            <div className="vault-metric-icon"><IconShield /></div>
+                        </div>
+                        <div className="vault-metric-val" style={{ color: "var(--gold)" }}>{counts.admins}</div>
+                        <span className="vault-metric-hint">Full vault HQ management access</span>
+                    </article>
+
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Verified Accounts</span>
+                            <div className="vault-metric-icon"><IconSparkle /></div>
+                        </div>
+                        <div className="vault-metric-val" style={{ color: "#4ade80" }}>{counts.verified}</div>
+                        <span className="vault-metric-hint">Email & security confirmed</span>
+                    </article>
+                </div>
+
+                {/* Filter Tabs & Search Row */}
+                <div
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        flexWrap: "wrap",
+                        gap: "1rem",
+                        marginBottom: "1.5rem"
+                    }}
+                >
+                    <div className="admin-status-tabs" style={{ marginBottom: 0 }}>
+                        <button
+                            type="button"
+                            className={`admin-tab-btn ${activeTab === "all" ? "is-active" : ""}`}
+                            onClick={() => setActiveTab("all")}
+                        >
+                            All Users <span className="admin-tab-count">{counts.total}</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`admin-tab-btn ${activeTab === "clients" ? "is-active" : ""}`}
+                            onClick={() => setActiveTab("clients")}
+                        >
+                            Clients <span className="admin-tab-count">{counts.clients}</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`admin-tab-btn ${activeTab === "admins" ? "is-active" : ""}`}
+                            onClick={() => setActiveTab("admins")}
+                        >
+                            Admins <span className="admin-tab-count">{counts.admins}</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`admin-tab-btn ${activeTab === "verified" ? "is-active" : ""}`}
+                            onClick={() => setActiveTab("verified")}
+                        >
+                            Verified <span className="admin-tab-count">{counts.verified}</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`admin-tab-btn ${activeTab === "unverified" ? "is-active" : ""}`}
+                            onClick={() => setActiveTab("unverified")}
+                        >
+                            Pending <span className="admin-tab-count">{counts.unverified}</span>
+                        </button>
+                    </div>
+
+                    <div style={{ position: "relative", minWidth: "260px" }}>
+                        <input
+                            type="text"
+                            placeholder="Search by name, email, phone..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            style={{
+                                width: "100%",
+                                padding: "0.6rem 1rem",
+                                background: "var(--bg-elevated)",
+                                border: "1px solid var(--border)",
+                                borderRadius: "6px",
+                                color: "var(--ivory)",
+                                fontSize: "0.85rem"
+                            }}
+                        />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchQuery("")}
+                                style={{
+                                    position: "absolute",
+                                    right: "0.8rem",
+                                    top: "50%",
+                                    transform: "translateY(-50%)",
+                                    background: "none",
+                                    border: "none",
+                                    color: "var(--text-muted)",
+                                    cursor: "pointer"
+                                }}
+                            >
+                                ×
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Bulk Action Bar */}
+                {selectedIds.length > 0 && (
+                    <div className="admin-bulk-bar" style={{ marginBottom: "1rem" }}>
+                        <span>{selectedIds.length} user(s) selected</span>
+                        <button type="button" className="admin-btn del-btn" onClick={handleBulkDelete}>
+                            Delete Selected
+                        </button>
+                    </div>
+                )}
+
+                {/* Users Table */}
+                {loading ? (
+                    <div
+                        style={{
+                            height: "300px",
+                            borderRadius: "8px",
+                            background: "var(--bg-elevated)",
+                            border: "1px solid var(--border)",
+                            animation: "aureoPulseGold 2s infinite"
+                        }}
+                    />
+                ) : filteredUsers.length === 0 ? (
+                    <div
+                        style={{
+                            padding: "4rem 2rem",
+                            textAlign: "center",
+                            background: "var(--bg-card)",
+                            border: "1px solid var(--border)",
+                            borderRadius: "8px"
+                        }}
+                    >
+                        <p style={{ color: "var(--text-muted)", marginBottom: "1rem" }}>
+                            {searchQuery ? "No users matching your search." : "No users found in this filter."}
+                        </p>
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                className="admin-btn edit-btn"
+                                onClick={() => setSearchQuery("")}
+                            >
+                                Clear Search
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    <div className="admin-table-wrap">
+                        <table className="admin-table">
+                            <thead>
+                                <tr>
+                                    <th style={{ width: "40px" }}>
+                                        <AureoCheckbox
+                                            checked={
+                                                filteredUsers.filter((u) => u._id !== currentUser?._id).length > 0 &&
+                                                filteredUsers
+                                                    .filter((u) => u._id !== currentUser?._id)
+                                                    .every((u) => selectedIds.includes(u._id))
+                                            }
+                                            onChange={handleSelectAll}
+                                        />
+                                    </th>
+                                    <th>User</th>
+                                    <th>Email & Contact</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Provider</th>
+                                    <th>Joined</th>
+                                    <th style={{ textAlign: "right" }}>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredUsers.map((targetUser) => {
+                                    const isSelf = targetUser._id === currentUser?._id;
+                                    const isAdmin = targetUser.role === "admin";
+
+                                    return (
+                                        <tr key={targetUser._id}>
+                                            <td>
+                                                <AureoCheckbox
+                                                    checked={isSelected(targetUser._id)}
+                                                    onChange={() => handleToggleSelect(targetUser._id)}
+                                                    disabled={isSelf}
+                                                />
+                                            </td>
+                                            <td>
+                                                <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
+                                                    {targetUser.avatar?.url ? (
+                                                        <img
+                                                            src={targetUser.avatar.url}
+                                                            alt={targetUser.name}
+                                                            style={{
+                                                                width: "36px",
+                                                                height: "36px",
+                                                                borderRadius: "50%",
+                                                                objectFit: "cover",
+                                                                border: "1px solid var(--border-gold)"
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <div
+                                                            style={{
+                                                                width: "36px",
+                                                                height: "36px",
+                                                                borderRadius: "50%",
+                                                                background: isAdmin ? "var(--gold-dim)" : "var(--bg-elevated)",
+                                                                color: isAdmin ? "var(--gold)" : "var(--ivory)",
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                                fontWeight: 600,
+                                                                fontSize: "0.85rem",
+                                                                border: isAdmin ? "1px solid var(--gold)" : "1px solid var(--border)"
+                                                            }}
+                                                        >
+                                                            {targetUser.name?.[0]?.toUpperCase() || "U"}
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <div style={{ fontWeight: 600, color: "var(--ivory)" }}>
+                                                            {targetUser.name}
+                                                            {isSelf && (
+                                                                <span
+                                                                    style={{
+                                                                        marginLeft: "0.5rem",
+                                                                        fontSize: "0.7rem",
+                                                                        padding: "0.15rem 0.4rem",
+                                                                        borderRadius: "4px",
+                                                                        background: "var(--gold-dim)",
+                                                                        color: "var(--gold)"
+                                                                    }}
+                                                                >
+                                                                    YOU
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {targetUser.address && (
+                                                            <div
+                                                                style={{
+                                                                    fontSize: "0.75rem",
+                                                                    color: "var(--text-muted)",
+                                                                    maxWidth: "200px",
+                                                                    whiteSpace: "nowrap",
+                                                                    overflow: "hidden",
+                                                                    textOverflow: "ellipsis"
+                                                                }}
+                                                            >
+                                                                {targetUser.address}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style={{ color: "var(--ivory)", fontSize: "0.85rem" }}>
+                                                    {targetUser.email}
+                                                </div>
+                                                {targetUser.contactNumber && (
+                                                    <div style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
+                                                        {targetUser.contactNumber}
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td>
+                                                <span
+                                                    style={{
+                                                        display: "inline-block",
+                                                        padding: "0.25rem 0.65rem",
+                                                        borderRadius: "4px",
+                                                        fontSize: "0.75rem",
+                                                        fontWeight: 600,
+                                                        letterSpacing: "0.05em",
+                                                        textTransform: "uppercase",
+                                                        background: isAdmin ? "rgba(212, 175, 55, 0.15)" : "rgba(255, 255, 255, 0.06)",
+                                                        color: isAdmin ? "var(--gold)" : "var(--text-muted)",
+                                                        border: isAdmin ? "1px solid rgba(212, 175, 55, 0.4)" : "1px solid var(--border)"
+                                                    }}
+                                                >
+                                                    {isAdmin ? "Admin" : "Client"}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span
+                                                    style={{
+                                                        display: "inline-block",
+                                                        padding: "0.2rem 0.55rem",
+                                                        borderRadius: "4px",
+                                                        fontSize: "0.75rem",
+                                                        fontWeight: 500,
+                                                        background: targetUser.isVerified
+                                                            ? "rgba(34, 197, 94, 0.15)"
+                                                            : "rgba(245, 158, 11, 0.15)",
+                                                        color: targetUser.isVerified
+                                                            ? "#4ade80"
+                                                            : "#fbbf24",
+                                                        border: targetUser.isVerified
+                                                            ? "1px solid rgba(34, 197, 94, 0.3)"
+                                                            : "1px solid rgba(245, 158, 11, 0.3)"
+                                                    }}
+                                                >
+                                                    {targetUser.isVerified ? "Verified" : "Pending"}
+                                                </span>
+                                            </td>
+                                            <td style={{ textTransform: "capitalize", color: "var(--text-muted)", fontSize: "0.8rem" }}>
+                                                {targetUser.authSource || "local"}
+                                            </td>
+                                            <td style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
+                                                {formatDate(targetUser.createdAt)}
+                                            </td>
+                                            <td style={{ textAlign: "right" }}>
+                                                <div style={{ display: "inline-flex", gap: "0.5rem", alignItems: "center" }}>
+                                                    <button
+                                                        type="button"
+                                                        className="admin-btn edit-btn"
+                                                        onClick={() => handleOpenEdit(targetUser)}
+                                                        title="Edit User Details"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="admin-btn"
+                                                        style={{
+                                                            background: "transparent",
+                                                            border: "1px solid var(--border)",
+                                                            color: isAdmin ? "var(--text-muted)" : "var(--gold)"
+                                                        }}
+                                                        onClick={() => handleToggleRole(targetUser)}
+                                                        disabled={isSelf}
+                                                        title={isAdmin ? "Demote to Client" : "Promote to Admin"}
+                                                    >
+                                                        {isAdmin ? "Demote" : "Promote"}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="admin-btn del-btn"
+                                                        onClick={() => handleDelete(targetUser)}
+                                                        disabled={isSelf}
+                                                        title={isSelf ? "You cannot delete your own account" : "Delete User"}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            {/* Create / Edit User Modal */}
+            {isModalOpen && (
+                <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}>
+                    <div
+                        className="modal-card"
+                        style={{ maxWidth: "560px" }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="modal-head">
+                            <div>
+                                <p className="eyebrow" style={{ margin: 0 }}>
+                                    {editingUser ? "MODIFY ACCOUNT" : "NEW REGISTRATION"}
+                                </p>
+                                <h2 style={{ fontFamily: "Cinzel, serif", fontSize: "1.4rem", margin: "0.2rem 0 0" }}>
+                                    {editingUser ? "Edit User Account" : "Create New User"}
+                                </h2>
+                            </div>
+                            <button
+                                type="button"
+                                className="modal-close"
+                                onClick={() => setIsModalOpen(false)}
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmit(onSubmit)} className="admin-form" style={{ marginTop: "1.5rem" }}>
+                            {/* Full Name */}
+                            <div className="admin-field">
+                                <label>Full Name *</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Eleanor Vance"
+                                    {...register("name")}
+                                />
+                                {errors.name && <span className="auth-field-error">{errors.name.message}</span>}
+                            </div>
+
+                            {/* Email */}
+                            <div className="admin-field">
+                                <label>Email Address *</label>
+                                <input
+                                    type="email"
+                                    placeholder="client@aureo.com"
+                                    {...register("email")}
+                                />
+                                {errors.email && <span className="auth-field-error">{errors.email.message}</span>}
+                            </div>
+
+                            {/* Two-column: Role & Status */}
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                                <div className="admin-field">
+                                    <label>Role</label>
+                                    <select {...register("role")} style={{ width: "100%", padding: "0.6rem", background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "var(--ivory)", borderRadius: "6px" }}>
+                                        <option value="user">Client</option>
+                                        <option value="admin">Administrator</option>
+                                    </select>
+                                    {errors.role && <span className="auth-field-error">{errors.role.message}</span>}
+                                </div>
+
+                                <div className="admin-field">
+                                    <label>Account Status</label>
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: "0.6rem",
+                                            padding: "0.6rem 0.8rem",
+                                            background: "var(--bg-elevated)",
+                                            border: "1px solid var(--border)",
+                                            borderRadius: "6px",
+                                            cursor: "pointer"
+                                        }}
+                                        onClick={() => setValue("isVerified", !isVerifiedWatch)}
+                                    >
+                                        <AureoCheckbox
+                                            checked={isVerifiedWatch}
+                                            onChange={(e) => setValue("isVerified", e.target.checked)}
+                                        />
+                                        <span style={{ fontSize: "0.85rem", color: "var(--ivory)" }}>
+                                            {isVerifiedWatch ? "Verified (Active)" : "Pending Verification"}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Contact Number */}
+                            <div className="admin-field">
+                                <label>Contact Number (Optional)</label>
+                                <input
+                                    type="text"
+                                    placeholder="+63 912 345 6789"
+                                    {...register("contactNumber")}
+                                />
+                                {errors.contactNumber && (
+                                    <span className="auth-field-error">{errors.contactNumber.message}</span>
+                                )}
+                            </div>
+
+                            {/* Address */}
+                            <div className="admin-field">
+                                <label>Delivery / Billing Address (Optional)</label>
+                                <input
+                                    type="text"
+                                    placeholder="Unit 12B, Luxury Tower, Makati City"
+                                    {...register("address")}
+                                />
+                                {errors.address && (
+                                    <span className="auth-field-error">{errors.address.message}</span>
+                                )}
+                            </div>
+
+                            {/* Password */}
+                            <div className="admin-field">
+                                <label>
+                                    {editingUser ? "Reset Password (Leave blank to keep current)" : "Password"}
+                                </label>
+                                <input
+                                    type="password"
+                                    placeholder={editingUser ? "••••••••" : "Default: AureoPass123!"}
+                                    {...register("password")}
+                                />
+                                {errors.password && (
+                                    <span className="auth-field-error">{errors.password.message}</span>
+                                )}
+                            </div>
+
+                            {/* Modal Actions */}
+                            <div
+                                style={{
+                                    display: "flex",
+                                    justifyContent: "flex-end",
+                                    gap: "0.8rem",
+                                    marginTop: "1.5rem"
+                                }}
+                            >
+                                <button
+                                    type="button"
+                                    className="admin-btn"
+                                    onClick={() => setIsModalOpen(false)}
+                                    disabled={mutationLoading}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="gold-button"
+                                    disabled={mutationLoading}
+                                >
+                                    {mutationLoading
+                                        ? "Saving..."
+                                        : editingUser
+                                          ? "Save Changes"
+                                          : "Create User"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </main>
+    );
+}

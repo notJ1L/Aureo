@@ -11,7 +11,10 @@ const {
     uploadAvatar,
     getAllUsers,
     getSingleUser,
+    createUserByAdmin,
+    updateUserByAdmin,
     updateUserRole,
+    bulkDeleteUsers,
     deleteUser
 } = require("../controllers/authController");
 
@@ -36,11 +39,17 @@ router.put("/me/update", isAuthenticatedUser, requireVerified, updateProfile);
 router.put("/me/avatar", isAuthenticatedUser, uploadAvatar);
 
 // Admin: User management (FR 1.4)
-router.get("/admin/users", isAuthenticatedUser, authorizeRoles("admin"), getAllUsers);
+router
+    .route("/admin/users")
+    .get(isAuthenticatedUser, authorizeRoles("admin"), getAllUsers)
+    .post(isAuthenticatedUser, authorizeRoles("admin"), createUserByAdmin);
+
+router.post("/admin/users/bulk-delete", isAuthenticatedUser, authorizeRoles("admin"), bulkDeleteUsers);
+
 router
     .route("/admin/user/:id")
     .get(isAuthenticatedUser, authorizeRoles("admin"), getSingleUser)
-    .put(isAuthenticatedUser, authorizeRoles("admin"), updateUserRole)
+    .put(isAuthenticatedUser, authorizeRoles("admin"), updateUserByAdmin)
     .delete(isAuthenticatedUser, authorizeRoles("admin"), deleteUser);
 
 module.exports = router;

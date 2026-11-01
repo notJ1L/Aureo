@@ -9,6 +9,7 @@ import {
     IconScale,
     IconStore,
     IconTool,
+    IconUser,
     IconMenu
 } from "./icons";
 import "../../styles/admin.css";
@@ -19,7 +20,8 @@ const ADMIN_LINKS = [
     { to: "/admin/orders", label: "Orders", icon: IconReceipt },
     { to: "/admin/services", label: "Services", icon: IconTool },
     { to: "/admin/appraisals", label: "Appraisals", icon: IconScale },
-    { to: "/admin/tickets", label: "Tickets", icon: IconChat }
+    { to: "/admin/tickets", label: "Tickets", icon: IconChat },
+    { to: "/admin/users", label: "Users", icon: IconUser }
 ];
 
 export function AdminHeader() {

@@ -711,29 +711,130 @@ const getSingleUser = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Admin: Update user role (FR 1.4)
-const updateUserRole = catchAsyncErrors(async (req, res, next) => {
-    const { role } = req.body;
+// Admin: Create user (FR 1.4 / Full Admin User CRUD)
+const createUserByAdmin = catchAsyncErrors(async (req, res, next) => {
+    const { name, email, password, role, contactNumber, address, isVerified } = req.body;
 
-    if (!role || !["user", "admin"].includes(role)) {
-        return next(
-            new ErrorHandler("Please provide a valid role ('user' or 'admin')", 400)
-        );
+    if (!name || !email) {
+        return next(new ErrorHandler("Name and email are required", 400));
     }
 
-    const user = await User.findById(req.params.id);
+    const normalizedEmail = normalizeEmail(email);
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+        return next(new ErrorHandler("A user with this email already exists", 409));
+    }
 
+    const user = await User.create({
+        name: String(name).trim(),
+        email: normalizedEmail,
+        password: password || "AureoPass123!",
+        role: role === "admin" ? "admin" : "user",
+        contactNumber: contactNumber ? String(contactNumber).trim() : "",
+        address: address ? String(address).trim() : "",
+        isVerified: isVerified !== undefined ? Boolean(isVerified) : true,
+        authSource: "local"
+    });
+
+    const userData = user.toObject();
+    delete userData.password;
+
+    res.status(201).json({
+        success: true,
+        message: "User created successfully",
+        user: userData
+    });
+});
+
+// Admin: Update user details & role (FR 1.4 / Full Admin User CRUD)
+const updateUserByAdmin = catchAsyncErrors(async (req, res, next) => {
+    const { name, email, role, contactNumber, address, isVerified, password } = req.body;
+
+    const user = await User.findById(req.params.id).select("+password");
     if (!user) {
         return next(new ErrorHandler("User not found", 404));
     }
 
-    user.role = role;
+    if (role !== undefined) {
+        if (!["user", "admin"].includes(role)) {
+            return next(
+                new ErrorHandler("Please provide a valid role ('user' or 'admin')", 400)
+            );
+        }
+        // Protect self-demotion
+        if (user._id.toString() === req.user._id.toString() && role !== "admin") {
+            return next(
+                new ErrorHandler("You cannot remove your own administrator role", 400)
+            );
+        }
+        user.role = role;
+    }
+
+    if (name) {
+        user.name = String(name).trim();
+    }
+
+    if (email) {
+        const normalizedEmail = normalizeEmail(email);
+        if (normalizedEmail !== user.email) {
+            const conflict = await User.findOne({ email: normalizedEmail });
+            if (conflict) {
+                return next(new ErrorHandler("Email is already taken by another account", 409));
+            }
+            user.email = normalizedEmail;
+        }
+    }
+
+    if (contactNumber !== undefined) {
+        user.contactNumber = String(contactNumber).trim();
+    }
+
+    if (address !== undefined) {
+        user.address = String(address).trim();
+    }
+
+    if (isVerified !== undefined) {
+        user.isVerified = Boolean(isVerified);
+    }
+
+    if (password && String(password).trim().length >= 8) {
+        user.password = String(password).trim();
+    }
+
     await user.save({ validateBeforeSave: false });
+
+    const userData = user.toObject();
+    delete userData.password;
 
     res.status(200).json({
         success: true,
-        message: "User role updated successfully",
-        user
+        message: "User updated successfully",
+        user: userData
+    });
+});
+
+const updateUserRole = updateUserByAdmin;
+
+// Admin: Bulk delete users
+const bulkDeleteUsers = catchAsyncErrors(async (req, res, next) => {
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return next(new ErrorHandler("Please provide an array of user IDs", 400));
+    }
+
+    // Never allow an admin to delete their own account in bulk
+    const safeIds = ids.filter((id) => id.toString() !== req.user._id.toString());
+
+    if (safeIds.length === 0) {
+        return next(new ErrorHandler("You cannot delete your own administrator account", 400));
+    }
+
+    await User.deleteMany({ _id: { $in: safeIds } });
+
+    res.status(200).json({
+        success: true,
+        message: `${safeIds.length} user(s) removed successfully`
     });
 });
 
@@ -770,6 +871,9 @@ module.exports = {
     uploadAvatar,
     getAllUsers,
     getSingleUser,
+    createUserByAdmin,
+    updateUserByAdmin,
     updateUserRole,
+    bulkDeleteUsers,
     deleteUser
 };

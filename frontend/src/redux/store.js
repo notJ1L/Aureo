@@ -34,6 +34,10 @@ import {
     dashboardReducer,
     chatReducer
 } from "./reducers/serviceReducer";
+import {
+    adminUsersReducer,
+    userMutationReducer
+} from "./reducers/userReducer";
 
 const rootReducer = combineReducers({
     auth: authReducer,
@@ -43,6 +47,8 @@ const rootReducer = combineReducers({
     wishlist: wishlistReducer,
     adminProducts: adminProductsReducer,
     productMutation: productMutationReducer,
+    adminUsers: adminUsersReducer,
+    userMutation: userMutationReducer,
     orderCreate: orderCreateReducer,
     myOrders: myOrdersReducer,
     orderDetails: orderDetailsReducer,
