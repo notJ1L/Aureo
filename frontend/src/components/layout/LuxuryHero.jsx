@@ -53,11 +53,9 @@ export function LuxuryHero() {
         if (paused) return undefined;
         const timer = setInterval(() => {
             setCurrent((prev) => (prev + 1) % SLIDES.length);
-        }, 7500);
+        }, 5000);
         return () => clearInterval(timer);
     }, [paused]);
-
-    const slide = SLIDES[current];
 
     const prevSlide = () => {
         setCurrent((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
@@ -85,11 +83,23 @@ export function LuxuryHero() {
             </div>
 
             <div className="hero__inner">
-                {/* Main Editorial Copy */}
-                <div className="hero__copy" key={slide.id}>
-                    <span className="hero__kicker">{slide.kicker}</span>
-                    <h1 className="hero__title">{slide.title}</h1>
-                    <p className="hero__text">{slide.text}</p>
+                {/* Main Editorial Copy — every slide is stacked so the block
+                    keeps a constant height and nothing jumps on change. */}
+                <div className="hero__copy">
+                    <div className="hero__copy-stack">
+                        {SLIDES.map((s, idx) => (
+                            <div
+                                key={s.id}
+                                className={`hero__copy-layer ${idx === current ? "is-active" : ""}`}
+                                aria-hidden={idx !== current}
+                            >
+                                <span className="hero__kicker">{s.kicker}</span>
+                                <h1 className="hero__title">{s.title}</h1>
+                                <p className="hero__text">{s.text}</p>
+                            </div>
+                        ))}
+                    </div>
+
                     <div className="hero__actions">
                         <Link to="/catalog" className="btn-gold" id="hero-primary-cta">
                             Explore Curated Vault <IconArrow />
@@ -100,16 +110,28 @@ export function LuxuryHero() {
                     </div>
                 </div>
 
-                {/* Floating Glass Spec Card (CADRAN-inspired personality feature) */}
-                <div className="hero__floating-card" key={`card-${slide.id}`}>
+                {/* Floating Glass Spec Card — stacked slides keep the box the
+                    same size so the watch name never shifts. */}
+                <div className="hero__floating-card">
                     <div className="hero__card-glass">
-                        <div className="hero__card-status">
-                            <span className="hero__card-dot" />
-                            <span className="hero__card-tag">{slide.highlightTag}</span>
-                            <span className="hero__card-badge">{slide.highlightBadge}</span>
+                        <div className="hero__card-stack">
+                            {SLIDES.map((s, idx) => (
+                                <div
+                                    key={s.id}
+                                    className={`hero__card-layer ${idx === current ? "is-active" : ""}`}
+                                    aria-hidden={idx !== current}
+                                >
+                                    <div className="hero__card-status">
+                                        <span className="hero__card-dot" />
+                                        <span className="hero__card-tag">{s.highlightTag}</span>
+                                        <span className="hero__card-badge">{s.highlightBadge}</span>
+                                    </div>
+                                    <h4 className="hero__card-title">{s.highlightTitle}</h4>
+                                    <p className="hero__card-spec">{s.highlightSpec}</p>
+                                </div>
+                            ))}
                         </div>
-                        <h4 className="hero__card-title">{slide.highlightTitle}</h4>
-                        <p className="hero__card-spec">{slide.highlightSpec}</p>
+
                         <Link to="/catalog" className="hero__card-link">
                             View Reference Specification →
                         </Link>
