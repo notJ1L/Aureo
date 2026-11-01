@@ -3,6 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getMyOrders, cancelOrder } from "../redux/actions/orderActions";
 import { confirmAction } from "../utils/sweetAlert";
+import SiteHeader from "../components/layout/SiteHeader";
+import SiteFooter from "../components/layout/SiteFooter";
 
 function OrdersPage() {
     const dispatch = useDispatch();
@@ -27,7 +29,8 @@ function OrdersPage() {
         const confirmed = await confirmAction({
             title: "Cancel this acquisition?",
             message: "The timepiece returns to the Aureo vault. This cannot be undone.",
-            confirmText: "Cancel order"
+            confirmText: "Cancel order",
+            danger: true
         });
 
         if (confirmed) {
@@ -52,37 +55,34 @@ function OrdersPage() {
     };
 
     return (
-        <main className="orders-page">
-            <header className="navbar">
-                <Link className="logo" to="/">AUREO</Link>
-
-                <nav className="nav-links">
-                    <Link to="/catalog">Collection</Link>
-                    <Link to="/wishlist">Wishlist</Link>
-                    <Link to="/orders" style={{ color: "var(--gold)" }}>Orders</Link>
-                </nav>
-
-                <div className="nav-actions">
-                    <Link to="/me" className="nav-action">Account</Link>
-                </div>
-            </header>
+        <main className="orders-page page-enter">
+            <SiteHeader variant="solid" />
 
             <div className="orders-container">
                 <div className="orders-header">
-                    <p className="eyebrow">ACQUISITION ARCHIVE</p>
-                    <h1>My Watch Orders</h1>
-                    <p className="auth-description">
-                        Track the delivery status, payment receipts, and historical acquisitions of your horological timepieces.
-                    </p>
+                    <div>
+                        <p className="eyebrow">ACQUISITION ARCHIVE</p>
+                        <h1>My Watch Orders</h1>
+                        <p className="auth-description">
+                            Track delivery status, archival provenance records, and payment receipts.
+                        </p>
+                    </div>
                 </div>
 
                 {location.state?.newOrderPlaced && (
                     <div className="auth-info" style={{ marginBottom: "1.5rem" }}>
-                        ✓ Acquisition confirmed! An archival confirmation receipt has been sent to your registered email.
+                        ✓ Acquisition confirmed! An archival confirmation receipt has been generated and sent to your registered email.
                     </div>
                 )}
 
-                {loading && <p className="loading-state">Loading your acquisitions...</p>}
+                {loading && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                        {[1, 2].map((n) => (
+                            <div key={n} style={{ height: "160px", borderRadius: "8px", background: "var(--bg-elevated)", border: "1px solid var(--border)", animation: "aureoPulseGold 2s infinite" }} />
+                        ))}
+                    </div>
+                )}
+
                 {error && <div className="auth-error">{error}</div>}
 
                 {!loading && orders.length === 0 && !error && (
@@ -153,7 +153,7 @@ function OrdersPage() {
                                             </button>
                                         )}
                                         <Link to={`/order/${ord._id}`} className="gold-button">
-                                            View Receipt & Timeline
+                                            View Receipt &amp; Timeline
                                         </Link>
                                     </div>
                                 </div>
@@ -162,6 +162,8 @@ function OrdersPage() {
                     })}
                 </div>
             </div>
+
+            <SiteFooter />
         </main>
     );
 }

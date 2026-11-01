@@ -1,36 +1,16 @@
-import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
+import { updateCartQuantity, removeFromCart } from "../redux/actions/cartActions";
+import SiteHeader from "../components/layout/SiteHeader";
+import SiteFooter from "../components/layout/SiteFooter";
 
 function CartPage() {
     const navigate = useNavigate();
-    const { isAuthenticated, user } = useSelector((state) => state.auth);
+    const dispatch = useDispatch();
 
-    const readCart = () => {
-        const raw = localStorage.getItem("aureoCart");
-        return raw ? JSON.parse(raw) : [];
-    };
-
-    const [cartItems, setCartItems] = useState(readCart);
-
-    useEffect(() => {
-        const handleCartUpdate = () => setCartItems(readCart());
-
-        window.addEventListener("storage", handleCartUpdate);
-        window.addEventListener("aureo:cart-updated", handleCartUpdate);
-
-        return () => {
-            window.removeEventListener("storage", handleCartUpdate);
-            window.removeEventListener("aureo:cart-updated", handleCartUpdate);
-        };
-    }, []);
-
-    const saveCart = (items) => {
-        setCartItems(items);
-        localStorage.setItem("aureoCart", JSON.stringify(items));
-        window.dispatchEvent(new Event("aureo:cart-updated"));
-    };
+    const { isAuthenticated } = useSelector((state) => state.auth);
+    const cartItems = useSelector((state) => state.cart?.cartItems) || [];
 
     const handleQuantityChange = (productId, newQty, condition, stock) => {
         if (newQty < 1) return;
@@ -43,18 +23,11 @@ function CartPage() {
             return;
         }
 
-        const updated = cartItems.map((item) => {
-            if (item.product === productId) {
-                return { ...item, quantity: newQty };
-            }
-            return item;
-        });
-        saveCart(updated);
+        dispatch(updateCartQuantity(productId, newQty));
     };
 
     const handleRemoveItem = (productId) => {
-        const updated = cartItems.filter((item) => item.product !== productId);
-        saveCart(updated);
+        dispatch(removeFromCart(productId));
     };
 
     const formatPrice = (price) => {
@@ -76,25 +49,8 @@ function CartPage() {
     };
 
     return (
-        <main className="cart-page">
-            <header className="navbar">
-                <Link className="logo" to="/">AUREO</Link>
-
-                <nav className="nav-links">
-                    <Link to="/catalog">Collection</Link>
-                    <Link to="/wishlist">Wishlist</Link>
-                </nav>
-
-                <div className="nav-actions">
-                    {isAuthenticated ? (
-                        <Link className="nav-action" to="/me" style={{ color: "var(--gold)" }}>
-                            {user?.name?.split(" ")[0] || "Account"}
-                        </Link>
-                    ) : (
-                        <Link className="nav-action" to="/login">Sign in</Link>
-                    )}
-                </div>
-            </header>
+        <main className="cart-page page-enter">
+            <SiteHeader variant="solid" />
 
             <div className="cart-container">
                 <div className="cart-header">
@@ -140,6 +96,8 @@ function CartPage() {
                                                 <button
                                                     type="button"
                                                     onClick={() => handleQuantityChange(item.product, item.quantity - 1, item.condition, item.stock)}
+                                                    disabled={item.quantity <= 1}
+                                                    aria-label="Decrease quantity"
                                                 >
                                                     -
                                                 </button>
@@ -147,65 +105,75 @@ function CartPage() {
                                                 <button
                                                     type="button"
                                                     onClick={() => handleQuantityChange(item.product, item.quantity + 1, item.condition, item.stock)}
+                                                    disabled={item.quantity >= item.stock}
+                                                    aria-label="Increase quantity"
                                                 >
                                                     +
                                                 </button>
                                             </div>
                                         )}
-                                    </div>
 
-                                    <div className="cart-item-total">
-                                        <strong>{formatPrice(item.price * item.quantity)}</strong>
                                         <button
                                             type="button"
-                                            className="cart-remove-btn"
+                                            className="cart-remove-link"
                                             onClick={() => handleRemoveItem(item.product)}
                                         >
                                             Remove
                                         </button>
                                     </div>
+
+                                    <div className="cart-item-total">
+                                        <strong>{formatPrice(item.price * item.quantity)}</strong>
+                                    </div>
                                 </article>
                             ))}
                         </div>
 
-                        {/* Order Summary sidebar */}
-                        <aside className="cart-summary-box">
-                            <h3>Acquisition Summary</h3>
-                            <div className="summary-row">
-                                <span>Subtotal</span>
-                                <strong>{formatPrice(subtotal)}</strong>
-                            </div>
-                            <div className="summary-row">
-                                <span>Insured Vault Shipping</span>
-                                <span className="free-shipping">Complimentary</span>
-                            </div>
-                            <div className="summary-row">
-                                <span>Authenticity Certificate</span>
-                                <span>Included</span>
-                            </div>
+                        {/* Order Summary Sidebar */}
+                        <aside className="cart-summary-column">
+                            <div className="cart-summary-box">
+                                <h3>Acquisition Summary</h3>
 
-                            <hr className="profile-divider" />
+                                <div className="summary-row">
+                                    <span>Subtotal</span>
+                                    <strong>{formatPrice(subtotal)}</strong>
+                                </div>
 
-                            <div className="summary-row summary-total">
-                                <span>Estimated Total</span>
-                                <strong>{formatPrice(subtotal)}</strong>
+                                <div className="summary-row">
+                                    <span>Armored Insured Transit</span>
+                                    <span className="free-shipping">Complimentary</span>
+                                </div>
+
+                                <div className="summary-row">
+                                    <span>Escrow &amp; Authentication</span>
+                                    <span className="free-shipping">Included</span>
+                                </div>
+
+                                <hr className="summary-divider" />
+
+                                <div className="summary-row summary-total">
+                                    <span>Estimated Total</span>
+                                    <strong style={{ color: "var(--gold)" }}>{formatPrice(subtotal)}</strong>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    className="gold-button checkout-proceed-btn"
+                                    onClick={handleProceedToCheckout}
+                                >
+                                    Proceed to Secure Checkout →
+                                </button>
+
+                                <p className="secure-badge-note">
+                                    🔒 256-Bit Encrypted Settlement &bull; Physical In-House Movement Audit
+                                </p>
                             </div>
-
-                            <button
-                                type="button"
-                                className="gold-button checkout-btn"
-                                onClick={handleProceedToCheckout}
-                            >
-                                Proceed to Acquisition
-                            </button>
-
-                            <Link to="/catalog" className="continue-shopping-link">
-                                ← Continue exploring watches
-                            </Link>
                         </aside>
                     </div>
                 )}
             </div>
+
+            <SiteFooter />
         </main>
     );
 }

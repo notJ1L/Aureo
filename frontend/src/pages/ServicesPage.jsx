@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { toast } from "react-toastify";
 import { getServices, getMyTickets, createTicket } from "../redux/actions/serviceActions";
 import { TICKET_CREATE_RESET } from "../redux/constants/serviceConstants";
+import { ticketSchema } from "../utils/validationSchemas";
+import SiteHeader from "../components/layout/SiteHeader";
+import SiteFooter from "../components/layout/SiteFooter";
+import { WatchCardSkeleton } from "../components/ui/Skeleton";
 
 const formatPrice = (price) =>
     new Intl.NumberFormat("en-PH", {
@@ -19,22 +25,24 @@ function ServicesPage() {
     const { tickets } = useSelector((state) => state.ticketList);
     const { loading: creating, success } = useSelector((state) => state.ticketCreate);
 
-    const [form, setForm] = useState({
-        service: "",
-        watchBrand: "",
-        watchModel: "",
-        problemDescription: ""
+    const [selectedServiceId, setSelectedServiceId] = useState("");
+
+    const {
+        register,
+        handleSubmit,
+        setValue,
+        reset,
+        formState: { errors }
+    } = useForm({
+        resolver: yupResolver(ticketSchema),
+        mode: "onBlur",
+        defaultValues: {
+            service: "",
+            watchBrand: "",
+            watchModel: "",
+            problemDescription: ""
+        }
     });
-
-    // The form is cleared while rendering when a ticket was created.
-    const [handledSuccess, setHandledSuccess] = useState(false);
-
-    if (success && !handledSuccess) {
-        setHandledSuccess(true);
-        setForm({ service: "", watchBrand: "", watchModel: "", problemDescription: "" });
-    } else if (!success && handledSuccess) {
-        setHandledSuccess(false);
-    }
 
     useEffect(() => {
         dispatch(getServices());
@@ -50,93 +58,116 @@ function ServicesPage() {
         if (success) {
             toast.success("Your support ticket has been opened.");
             dispatch({ type: TICKET_CREATE_RESET });
+            reset({ service: "", watchBrand: "", watchModel: "", problemDescription: "" });
+            setSelectedServiceId("");
             dispatch(getMyTickets());
         }
-    }, [success, dispatch]);
+    }, [success, dispatch, reset]);
 
-    const handleChange = (event) => {
-        setForm({ ...form, [event.target.name]: event.target.value });
+    const handleSelectService = (service) => {
+        setSelectedServiceId(service._id);
+        setValue("service", service._id, { shouldValidate: true });
+        const formEl = document.getElementById("ticket-form");
+        if (formEl) {
+            formEl.scrollIntoView({ behavior: "smooth" });
+        }
     };
 
-    const handleSubmit = (event) => {
-        event.preventDefault();
-
-        if (!form.service) {
-            toast.error("Please choose a service first.");
-            return;
-        }
-
-        dispatch(createTicket(form));
+    const onSubmit = (data) => {
+        dispatch(createTicket(data));
     };
 
     return (
-        <main className="sell-page">
-            <header className="navbar">
-                <Link className="logo" to="/">AUREO</Link>
-                <nav className="nav-links">
-                    <Link to="/catalog">Collection</Link>
-                    <Link to="/sell">Sell your watch</Link>
-                    <Link to="/services">Services</Link>
-                    <Link to="/appraisals">Appraisals</Link>
-                </nav>
-                <div className="nav-actions">
-                    {isAuthenticated ? (
-                        <Link className="nav-action" to="/me" style={{ color: "var(--gold)" }}>
-                            {user?.name?.split(" ")[0] || "Account"}
-                        </Link>
-                    ) : (
-                        <Link className="nav-action" to="/login">Sign in</Link>
-                    )}
-                </div>
-            </header>
+        <main className="sell-page page-enter">
+            <SiteHeader variant="solid" />
 
             <div className="sell-container">
                 <div className="sell-heading">
                     <p className="eyebrow">SERVICES &amp; AFTERCARE</p>
                     <h1>Keep your timepiece in its best condition</h1>
                     <p className="auth-description">
-                        Cleaning, repair and adjustment carried out by our watchmakers.
+                        Expert cleaning, escapement calibration, and movement restoration carried out by our master watchmakers.
                     </p>
                 </div>
 
                 {error && <div className="auth-error">{error}</div>}
 
-                {loading && <p className="catalog-message">Loading the services...</p>}
+                {loading ? (
+                    <div className="service-grid">
+                        {[1, 2, 3].map((n) => (
+                            <div key={n} style={{ height: "180px", borderRadius: "8px", background: "var(--bg-elevated)", border: "1px solid var(--border)", animation: "aureoPulseGold 2s infinite" }} />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="service-grid">
+                        {services.map((service) => (
+                            <article
+                                className={`service-card ${selectedServiceId === service._id ? "is-selected" : ""}`}
+                                key={service._id}
+                                style={{
+                                    borderColor: selectedServiceId === service._id ? "var(--gold)" : undefined,
+                                    cursor: "pointer"
+                                }}
+                                onClick={() => handleSelectService(service)}
+                            >
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                                    <h3>{service.name}</h3>
+                                    {selectedServiceId === service._id && (
+                                        <span className="badge verified-badge">Selected</span>
+                                    )}
+                                </div>
+                                <p>{service.description}</p>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "1rem" }}>
+                                    <strong className="service-price">{formatPrice(service.price)}</strong>
+                                    <button
+                                        type="button"
+                                        className="outline-button"
+                                        style={{ minHeight: "34px", padding: "0 0.9rem", fontSize: "0.75rem" }}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleSelectService(service);
+                                        }}
+                                    >
+                                        Book Service
+                                    </button>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                )}
 
-                <div className="service-grid">
-                    {services.map((service) => (
-                        <article className="service-card" key={service._id}>
-                            <h3>{service.name}</h3>
-                            <p>{service.description}</p>
-                            <strong className="service-price">{formatPrice(service.price)}</strong>
-                        </article>
-                    ))}
-                </div>
-
-                <section className="ticket-section">
+                <section className="ticket-section" id="ticket-form" style={{ marginTop: "3.5rem" }}>
                     <h2>Open a support ticket</h2>
                     <p className="auth-description">
-                        Tell us what is wrong with the watch and we will take it from there.
+                        Tell us what is wrong with the watch and our horology atelier will inspect it.
                     </p>
 
                     {!isAuthenticated ? (
-                        <Link className="gold-button" to="/login" style={{ display: "inline-block", textAlign: "center" }}>
-                            Sign in to open a ticket
-                        </Link>
+                        <div style={{ textAlign: "center", padding: "2rem", background: "var(--bg-card)", borderRadius: "8px", border: "1px solid var(--border)" }}>
+                            <p style={{ color: "var(--text-secondary)", marginBottom: "1.2rem" }}>
+                                You must be signed in to request maintenance or open a service ticket.
+                            </p>
+                            <Link className="gold-button" to="/login">
+                                Sign in to open a ticket
+                            </Link>
+                        </div>
                     ) : !user?.isVerified ? (
-                        <div className="auth-info">
-                            Please verify your email before opening a support ticket.
+                        <div className="auth-error" style={{ textAlign: "center", padding: "1.5rem" }}>
+                            ⚠ <strong>Verification Required:</strong> Please verify your email before opening a support ticket.
                         </div>
                     ) : (
-                        <form onSubmit={handleSubmit} className="admin-form">
+                        <form onSubmit={handleSubmit(onSubmit)} className="admin-form">
                             <label>
                                 Service
                                 <select
-                                    name="service"
-                                    value={form.service}
-                                    onChange={handleChange}
+                                    {...register("service")}
                                     className="catalog-select"
-                                    required
+                                    value={selectedServiceId}
+                                    onChange={(e) => {
+                                        setSelectedServiceId(e.target.value);
+                                        setValue("service", e.target.value, { shouldValidate: true });
+                                    }}
+                                    aria-invalid={Boolean(errors.service)}
                                 >
                                     <option value="">Choose a service</option>
                                     {services.map((service) => (
@@ -145,28 +176,27 @@ function ServicesPage() {
                                         </option>
                                     ))}
                                 </select>
+                                {errors.service && <span className="field-error">{errors.service.message}</span>}
                             </label>
 
                             <div className="form-row-2">
                                 <label>
                                     Watch brand
                                     <input
-                                        name="watchBrand"
-                                        value={form.watchBrand}
-                                        onChange={handleChange}
+                                        {...register("watchBrand")}
                                         placeholder="e.g. Seiko"
-                                        required
+                                        aria-invalid={Boolean(errors.watchBrand)}
                                     />
+                                    {errors.watchBrand && <span className="field-error">{errors.watchBrand.message}</span>}
                                 </label>
                                 <label>
                                     Watch model
                                     <input
-                                        name="watchModel"
-                                        value={form.watchModel}
-                                        onChange={handleChange}
+                                        {...register("watchModel")}
                                         placeholder="e.g. Presage Cocktail Time"
-                                        required
+                                        aria-invalid={Boolean(errors.watchModel)}
                                     />
+                                    {errors.watchModel && <span className="field-error">{errors.watchModel.message}</span>}
                                 </label>
                             </div>
 
@@ -174,12 +204,11 @@ function ServicesPage() {
                                 Problem description
                                 <textarea
                                     rows={4}
-                                    name="problemDescription"
-                                    value={form.problemDescription}
-                                    onChange={handleChange}
+                                    {...register("problemDescription")}
                                     placeholder="Describe the issue, for example the watch loses about two minutes a day."
-                                    required
+                                    aria-invalid={Boolean(errors.problemDescription)}
                                 />
+                                {errors.problemDescription && <span className="field-error">{errors.problemDescription.message}</span>}
                             </label>
 
                             <div className="modal-actions">
@@ -192,7 +221,7 @@ function ServicesPage() {
                 </section>
 
                 {isAuthenticated && tickets.length > 0 && (
-                    <section className="ticket-section">
+                    <section className="ticket-section" style={{ marginTop: "3.5rem" }}>
                         <h2>Your tickets</h2>
                         <div className="ticket-list">
                             {tickets.map((ticket) => (
@@ -225,6 +254,8 @@ function ServicesPage() {
                     </section>
                 )}
             </div>
+
+            <SiteFooter />
         </main>
     );
 }

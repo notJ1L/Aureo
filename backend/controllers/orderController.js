@@ -419,10 +419,29 @@ const deleteAdminOrder = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
+// Get Order PDF Receipt
+const getOrderReceipt = catchAsyncErrors(async (req, res, next) => {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        return next(new ErrorHandler("Invalid order ID", 400));
+    }
+    const order = await Order.findById(req.params.id).populate("user", "name email");
+    if (!order) {
+        return next(new ErrorHandler("Order not found", 404));
+    }
+    if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== "admin") {
+        return next(new ErrorHandler("Unauthorized to view this receipt", 403));
+    }
+    const pdfBuffer = await generateReceipt(order, order.user);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", 'inline; filename="aureo-receipt-' + order._id + '.pdf"');
+    res.send(pdfBuffer);
+});
+
 module.exports = {
     createOrder,
     getMyOrders,
     getSingleOrder,
+    getOrderReceipt,
     cancelOrder,
     getAdminOrders,
     updateAdminOrder,

@@ -126,6 +126,47 @@ export const checkoutSchema = Yup.object({
         .required("Contact number is required.")
 });
 
+export const appraisalSchema = Yup.object({
+    brand: requiredText("Brand", { min: 2, max: 60 }),
+    model: requiredText("Model", { min: 2, max: 60 }),
+    movement: Yup.string()
+        .oneOf(["automatic", "quartz", "manual"], "Choose a movement type")
+        .required("Movement is required"),
+    caseSize: Yup.number()
+        .typeError("Case size must be a number")
+        .min(1, "Case size must be greater than zero")
+        .max(70, "Case size cannot exceed 70mm")
+        .required("Case size is required"),
+    condition: Yup.string()
+        .oneOf(["new", "second-hand"], "Choose a condition")
+        .required("Condition is required"),
+    year: Yup.number()
+        .typeError("Year must be a number")
+        .min(1800, "Enter a valid year")
+        .max(new Date().getFullYear(), "The year cannot be in the future")
+        .required("Year is required"),
+    askingPrice: Yup.number()
+        .typeError("Asking price must be a number")
+        .min(0, "Asking price cannot be negative")
+        .required("Asking price is required")
+});
+
+export const ticketSchema = Yup.object({
+    service: Yup.string().required("Please select a service"),
+    watchBrand: requiredText("Watch brand", { min: 2, max: 60 }),
+    watchModel: requiredText("Watch model", { min: 2, max: 60 }),
+    problemDescription: requiredText("Problem description", { min: 10, max: 1000 })
+});
+
+export const serviceSchema = Yup.object({
+    name: requiredText("Service name", { min: 2, max: 100 }),
+    description: requiredText("Description", { min: 10, max: 500 }),
+    price: Yup.number()
+        .typeError("Price must be a number")
+        .min(1, "Price must be at least 1 PHP")
+        .required("Price is required")
+});
+
 export const schemas = {
     login: loginSchema,
     register: registerSchema,
@@ -133,7 +174,10 @@ export const schemas = {
     profile: profileSchema,
     product: productSchema,
     review: reviewSchema,
-    checkout: checkoutSchema
+    checkout: checkoutSchema,
+    appraisal: appraisalSchema,
+    ticket: ticketSchema,
+    service: serviceSchema
 };
 
 export default schemas;

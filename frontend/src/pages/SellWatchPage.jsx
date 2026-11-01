@@ -3,45 +3,18 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
 import { toast } from "react-toastify";
 import {
     createAppraisal,
     clearAppraisalErrors
 } from "../redux/actions/appraisalActions";
 import { APPRAISAL_CREATE_RESET } from "../redux/constants/appraisalConstants";
+import { appraisalSchema } from "../utils/validationSchemas";
+import SiteHeader from "../components/layout/SiteHeader";
+import SiteFooter from "../components/layout/SiteFooter";
 
 const MAX_PHOTOS = 6;
-
-// Unit 1: the appraisal form is validated with Yup.
-const appraisalSchema = yup.object({
-    brand: yup.string().trim().min(2, "Brand is required").required("Brand is required"),
-    model: yup.string().trim().min(2, "Model is required").required("Model is required"),
-    movement: yup
-        .string()
-        .oneOf(["automatic", "quartz", "manual"], "Choose a movement type")
-        .required("Movement is required"),
-    caseSize: yup
-        .number()
-        .typeError("Case size must be a number")
-        .min(1, "Case size must be greater than zero")
-        .required("Case size is required"),
-    condition: yup
-        .string()
-        .oneOf(["new", "second-hand"], "Choose a condition")
-        .required("Condition is required"),
-    year: yup
-        .number()
-        .typeError("Year must be a number")
-        .min(1800, "Enter a valid year")
-        .max(new Date().getFullYear(), "The year cannot be in the future")
-        .required("Year is required"),
-    askingPrice: yup
-        .number()
-        .typeError("Asking price must be a number")
-        .min(0, "Asking price cannot be negative")
-        .required("Asking price is required")
-});
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 function SellWatchPage() {
     const dispatch = useDispatch();
@@ -85,42 +58,6 @@ function SellWatchPage() {
         };
     }, [dispatch]);
 
-    if (!isAuthenticated) {
-        return (
-            <main className="auth-page">
-                <Link className="auth-back" to="/">← Back to store</Link>
-                <section className="auth-card">
-                    <p className="eyebrow">SELL YOUR WATCH</p>
-                    <h1>Sign in to request an appraisal</h1>
-                    <p className="auth-description">
-                        Appraisals are reserved for registered collectors.
-                    </p>
-                    <Link className="gold-button" to="/login" style={{ display: "inline-block", textAlign: "center" }}>
-                        Sign in
-                    </Link>
-                </section>
-            </main>
-        );
-    }
-
-    if (!user?.isVerified) {
-        return (
-            <main className="auth-page">
-                <Link className="auth-back" to="/">← Back to store</Link>
-                <section className="auth-card">
-                    <p className="eyebrow">SELL YOUR WATCH</p>
-                    <h1>Verify your email first</h1>
-                    <p className="auth-description">
-                        Only verified collectors can submit an appraisal.
-                    </p>
-                    <Link className="gold-button" to="/me" style={{ display: "inline-block", textAlign: "center" }}>
-                        Go to my account
-                    </Link>
-                </section>
-            </main>
-        );
-    }
-
     const handleFiles = (event) => {
         const selected = Array.from(event.target.files || []);
 
@@ -128,6 +65,14 @@ function SellWatchPage() {
             toast.error(`You can upload a maximum of ${MAX_PHOTOS} photos.`);
             event.target.value = "";
             return;
+        }
+
+        for (const file of selected) {
+            if (file.size > MAX_FILE_SIZE) {
+                toast.error(`File "${file.name}" exceeds the 5MB limit.`);
+                event.target.value = "";
+                return;
+            }
         }
 
         setFiles(selected);
@@ -141,7 +86,6 @@ function SellWatchPage() {
         }
 
         const payload = new FormData();
-
         Object.entries(values).forEach(([key, value]) => {
             payload.append(key, value);
         });
@@ -154,21 +98,51 @@ function SellWatchPage() {
         dispatch(createAppraisal(payload));
     };
 
-    return (
-        <main className="sell-page">
-            <header className="navbar">
-                <Link className="logo" to="/">AUREO</Link>
-                <nav className="nav-links">
-                    <Link to="/catalog">Collection</Link>
-                    <Link to="/sell">Sell your watch</Link>
-                    <Link to="/appraisals">My appraisals</Link>
-                </nav>
-                <div className="nav-actions">
-                    <Link className="nav-action" to="/me" style={{ color: "var(--gold)" }}>
-                        {user?.name?.split(" ")[0] || "Account"}
-                    </Link>
+    if (!isAuthenticated) {
+        return (
+            <main className="sell-page page-enter">
+                <SiteHeader variant="solid" />
+                <div className="sell-container" style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <section className="auth-card" style={{ maxWidth: "480px", margin: "3rem auto", textAlign: "center" }}>
+                        <p className="eyebrow">SELL YOUR WATCH</p>
+                        <h1>Sign in to request an appraisal</h1>
+                        <p className="auth-description">
+                            Appraisals and consignment evaluations are reserved for registered collectors.
+                        </p>
+                        <Link className="gold-button" to="/login" style={{ display: "inline-block", marginTop: "1rem" }}>
+                            Sign in to Continue
+                        </Link>
+                    </section>
                 </div>
-            </header>
+                <SiteFooter />
+            </main>
+        );
+    }
+
+    if (!user?.isVerified) {
+        return (
+            <main className="sell-page page-enter">
+                <SiteHeader variant="solid" />
+                <div className="sell-container" style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <section className="auth-card" style={{ maxWidth: "480px", margin: "3rem auto", textAlign: "center" }}>
+                        <p className="eyebrow" style={{ color: "var(--danger)" }}>VERIFICATION REQUIRED</p>
+                        <h1>Verify your email first</h1>
+                        <p className="auth-description">
+                            Only verified collectors can submit a timepiece for consignment appraisal.
+                        </p>
+                        <Link className="gold-button" to="/register" style={{ display: "inline-block", marginTop: "1rem" }}>
+                            Enter Verification Code
+                        </Link>
+                    </section>
+                </div>
+                <SiteFooter />
+            </main>
+        );
+    }
+
+    return (
+        <main className="sell-page page-enter">
+            <SiteHeader variant="solid" />
 
             <div className="sell-container">
                 <div className="sell-heading">
@@ -243,11 +217,11 @@ function SellWatchPage() {
                     </div>
 
                     <div className="form-row-2">
-                        <label className="checkbox-label">
+                        <label className="checkbox-label" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                             <input type="checkbox" id="hasBox" />
                             Original box included
                         </label>
-                        <label className="checkbox-label">
+                        <label className="checkbox-label" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                             <input type="checkbox" id="hasPapers" />
                             Original papers included
                         </label>
@@ -269,7 +243,7 @@ function SellWatchPage() {
                         </div>
                     )}
 
-                    <div className="modal-actions">
+                    <div className="modal-actions" style={{ display: "flex", gap: "1rem", marginTop: "1.5rem" }}>
                         <button type="button" className="outline-button" onClick={() => navigate("/appraisals")}>
                             Cancel
                         </button>
@@ -279,6 +253,8 @@ function SellWatchPage() {
                     </div>
                 </form>
             </div>
+
+            <SiteFooter />
         </main>
     );
 }

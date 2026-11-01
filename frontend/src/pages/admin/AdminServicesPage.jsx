@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { toast } from "react-toastify";
 import {
     getAdminServices,
@@ -15,6 +17,7 @@ import {
     SERVICE_DELETE_RESET,
     SERVICE_BULK_DELETE_RESET
 } from "../../redux/constants/serviceConstants";
+import { serviceSchema } from "../../utils/validationSchemas";
 import { confirmAction } from "../../utils/sweetAlert";
 import AdminHeader from "../../components/layout/AdminHeader";
 
@@ -42,7 +45,17 @@ function AdminServicesPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingService, setEditingService] = useState(null);
     const [selectedIds, setSelectedIds] = useState([]);
-    const [form, setForm] = useState(EMPTY_FORM);
+
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors }
+    } = useForm({
+        resolver: yupResolver(serviceSchema),
+        mode: "onBlur",
+        defaultValues: EMPTY_FORM
+    });
 
     useEffect(() => {
         dispatch(getAdminServices());
@@ -65,7 +78,7 @@ function AdminServicesPage() {
 
         if (mutationKey === "create" || mutationKey === "update") {
             setIsModalOpen(false);
-            setForm(EMPTY_FORM);
+            reset(EMPTY_FORM);
             setEditingService(null);
         }
 
@@ -98,19 +111,15 @@ function AdminServicesPage() {
         dispatch(getAdminServices());
     }, [mutationKey, dispatch]);
 
-    const handleChange = (event) => {
-        setForm({ ...form, [event.target.name]: event.target.value });
-    };
-
     const handleOpenCreate = () => {
         setEditingService(null);
-        setForm(EMPTY_FORM);
+        reset(EMPTY_FORM);
         setIsModalOpen(true);
     };
 
     const handleOpenEdit = (service) => {
         setEditingService(service);
-        setForm({
+        reset({
             name: service.name,
             description: service.description,
             price: service.price
@@ -118,18 +127,11 @@ function AdminServicesPage() {
         setIsModalOpen(true);
     };
 
-    const handleSubmit = (event) => {
-        event.preventDefault();
-
-        if (Number(form.price) <= 0) {
-            toast.error("The service price must be a positive number.");
-            return;
-        }
-
+    const onSubmit = (data) => {
         if (editingService) {
-            dispatch(updateService(editingService._id, form));
+            dispatch(updateService(editingService._id, data));
         } else {
-            dispatch(createService(form));
+            dispatch(createService(data));
         }
     };
 
@@ -137,7 +139,8 @@ function AdminServicesPage() {
         const confirmed = await confirmAction({
             title: "Remove this service?",
             message: `"${service.name}" will no longer be offered on the storefront.`,
-            confirmText: "Remove service"
+            confirmText: "Remove service",
+            danger: true
         });
 
         if (confirmed) {
@@ -171,7 +174,8 @@ function AdminServicesPage() {
         const confirmed = await confirmAction({
             title: `Delete ${selectedIds.length} selected service(s)?`,
             message: "The services will no longer be offered on the storefront.",
-            confirmText: "Delete selected"
+            confirmText: "Delete selected",
+            danger: true
         });
 
         if (confirmed) {
@@ -180,7 +184,7 @@ function AdminServicesPage() {
     };
 
     return (
-        <main className="admin-page">
+        <main className="admin-page page-enter">
             <AdminHeader />
 
             <div className="admin-container">
@@ -200,47 +204,28 @@ function AdminServicesPage() {
                 {selectedIds.length > 0 && (
                     <div className="admin-bulk-bar">
                         <span>{selectedIds.length} service(s) selected</span>
-                        <button
-                            type="button"
-                            className="admin-btn del-btn"
-                            onClick={handleBulkDelete}
-                            disabled={mutationLoading}
-                        >
-                            {mutationLoading ? "Deleting..." : "Delete selected"}
-                        </button>
-                        <button
-                            type="button"
-                            className="outline-button"
-                            onClick={() => setSelectedIds([])}
-                        >
-                            Clear selection
+                        <button type="button" className="admin-btn del-btn" onClick={handleBulkDelete}>
+                            Delete Selected
                         </button>
                     </div>
                 )}
 
-                {loading && <p className="catalog-message">Loading services...</p>}
-
-                {!loading && (services || []).length === 0 && (
-                    <div className="empty-state">
-                        <p>No services yet.</p>
-                        <span>Add the first aftercare service of the vault.</span>
-                    </div>
-                )}
-
-                {(services || []).length > 0 && (
+                {loading ? (
+                    <div style={{ height: "300px", borderRadius: "8px", background: "var(--bg-elevated)", border: "1px solid var(--border)", animation: "aureoPulseGold 2s infinite" }} />
+                ) : (
                     <div className="admin-table-wrap">
                         <table className="admin-table">
                             <thead>
                                 <tr>
-                                    <th className="admin-select-cell">
+                                    <th style={{ width: "40px" }}>
                                         <input
                                             type="checkbox"
-                                            aria-label="Select all services"
                                             checked={
                                                 (services || []).length > 0 &&
-                                                selectedIds.length === (services || []).length
+                                                (services || []).every((s) => selectedIds.includes(s._id))
                                             }
                                             onChange={handleSelectAll}
+                                            aria-label="Select all services"
                                         />
                                     </th>
                                     <th>Service</th>
@@ -250,21 +235,25 @@ function AdminServicesPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {services.map((service) => (
-                                    <tr key={service._id} className={isSelected(service._id) ? "admin-row-selected" : ""}>
-                                        <td className="admin-select-cell">
+                                {(services || []).map((service) => (
+                                    <tr key={service._id} className={isSelected(service._id) ? "row-selected" : ""}>
+                                        <td>
                                             <input
                                                 type="checkbox"
-                                                aria-label={`Select ${service.name}`}
                                                 checked={isSelected(service._id)}
                                                 onChange={() => handleToggleSelect(service._id)}
+                                                aria-label={`Select ${service.name}`}
                                             />
                                         </td>
-                                        <td><strong>{service.name}</strong></td>
-                                        <td>{service.description}</td>
-                                        <td>{formatPrice(service.price)}</td>
                                         <td>
-                                            <div className="admin-action-cell">
+                                            <strong>{service.name}</strong>
+                                        </td>
+                                        <td className="admin-desc-cell">{service.description}</td>
+                                        <td>
+                                            <strong className="text-gold">{formatPrice(service.price)}</strong>
+                                        </td>
+                                        <td>
+                                            <div className="admin-actions">
                                                 <button
                                                     type="button"
                                                     className="admin-btn edit-btn"
@@ -297,28 +286,26 @@ function AdminServicesPage() {
                             <button type="button" className="modal-close" onClick={() => setIsModalOpen(false)}>×</button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="admin-form">
+                        <form onSubmit={handleSubmit(onSubmit)} className="admin-form">
                             <label>
                                 Service name
                                 <input
-                                    name="name"
-                                    value={form.name}
-                                    onChange={handleChange}
+                                    {...register("name")}
                                     placeholder="e.g. Watch Cleaning"
-                                    required
+                                    aria-invalid={Boolean(errors.name)}
                                 />
+                                {errors.name && <span className="field-error">{errors.name.message}</span>}
                             </label>
 
                             <label>
                                 Description
                                 <textarea
                                     rows={3}
-                                    name="description"
-                                    value={form.description}
-                                    onChange={handleChange}
+                                    {...register("description")}
                                     placeholder="What is included in this service?"
-                                    required
+                                    aria-invalid={Boolean(errors.description)}
                                 />
+                                {errors.description && <span className="field-error">{errors.description.message}</span>}
                             </label>
 
                             <label>
@@ -326,12 +313,11 @@ function AdminServicesPage() {
                                 <input
                                     type="number"
                                     step="1"
-                                    name="price"
-                                    value={form.price}
-                                    onChange={handleChange}
+                                    {...register("price")}
                                     placeholder="1500"
-                                    required
+                                    aria-invalid={Boolean(errors.price)}
                                 />
+                                {errors.price && <span className="field-error">{errors.price.message}</span>}
                                 <span className="field-hint">The price must be greater than zero.</span>
                             </label>
 

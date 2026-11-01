@@ -3,10 +3,13 @@ import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { toast } from "react-toastify";
 import { updateProfile, uploadAvatar, logoutUser, clearAuthError } from "../redux/actions/authActions";
 import { ValidatedField } from "../components/ui/ValidatedField";
 import { profileSchema } from "../utils/validationSchemas";
 import { showError } from "../utils/sweetAlert";
+import SiteHeader from "../components/layout/SiteHeader";
+import SiteFooter from "../components/layout/SiteFooter";
 
 function ProfilePage() {
     const dispatch = useDispatch();
@@ -33,8 +36,6 @@ function ProfilePage() {
         }
     });
 
-    // The form mirrors the loaded profile. It is reset whenever a different
-    // profile arrives.
     useEffect(() => {
         if (!user) {
             return;
@@ -70,6 +71,7 @@ function ProfilePage() {
                 }
             })
         );
+        toast.success("Profile updated successfully.");
         setSavedMsg("Profile updated successfully.");
         setTimeout(() => setSavedMsg(""), 3000);
     };
@@ -88,6 +90,7 @@ function ProfilePage() {
             if (reader.readyState === 2) {
                 setAvatarPreview(reader.result);
                 dispatch(uploadAvatar(reader.result));
+                toast.success("Profile avatar updated.");
             }
         };
         reader.readAsDataURL(file);
@@ -98,15 +101,8 @@ function ProfilePage() {
     };
 
     return (
-        <main className="profile-page">
-            <header className="profile-header-bar">
-                <Link to="/" className="auth-back">
-                    ← Back to store
-                </Link>
-                <button type="button" className="outline-button" onClick={handleLogout}>
-                    Sign out
-                </button>
-            </header>
+        <main className="profile-page page-enter">
+            <SiteHeader variant="solid" />
 
             <div className="profile-container">
                 <section className="profile-card">
@@ -132,12 +128,18 @@ function ProfilePage() {
                             <p className="eyebrow">AUREO MEMBER</p>
                             <h2>{user?.name}</h2>
                             <p className="profile-email">{user?.email}</p>
-                            <div className="profile-badges">
+                            <div className="profile-badges" style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
                                 <span className="badge role-badge">{user?.role?.toUpperCase()}</span>
                                 <span className={`badge ${user?.isVerified ? "verified-badge" : "unverified-badge"}`}>
                                     {user?.isVerified ? "✓ Verified" : "⚠ Unverified"}
                                 </span>
                             </div>
+                        </div>
+
+                        <div style={{ marginLeft: "auto" }}>
+                            <button type="button" className="outline-button" onClick={handleLogout}>
+                                Sign Out
+                            </button>
                         </div>
                     </div>
 
@@ -158,39 +160,43 @@ function ProfilePage() {
                         />
 
                         <label>
-                            Email (Cannot be changed)
+                            Email Address
                             <input
+                                type="email"
                                 value={user?.email || ""}
                                 disabled
-                                style={{ opacity: 0.6 }}
+                                style={{ opacity: 0.65, cursor: "not-allowed" }}
                             />
+                            <span className="field-hint">Email is bound to your authentication provider.</span>
                         </label>
 
                         <ValidatedField
                             control={control}
                             name="contactNumber"
                             label="Contact Number"
-                            placeholder="+63 900 000 0000"
-                            hint="Optional. Used for delivery updates."
+                            placeholder="+63 917 123 4567"
+                            autoComplete="tel"
                             error={errors.contactNumber?.message}
                         />
 
-                        <h3>Delivery Address</h3>
+                        <h3 style={{ marginTop: "1.5rem" }}>Shipping Address</h3>
 
                         <ValidatedField
                             control={control}
                             name="addressLine"
                             label="Street Address"
-                            placeholder="Unit 4B, Emerald Tower, Ayala Ave"
+                            placeholder="e.g. 128 Ayala Avenue, Penthouse 4"
+                            autoComplete="street-address"
                             error={errors.addressLine?.message}
                         />
 
-                        <div className="form-row-3">
+                        <div className="form-row-2">
                             <ValidatedField
                                 control={control}
                                 name="city"
                                 label="City"
                                 placeholder="Makati"
+                                autoComplete="address-level2"
                                 error={errors.city?.message}
                             />
 
@@ -199,29 +205,34 @@ function ProfilePage() {
                                 name="postalCode"
                                 label="Postal Code"
                                 placeholder="1226"
+                                autoComplete="postal-code"
                                 error={errors.postalCode?.message}
-                            />
-
-                            <ValidatedField
-                                control={control}
-                                name="country"
-                                label="Country"
-                                placeholder="Philippines"
-                                error={errors.country?.message}
                             />
                         </div>
 
-                        <button
-                            type="submit"
-                            className="gold-button"
-                            disabled={updateLoading}
-                            style={{ marginTop: "1rem" }}
-                        >
-                            {updateLoading ? "Saving..." : "Save Profile Details"}
-                        </button>
+                        <ValidatedField
+                            control={control}
+                            name="country"
+                            label="Country"
+                            placeholder="Philippines"
+                            autoComplete="country-name"
+                            error={errors.country?.message}
+                        />
+
+                        <div className="profile-actions" style={{ marginTop: "1.5rem" }}>
+                            <button
+                                type="submit"
+                                className="gold-button"
+                                disabled={updateLoading}
+                            >
+                                {updateLoading ? "Saving Changes..." : "Save Profile"}
+                            </button>
+                        </div>
                     </form>
                 </section>
             </div>
+
+            <SiteFooter />
         </main>
     );
 }

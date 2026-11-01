@@ -2,12 +2,14 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getWishlist, removeFromWishlist } from "../redux/actions/productActions";
+import SiteHeader from "../components/layout/SiteHeader";
+import SiteFooter from "../components/layout/SiteFooter";
 import "../styles/aureo.css";
 
 function WishlistPage() {
     const dispatch = useDispatch();
     const { wishlist, loading, error } = useSelector((state) => state.wishlist);
-    const { isAuthenticated, user } = useSelector((state) => state.auth);
+    const { isAuthenticated } = useSelector((state) => state.auth);
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -28,25 +30,8 @@ function WishlistPage() {
     };
 
     return (
-        <main className="wishlist-page">
-            <header className="navbar">
-                <Link className="logo" to="/">AUREO</Link>
-
-                <nav className="nav-links">
-                    <Link to="/catalog">Collection</Link>
-                    <Link to="/wishlist" style={{ color: "var(--gold)" }}>Wishlist</Link>
-                </nav>
-
-                <div className="nav-actions">
-                    {isAuthenticated ? (
-                        <Link className="nav-action" to="/me" style={{ color: "var(--gold)" }}>
-                            {user?.name?.split(" ")[0] || "Account"}
-                        </Link>
-                    ) : (
-                        <Link className="nav-action" to="/login">Sign in</Link>
-                    )}
-                </div>
-            </header>
+        <main className="wishlist-page page-enter">
+            <SiteHeader variant="solid" />
 
             <div className="wishlist-container">
                 <div className="wishlist-header">
@@ -57,7 +42,13 @@ function WishlistPage() {
                     </p>
                 </div>
 
-                {loading && <p className="loading-state">Loading your saved watches...</p>}
+                {loading && (
+                    <div className="wishlist-grid">
+                        {[1, 2, 3, 4].map((n) => (
+                            <div key={n} style={{ height: "300px", borderRadius: "8px", background: "var(--bg-elevated)", border: "1px solid var(--border)", animation: "aureoPulseGold 2s infinite" }} />
+                        ))}
+                    </div>
+                )}
 
                 {error && <div className="auth-error">{error}</div>}
 
@@ -91,8 +82,8 @@ function WishlistPage() {
                                     <h3>{watch.name}</h3>
                                     <p className="product-price">{formatPrice(watch.price)}</p>
 
-                                    <div className="wishlist-card-actions">
-                                        <Link to={`/product/${watch._id}`} className="gold-button" style={{ textAlign: "center" }}>
+                                    <div className="wishlist-card-actions" style={{ display: "flex", gap: "0.6rem", marginTop: "1rem" }}>
+                                        <Link to={`/product/${watch._id}`} className="gold-button" style={{ textAlign: "center", flex: 1 }}>
                                             {isSold ? "View Details" : "Acquire Piece"}
                                         </Link>
                                         <button
@@ -109,6 +100,8 @@ function WishlistPage() {
                     })}
                 </div>
             </div>
+
+            <SiteFooter />
         </main>
     );
 }

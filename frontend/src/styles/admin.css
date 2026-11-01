@@ -430,3 +430,74 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Admin Mobile Navigation Drawer                                             */
+/* -------------------------------------------------------------------------- */
+
+.admin-burger {
+    display: none;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 200ms ease;
+}
+
+.admin-burger:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--ivory);
+}
+
+@media (max-width: 992px) {
+    .admin-burger {
+        display: inline-grid;
+    }
+
+    .admin-vault-header {
+        position: relative;
+    }
+
+    .admin-vault-header__inner {
+        height: 64px !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 0 !important;
+    }
+
+    .admin-vault-nav {
+        position: absolute;
+        top: 64px;
+        left: 0;
+        right: 0;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        background: rgba(11, 11, 13, 0.98);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(226, 187, 118, 0.2);
+        padding: 1.5rem !important;
+        gap: 0.5rem !important;
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.8);
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-8px);
+        transition: all 250ms ease;
+        z-index: 100;
+    }
+
+    .admin-vault-header.is-open .admin-vault-nav {
+        opacity: 1;
+        pointer-events: auto;
+        transform: none;
+    }
+
+    .admin-nav-item {
+        padding: 0.8rem 1rem !important;
+        font-size: 0.85rem !important;
+    }
+}

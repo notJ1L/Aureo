@@ -16,7 +16,7 @@ import MyAppraisalsPage from "./pages/MyAppraisalsPage";
 import ServicesPage from "./pages/ServicesPage";
 import ChatWidget from "./components/ChatWidget";
 import { getProducts } from "./redux/actions/productActions";
-import { PrivateRoute, AdminRoute } from "./routes/ProtectedRoutes";
+import { PrivateRoute, VerifiedRoute, AdminRoute } from "./routes/ProtectedRoutes";
 import { useInfiniteScroll } from "./hooks/useInfiniteScroll";
 import LuxuryHero from "./components/layout/LuxuryHero";
 import { WatchCardSkeleton } from "./components/ui/Skeleton";
@@ -611,9 +611,9 @@ function App() {
                 <Route
                     path="/sell"
                     element={
-                        <PrivateRoute>
+                        <VerifiedRoute>
                             <SellWatchPage />
-                        </PrivateRoute>
+                        </VerifiedRoute>
                     }
                 />
                 <Route
@@ -624,14 +624,7 @@ function App() {
                         </PrivateRoute>
                     }
                 />
-                <Route
-                    path="/services"
-                    element={
-                        <PrivateRoute>
-                            <ServicesPage />
-                        </PrivateRoute>
-                    }
-                />
+                <Route path="/services" element={<ServicesPage />} />
                 <Route
                     path="/admin/services"
                     element={
@@ -660,9 +653,9 @@ function App() {
                 <Route
                     path="/checkout"
                     element={
-                        <PrivateRoute>
+                        <VerifiedRoute>
                             <CheckoutPage />
-                        </PrivateRoute>
+                        </VerifiedRoute>
                     }
                 />
                 <Route

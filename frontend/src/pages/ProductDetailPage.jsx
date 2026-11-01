@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getProductDetails, addToWishlist, removeFromWishlist, getWishlist } from "../redux/actions/productActions";
+import { addToCart } from "../redux/actions/cartActions";
 import ProductReviews from "../components/ProductReviews";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
@@ -18,6 +19,7 @@ function ProductDetailPage() {
     const { product, loading, error } = useSelector((state) => state.productDetails);
     const { wishlist } = useSelector((state) => state.wishlist);
     const { isAuthenticated } = useSelector((state) => state.auth);
+    const cartItems = useSelector((state) => state.cart?.cartItems) || [];
 
     const [selectedImage, setSelectedImage] = useState(0);
     const [addedNotice, setAddedNotice] = useState("");
@@ -54,35 +56,19 @@ function ProductDetailPage() {
     const handleAddToCart = () => {
         if (!product || product.stock <= 0) return;
 
-        const rawCart = localStorage.getItem("aureoCart");
-        let cartItems = rawCart ? JSON.parse(rawCart) : [];
+        const existingItem = cartItems.find((item) => item.product === product._id);
 
-        const existingIndex = cartItems.findIndex((item) => item.product === product._id);
-
-        if (existingIndex > -1) {
-            if (product.condition === "second-hand" || cartItems[existingIndex].quantity >= product.stock) {
+        if (existingItem) {
+            if (product.condition === "second-hand" || existingItem.quantity >= product.stock) {
                 toast.info(
                     `Cannot add more. Maximum available stock reached (${product.stock}).`
                 );
                 return;
             }
-            cartItems[existingIndex].quantity += 1;
+            dispatch(addToCart(product, existingItem.quantity + 1));
         } else {
-            cartItems.push({
-                product: product._id,
-                name: product.name,
-                brand: product.brand,
-                price: product.price,
-                image: product.images?.[0]?.url || "",
-                condition: product.condition,
-                stock: product.stock,
-                quantity: 1
-            });
+            dispatch(addToCart(product, 1));
         }
-
-        localStorage.setItem("aureoCart", JSON.stringify(cartItems));
-        window.dispatchEvent(new Event("storage"));
-        window.dispatchEvent(new Event("aureo:cart-updated"));
 
         setAddedNotice(`${product.name} added to your bag.`);
         setTimeout(() => setAddedNotice(""), 3500);
@@ -90,7 +76,7 @@ function ProductDetailPage() {
 
     if (loading) {
         return (
-            <main className="pdp-page">
+            <main className="pdp-page page-enter">
                 <SiteHeader variant="solid" />
                 <ProductDetailSkeleton />
                 <SiteFooter />
@@ -100,7 +86,7 @@ function ProductDetailPage() {
 
     if (error || !product) {
         return (
-            <main className="pdp-page">
+            <main className="pdp-page page-enter">
                 <SiteHeader variant="solid" />
                 <div className="pdp-state">
                     <h1>Watch unavailable</h1>
@@ -127,7 +113,7 @@ function ProductDetailPage() {
         : "In stock";
 
     return (
-        <main className="pdp-page">
+        <main className="pdp-page page-enter">
             <SiteHeader variant="solid" />
 
             <div className="pdp-container">
@@ -138,64 +124,68 @@ function ProductDetailPage() {
                 <div className="pdp-grid">
                     {/* Gallery */}
                     <div className="pdp-gallery">
-                        <div className="pdp-frame">
+                        <div className="pdp-gallery__main">
                             {images[selectedImage]?.url ? (
                                 <img
-                                    key={selectedImage}
                                     src={images[selectedImage].url}
-                                    alt={product.name}
-                                    className="pdp-main-photo"
+                                    alt={`${product.name} main view`}
+                                    className="pdp-gallery__img"
                                 />
                             ) : (
-                                <div className="pdp-placeholder">No photo available</div>
-                            )}
-                            {(isSold || isSecondHand) && (
-                                <span className="pdp-tag">{isSold ? "Sold" : "Pre-owned"}</span>
+                                <div className="pdp-gallery__empty">No photograph available</div>
                             )}
                         </div>
 
                         {images.length > 1 && (
-                            <div className="pdp-thumbs">
+                            <div className="pdp-gallery__thumbs" role="tablist">
                                 {images.map((img, idx) => (
                                     <button
-                                        key={idx}
+                                        key={img.public_id || idx}
                                         type="button"
-                                        className={`pdp-thumb ${selectedImage === idx ? "is-active" : ""}`}
+                                        role="tab"
+                                        aria-selected={idx === selectedImage}
+                                        className={`pdp-gallery__thumb ${idx === selectedImage ? "is-active" : ""}`}
                                         onClick={() => setSelectedImage(idx)}
-                                        aria-label={`View image ${idx + 1}`}
                                     >
-                                        <img src={img.url} alt="" />
+                                        <img src={img.url} alt={`Thumbnail ${idx + 1}`} />
                                     </button>
                                 ))}
                             </div>
                         )}
                     </div>
 
-                    {/* Details */}
+                    {/* Information */}
                     <div className="pdp-info">
-                        <span className="pdp-brand">{product.brand}</span>
+                        <p className="lx-kicker">{product.brand}</p>
                         <h1 className="pdp-title">{product.name}</h1>
 
-                        {product.numOfReviews > 0 && (
+                        <div className="pdp-rating-row">
                             <div className="pdp-rating">
                                 <IconStar width={14} height={14} />
-                                <strong>{Number(product.ratings).toFixed(1)}</strong>
-                                <span>({product.numOfReviews} reviews)</span>
+                                <span>{Number(product.ratings || 5).toFixed(1)}</span>
                             </div>
-                        )}
+                            <span className="pdp-rating-count">
+                                {product.numOfReviews || 0} {product.numOfReviews === 1 ? "review" : "reviews"}
+                            </span>
+                        </div>
 
-                        <p className="pdp-price">{formatPrice(product.price)}</p>
-                        <p className={`pdp-availability ${isSold ? "is-sold" : ""}`}>{availability}</p>
+                        <div className="pdp-price-row">
+                            <span className="pdp-price">{formatPrice(product.price)}</span>
+                            <span className={`pdp-badge ${isSold ? "pdp-badge--sold" : isSecondHand ? "pdp-badge--preowned" : ""}`}>
+                                {availability}
+                            </span>
+                        </div>
 
                         <div className="pdp-actions">
                             <button
                                 type="button"
-                                className="btn-gold pdp-cta"
-                                disabled={isSold}
+                                className="btn-gold pdp-add"
                                 onClick={handleAddToCart}
+                                disabled={isSold}
                             >
-                                {isSold ? "Sold out" : "Add to bag"}
+                                {isSold ? "Piece Archived" : "Acquire Timepiece"}
                             </button>
+
                             <button
                                 type="button"
                                 className={`pdp-wish ${isWishlisted ? "is-active" : ""}`}

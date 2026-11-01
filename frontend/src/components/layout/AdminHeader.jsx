@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
@@ -8,7 +9,7 @@ import {
     IconScale,
     IconStore,
     IconTool,
-    IconUser
+    IconMenu
 } from "./icons";
 import "../../styles/admin.css";
 
@@ -23,13 +24,15 @@ const ADMIN_LINKS = [
 
 export function AdminHeader() {
     const { user } = useSelector((state) => state.auth);
+    const [menuOpen, setMenuOpen] = useState(false);
+
+    const closeMenu = () => setMenuOpen(false);
 
     return (
-        <header className="admin-vault-header">
+        <header className={`admin-vault-header ${menuOpen ? "is-open" : ""}`}>
             <div className="admin-vault-header__inner">
                 <div className="admin-vault-header__brand">
-                    <Link to="/" className="site-logo">
-                        <span className="site-logo__mark" aria-hidden="true" />
+                    <Link to="/" className="site-logo" onClick={closeMenu}>
                         AUREO
                     </Link>
                     <span className="admin-vault-badge">VAULT HQ</span>
@@ -42,6 +45,7 @@ export function AdminHeader() {
                             <NavLink
                                 key={item.to}
                                 to={item.to}
+                                onClick={closeMenu}
                                 className={({ isActive }) =>
                                     `admin-nav-item ${isActive ? "is-active" : ""}`
                                 }
@@ -54,10 +58,10 @@ export function AdminHeader() {
                 </nav>
 
                 <div className="admin-vault-actions">
-                    <Link to="/catalog" className="admin-quick-btn" title="View Public Storefront">
+                    <Link to="/catalog" className="admin-quick-btn" title="View Public Storefront" onClick={closeMenu}>
                         <IconStore /> <span>Storefront</span>
                     </Link>
-                    <Link to="/me" className="admin-user-pill" title="Administrator Profile">
+                    <Link to="/me" className="admin-user-pill" title="Administrator Profile" onClick={closeMenu}>
                         {user?.avatar?.url ? (
                             <img src={user.avatar.url} alt="" className="admin-user-avatar" />
                         ) : (
@@ -67,6 +71,16 @@ export function AdminHeader() {
                         )}
                         <span className="admin-user-name">{user?.name ? user.name.split(" ")[0] : "Admin"}</span>
                     </Link>
+
+                    <button
+                        type="button"
+                        className="admin-burger"
+                        aria-label="Toggle menu"
+                        aria-expanded={menuOpen}
+                        onClick={() => setMenuOpen((open) => !open)}
+                    >
+                        <IconMenu />
+                    </button>
                 </div>
             </div>
         </header>

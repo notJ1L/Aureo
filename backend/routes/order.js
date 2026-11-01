@@ -4,6 +4,7 @@ const {
     createOrder,
     getMyOrders,
     getSingleOrder,
+    getOrderReceipt,
     cancelOrder,
     getAdminOrders,
     updateAdminOrder,
@@ -22,6 +23,7 @@ const router = express.Router();
 router.post("/order/new", isAuthenticatedUser, requireVerified, createOrder);
 router.get("/orders/me", isAuthenticatedUser, getMyOrders);
 router.get("/order/:id", isAuthenticatedUser, getSingleOrder);
+router.get("/order/:id/receipt", isAuthenticatedUser, getOrderReceipt);
 router.put("/order/:id/cancel", isAuthenticatedUser, cancelOrder);
 
 // Admin orders

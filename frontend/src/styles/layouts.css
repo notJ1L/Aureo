@@ -374,3 +374,163 @@
         width: calc(100% - 2rem);
     }
 }
+
+/* ==========================================================================
+   Aureo Unified Design System & Animation Engine
+   Standardized Tokens: Palette, Typography, Elevations, Forms, Modals, Motion
+   ========================================================================== */
+
+@keyframes aureoFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes aureoScaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes aureoPulseGold {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(201, 164, 92, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(201, 164, 92, 0);
+    }
+}
+
+/* Page Entry Animations */
+main,
+.page-enter,
+.orders-page,
+.order-detail-page,
+.cart-page,
+.checkout-page,
+.wishlist-page,
+.sell-page,
+.profile-page,
+.auth-page,
+.admin-page,
+.admin-vault-page {
+    animation: aureoFadeIn 350ms var(--ease-lux, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
+}
+
+/* Unified Card Surface */
+.auth-card,
+.service-card,
+.ticket-card,
+.profile-card,
+.checkout-section-box,
+.cart-items-card,
+.cart-summary-card,
+.wishlist-card,
+.vault-metric-card,
+.vault-panel-card {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
+    transition: transform 250ms ease, border-color 250ms ease, box-shadow 250ms ease !important;
+}
+
+.service-card:hover,
+.ticket-card:hover,
+.wishlist-card:hover {
+    border-color: rgba(201, 164, 92, 0.4) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Unified Form Controls */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+    background: var(--bg-elevated) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 6px !important;
+    color: var(--text-primary) !important;
+    font-family: var(--font-body, "DM Sans", sans-serif) !important;
+    transition: border-color 200ms ease, box-shadow 200ms ease, background 200ms ease !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 0 3px rgba(201, 164, 92, 0.2) !important;
+    outline: none !important;
+}
+
+/* Unified Buttons */
+.gold-button,
+.btn-gold {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 46px !important;
+    padding: 0 1.5rem !important;
+    background: linear-gradient(135deg, #d8b672 0%, #c9a45c 60%, #b88f44 100%) !important;
+    color: #0b0c10 !important;
+    border: 1px solid #c9a45c !important;
+    border-radius: 4px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.04em !important;
+    cursor: pointer !important;
+    transition: all 250ms ease !important;
+}
+
+.gold-button:hover,
+.btn-gold:hover {
+    background: linear-gradient(135deg, #e8d09e 0%, #d8b672 100%) !important;
+    box-shadow: 0 6px 20px rgba(201, 164, 92, 0.35) !important;
+    transform: translateY(-1px) !important;
+}
+
+.outline-button,
+.btn-ghost {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 46px !important;
+    padding: 0 1.5rem !important;
+    background: transparent !important;
+    color: var(--gold) !important;
+    border: 1px solid rgba(201, 164, 92, 0.6) !important;
+    border-radius: 4px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 250ms ease !important;
+}
+
+.outline-button:hover,
+.btn-ghost:hover {
+    background: rgba(201, 164, 92, 0.12) !important;
+    border-color: var(--gold) !important;
+    color: #f4efe6 !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Unified Modal Backdrop & Transitions */
+.modal-backdrop {
+    animation: aureoFadeIn 200ms ease forwards;
+}
+
+.modal-card {
+    animation: aureoScaleIn 250ms var(--ease-lux, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
+    background: #14171d !important;
+    border: 1px solid rgba(201, 164, 92, 0.3) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8) !important;
+}
