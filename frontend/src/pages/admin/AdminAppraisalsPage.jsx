@@ -15,6 +15,12 @@ import {
 import { confirmAction } from "../../utils/sweetAlert";
 import AdminHeader from "../../components/layout/AdminHeader";
 import { AureoSelect } from "../../components/ui";
+import {
+    IconScale,
+    IconSparkle,
+    IconWallet,
+    IconWatch
+} from "../../components/layout/icons";
 
 const STATUS_CLASS = {
     Pending: "unverified-badge",
@@ -143,6 +149,55 @@ function AdminAppraisalsPage() {
 
                 {error && <div className="auth-error">{error}</div>}
                 {actionError && <div className="auth-error">{actionError}</div>}
+
+                {/* Metric Summary Cards */}
+                <div className="vault-metrics-grid" style={{ marginBottom: "2rem" }}>
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Total Appraisals</span>
+                            <div className="vault-metric-icon"><IconWatch /></div>
+                        </div>
+                        <div className="vault-metric-val">{(appraisals || []).length}</div>
+                        <span className="vault-metric-hint">Collector submissions in evaluation queue</span>
+                    </article>
+
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Pending Review</span>
+                            <div className="vault-metric-icon"><IconScale /></div>
+                        </div>
+                        <div className="vault-metric-val" style={{ color: "#fbbf24" }}>
+                            {(appraisals || []).filter((a) => a.status === "Pending").length}
+                        </div>
+                        <span className="vault-metric-hint">Awaiting inspection & quotation offer</span>
+                    </article>
+
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Offers Accepted</span>
+                            <div className="vault-metric-icon"><IconSparkle /></div>
+                        </div>
+                        <div className="vault-metric-val" style={{ color: "#4ade80" }}>
+                            {(appraisals || []).filter((a) => a.status === "Accepted").length}
+                        </div>
+                        <span className="vault-metric-hint">Consignment acquisitions confirmed</span>
+                    </article>
+
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Acquisition Outlay</span>
+                            <div className="vault-metric-icon"><IconWallet /></div>
+                        </div>
+                        <div className="vault-metric-val" style={{ color: "var(--gold)" }}>
+                            {formatPrice(
+                                (appraisals || [])
+                                    .filter((a) => a.status === "Accepted")
+                                    .reduce((sum, a) => sum + (a.offerPrice || 0), 0)
+                            )}
+                        </div>
+                        <span className="vault-metric-hint">Consignment capital committed</span>
+                    </article>
+                </div>
 
                 {loading && <p className="catalog-message">Loading appraisals...</p>}
 

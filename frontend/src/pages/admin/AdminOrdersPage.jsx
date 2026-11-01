@@ -10,6 +10,12 @@ import {
 import { confirmAction } from "../../utils/sweetAlert";
 import { StatusBadge, AureoSelect } from "../../components/ui";
 import AdminHeader from "../../components/layout/AdminHeader";
+import {
+    IconReceipt,
+    IconTrendUp,
+    IconTruck,
+    IconSparkle
+} from "../../components/layout/icons";
 
 // FR 4.2: the order status flow. A completed order can never move back.
 const ORDER_STATUS_FLOW = {
@@ -116,6 +122,55 @@ function AdminOrdersPage() {
 
                 {error && <div className="auth-error">{error}</div>}
                 {mutationError && <div className="auth-error">{mutationError}</div>}
+
+                {/* Metric Summary Cards */}
+                <div className="vault-metrics-grid" style={{ marginBottom: "2rem" }}>
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Total Acquisitions</span>
+                            <div className="vault-metric-icon"><IconReceipt /></div>
+                        </div>
+                        <div className="vault-metric-val">{(orders || []).length}</div>
+                        <span className="vault-metric-hint">All customer watch order placements</span>
+                    </article>
+
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Gross Revenue</span>
+                            <div className="vault-metric-icon"><IconTrendUp /></div>
+                        </div>
+                        <div className="vault-metric-val" style={{ color: "var(--gold)" }}>
+                            {formatPrice(
+                                (orders || [])
+                                    .filter((o) => o.status !== "Cancelled")
+                                    .reduce((sum, o) => sum + (o.totalPrice || calculateTotal(o)), 0)
+                            )}
+                        </div>
+                        <span className="vault-metric-hint">Settled and active sales volume</span>
+                    </article>
+
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Pending Dispatch</span>
+                            <div className="vault-metric-icon"><IconTruck /></div>
+                        </div>
+                        <div className="vault-metric-val" style={{ color: "#fbbf24" }}>
+                            {(orders || []).filter((o) => ["Pending", "Paid"].includes(o.status)).length}
+                        </div>
+                        <span className="vault-metric-hint">Orders awaiting processing or courier</span>
+                    </article>
+
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Fulfilled Orders</span>
+                            <div className="vault-metric-icon"><IconSparkle /></div>
+                        </div>
+                        <div className="vault-metric-val" style={{ color: "#4ade80" }}>
+                            {(orders || []).filter((o) => ["Completed", "Shipped"].includes(o.status)).length}
+                        </div>
+                        <span className="vault-metric-hint">Dispatched or safely delivered</span>
+                    </article>
+                </div>
 
                 {loading && <p className="catalog-message">Loading orders...</p>}
 

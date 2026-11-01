@@ -21,6 +21,12 @@ import { serviceSchema } from "../../utils/validationSchemas";
 import { confirmAction } from "../../utils/sweetAlert";
 import AdminHeader from "../../components/layout/AdminHeader";
 import { AureoCheckbox } from "../../components/ui";
+import {
+    IconTool,
+    IconSparkle,
+    IconWallet,
+    IconBox
+} from "../../components/layout/icons";
 
 const formatPrice = (price) =>
     new Intl.NumberFormat("en-PH", {
@@ -225,6 +231,51 @@ function AdminServicesPage() {
                     <button type="button" className="gold-button" onClick={handleOpenCreate}>
                         + Add Service
                     </button>
+                </div>
+
+                {/* Metric Summary Cards */}
+                <div className="vault-metrics-grid" style={{ marginBottom: "2rem" }}>
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Total Services</span>
+                            <div className="vault-metric-icon"><IconTool /></div>
+                        </div>
+                        <div className="vault-metric-val">{counts.total}</div>
+                        <span className="vault-metric-hint">Registered atelier maintenance offerings</span>
+                    </article>
+
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Active Catalog</span>
+                            <div className="vault-metric-icon"><IconSparkle /></div>
+                        </div>
+                        <div className="vault-metric-val" style={{ color: "#4ade80" }}>{counts.active}</div>
+                        <span className="vault-metric-hint">Bookable on storefront & support desk</span>
+                    </article>
+
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Average Service Fee</span>
+                            <div className="vault-metric-icon"><IconWallet /></div>
+                        </div>
+                        <div className="vault-metric-val" style={{ color: "var(--gold)" }}>
+                            {formatPrice(
+                                counts.total
+                                    ? (services || []).reduce((sum, s) => sum + (s.price || 0), 0) / counts.total
+                                    : 0
+                            )}
+                        </div>
+                        <span className="vault-metric-hint">Standard calibration & maintenance rate</span>
+                    </article>
+
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Archived Services</span>
+                            <div className="vault-metric-icon"><IconBox /></div>
+                        </div>
+                        <div className="vault-metric-val">{counts.archived}</div>
+                        <span className="vault-metric-hint">Deactivated historical service records</span>
+                    </article>
                 </div>
 
                 {/* Status Tabs */}

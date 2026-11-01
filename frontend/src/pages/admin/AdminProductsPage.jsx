@@ -24,6 +24,12 @@ import { ValidatedField } from "../../components/ui/ValidatedField";
 import { StatusBadge, AureoCheckbox } from "../../components/ui";
 import { productSchema } from "../../utils/validationSchemas";
 import AdminHeader from "../../components/layout/AdminHeader";
+import {
+    IconWatch,
+    IconBox,
+    IconSparkle,
+    IconWallet
+} from "../../components/layout/icons";
 
 const CATEGORY_OPTIONS = [
     { value: "dress", label: "Dress" },
@@ -431,6 +437,49 @@ function AdminProductsPage() {
 
                 {error && <div className="auth-error">{error}</div>}
                 {mutationError && <div className="auth-error">{mutationError}</div>}
+
+                {/* Metric Summary Cards */}
+                <div className="vault-metrics-grid" style={{ marginBottom: "2rem" }}>
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Total References</span>
+                            <div className="vault-metric-icon"><IconWatch /></div>
+                        </div>
+                        <div className="vault-metric-val">{allProducts.length}</div>
+                        <span className="vault-metric-hint">Unique timepiece models cataloged</span>
+                    </article>
+
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Active Listings</span>
+                            <div className="vault-metric-icon"><IconSparkle /></div>
+                        </div>
+                        <div className="vault-metric-val" style={{ color: "#4ade80" }}>{activeCount}</div>
+                        <span className="vault-metric-hint">Publicly available on storefront</span>
+                    </article>
+
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>In-Stock Physical Units</span>
+                            <div className="vault-metric-icon"><IconBox /></div>
+                        </div>
+                        <div className="vault-metric-val">
+                            {allProducts.reduce((sum, p) => sum + (Number(p.stock) || 0), 0)}
+                        </div>
+                        <span className="vault-metric-hint">Total quantity across all inventory</span>
+                    </article>
+
+                    <article className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>Inventory Valuation</span>
+                            <div className="vault-metric-icon"><IconWallet /></div>
+                        </div>
+                        <div className="vault-metric-val" style={{ color: "var(--gold)" }}>
+                            {formatPrice(allProducts.reduce((sum, p) => sum + ((Number(p.price) || 0) * (Number(p.stock) || 0)), 0))}
+                        </div>
+                        <span className="vault-metric-hint">Combined market value of stock</span>
+                    </article>
+                </div>
 
                 {/* Filter and Search Bar */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>

@@ -10,6 +10,12 @@ import { ADMIN_TICKET_STATUS_RESET } from "../../redux/constants/serviceConstant
 import { confirmAction } from "../../utils/sweetAlert";
 import AdminHeader from "../../components/layout/AdminHeader";
 import { AureoSelect } from "../../components/ui";
+import {
+    IconChat,
+    IconTool,
+    IconSparkle,
+    IconShield
+} from "../../components/layout/icons";
 
 // FR 5.3: the ticket state tracking.
 const TICKET_STATUS_FLOW = {
@@ -66,6 +72,11 @@ function AdminTicketsPage() {
         (ticket) => !statusFilter || ticket.status === statusFilter
     );
 
+    const totalCount = (tickets || []).length;
+    const activeRepairsCount = (tickets || []).filter((t) => ["Received", "Diagnosing"].includes(t.status)).length;
+    const awaitingPartsCount = (tickets || []).filter((t) => t.status === "Waiting for Parts").length;
+    const completedCount = (tickets || []).filter((t) => t.status === "Completed").length;
+
     return (
         <main className="admin-page">
             <AdminHeader />
@@ -88,6 +99,53 @@ function AdminTicketsPage() {
                                 }))
                             ]}
                         />
+                    </div>
+                </div>
+
+                {/* Metric Summary Cards */}
+                <div className="vault-metrics-grid">
+                    <div className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>TOTAL TICKETS</span>
+                            <div className="vault-metric-icon">
+                                <IconChat size={20} />
+                            </div>
+                        </div>
+                        <div className="vault-metric-val">{totalCount}</div>
+                        <div className="vault-metric-hint">Client repair & service cases</div>
+                    </div>
+
+                    <div className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>IN DIAGNOSTIC</span>
+                            <div className="vault-metric-icon" style={{ color: "#fbbf24" }}>
+                                <IconTool size={20} />
+                            </div>
+                        </div>
+                        <div className="vault-metric-val">{activeRepairsCount}</div>
+                        <div className="vault-metric-hint">Received & bench inspection</div>
+                    </div>
+
+                    <div className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>AWAITING PARTS</span>
+                            <div className="vault-metric-icon" style={{ color: "#f87171" }}>
+                                <IconShield size={20} />
+                            </div>
+                        </div>
+                        <div className="vault-metric-val">{awaitingPartsCount}</div>
+                        <div className="vault-metric-hint">Pending movement & parts</div>
+                    </div>
+
+                    <div className="vault-metric-card">
+                        <div className="vault-metric-head">
+                            <span>COMPLETED</span>
+                            <div className="vault-metric-icon" style={{ color: "#4ade80" }}>
+                                <IconSparkle size={20} />
+                            </div>
+                        </div>
+                        <div className="vault-metric-val">{completedCount}</div>
+                        <div className="vault-metric-hint">Restored & ready for return</div>
                     </div>
                 </div>
 
