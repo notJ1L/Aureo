@@ -171,7 +171,7 @@
     font-size: 0.9rem;
     padding: 0.5rem 1.1rem;
     border: 1px solid transparent;
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
 
 .aureo-btn-primary {
@@ -185,6 +185,7 @@
     background-color: var(--gold-hover);
     border-color: var(--gold-hover);
     color: var(--bg-page);
+    transform: translateY(-1px);
 }
 
 .aureo-btn-outline-secondary {
@@ -195,9 +196,10 @@
 
 .aureo-btn-outline-secondary:hover,
 .aureo-btn-outline-secondary:focus {
-    background-color: var(--gold-10);
-    border-color: var(--gold-hover);
-    color: var(--gold-hover);
+    background-color: var(--gold);
+    border-color: var(--gold);
+    color: var(--bg-page);
+    transform: translateY(-1px);
 }
 
 .aureo-btn-danger {
@@ -276,7 +278,7 @@
 
 .aureo-form-group .form-control {
     background-color: var(--bg-elevated);
-    border: 1px solid var(--border);
+    border: 1px solid var(--gold-30);
     border-radius: 8px;
     color: var(--text-primary);
     font-size: 0.92rem;
@@ -336,7 +338,7 @@
 .aureo-field-input {
     width: 100%;
     background-color: var(--bg-elevated);
-    border: 1px solid var(--border);
+    border: 1px solid var(--gold-30);
     border-radius: 8px;
     color: var(--text-primary);
     font-size: 0.92rem;
@@ -375,4 +377,55 @@
     color: var(--text-muted);
     font-size: 0.8rem;
     margin-top: 0.3rem;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Status badges (Fix 6)                                                      */
+/* -------------------------------------------------------------------------- */
+
+/* One pill for every status chip in the application: order statuses on the
+ * Orders, Order Detail, and Admin Orders pages, and condition / listing
+ * status on the admin inventory. The tone modifier is the only thing a page
+ * chooses; the shape, type, and spacing live here. */
+.aureo-status {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    line-height: 1.6;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.aureo-status--pending,
+.aureo-status--inactive,
+.aureo-status--second {
+    border-color: var(--muted-50);
+    color: var(--text-muted);
+}
+
+.aureo-status--paid {
+    border-color: var(--info-55);
+    color: var(--info);
+}
+
+.aureo-status--shipped,
+.aureo-status--new {
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+.aureo-status--completed,
+.aureo-status--active {
+    border-color: var(--success);
+    color: var(--success);
+}
+
+.aureo-status--cancelled {
+    border-color: var(--danger);
+    color: var(--danger-text);
 }

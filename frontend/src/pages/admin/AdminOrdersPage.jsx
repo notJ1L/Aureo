@@ -8,6 +8,7 @@ import {
     deleteAdminOrder
 } from "../../redux/actions/orderActions";
 import { confirmAction } from "../../utils/sweetAlert";
+import { StatusBadge } from "../../components/ui";
 import AdminHeader from "../../components/layout/AdminHeader";
 
 // FR 4.2: the order status flow. A completed order can never move back.
@@ -17,14 +18,6 @@ const ORDER_STATUS_FLOW = {
     Shipped: ["Completed"],
     Completed: [],
     Cancelled: []
-};
-
-const STATUS_CLASS = {
-    Pending: "unverified-badge",
-    Paid: "verified-badge",
-    Shipped: "verified-badge",
-    Completed: "verified-badge",
-    Cancelled: "preowned-badge"
 };
 
 function AdminOrdersPage() {
@@ -176,9 +169,7 @@ function AdminOrdersPage() {
                                                 <span className="admin-subtext">{order.paymentStatus}</span>
                                             </td>
                                             <td>
-                                                <span className={`badge ${STATUS_CLASS[order.status] || "unverified-badge"}`}>
-                                                    {order.status}
-                                                </span>
+                                                <StatusBadge status={order.status} label={order.status} />
                                             </td>
                                             <td>
                                                 <div className="admin-action-cell">

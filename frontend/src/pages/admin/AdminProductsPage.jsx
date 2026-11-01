@@ -19,6 +19,7 @@ import {
 } from "../../redux/constants/productConstants";
 import { confirmAction } from "../../utils/sweetAlert";
 import { ValidatedField } from "../../components/ui/ValidatedField";
+import { StatusBadge } from "../../components/ui";
 import { productSchema } from "../../utils/validationSchemas";
 import AdminHeader from "../../components/layout/AdminHeader";
 
@@ -369,9 +370,7 @@ function AdminProductsPage() {
                                     </td>
                                     <td>{prod.movement} ({prod.caseSize}mm)</td>
                                     <td>
-                                        <span className={`badge ${prod.condition === "second-hand" ? "preowned-badge" : "new-badge"}`}>
-                                            {prod.condition}
-                                        </span>
+                                        <StatusBadge status={prod.condition} label={prod.condition} />
                                     </td>
                                     <td>{formatPrice(prod.price)}</td>
                                     <td>
@@ -379,9 +378,10 @@ function AdminProductsPage() {
                                         {prod.condition === "second-hand" && <span className="single-unit-pill">Single unit</span>}
                                     </td>
                                     <td>
-                                        <span className={`badge ${prod.isActive ? "verified-badge" : "unverified-badge"}`}>
-                                            {prod.isActive ? "Active" : "Archived"}
-                                        </span>
+                                        <StatusBadge
+                                            status={prod.isActive ? "active" : "archived"}
+                                            label={prod.isActive ? "Active" : "Archived"}
+                                        />
                                     </td>
                                     <td>
                                         <div className="admin-action-cell">

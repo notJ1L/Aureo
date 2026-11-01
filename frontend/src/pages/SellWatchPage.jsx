@@ -25,6 +25,7 @@ function SellWatchPage() {
 
     const [files, setFiles] = useState([]);
     const [previews, setPreviews] = useState([]);
+    const [isDragging, setIsDragging] = useState(false);
 
     const {
         register,
@@ -58,25 +59,48 @@ function SellWatchPage() {
         };
     }, [dispatch]);
 
-    const handleFiles = (event) => {
-        const selected = Array.from(event.target.files || []);
+    const acceptFiles = (fileList) => {
+        const selected = Array.from(fileList || []);
+        if (selected.length === 0) {
+            return;
+        }
 
         if (selected.length > MAX_PHOTOS) {
             toast.error(`You can upload a maximum of ${MAX_PHOTOS} photos.`);
-            event.target.value = "";
             return;
         }
 
         for (const file of selected) {
             if (file.size > MAX_FILE_SIZE) {
                 toast.error(`File "${file.name}" exceeds the 5MB limit.`);
-                event.target.value = "";
                 return;
             }
         }
 
         setFiles(selected);
         setPreviews(selected.map((file) => URL.createObjectURL(file)));
+    };
+
+    const handleFiles = (event) => {
+        acceptFiles(event.target.files);
+        // Reset so the same file can be picked again after a validation error.
+        event.target.value = "";
+    };
+
+    const handleDragOver = (event) => {
+        event.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (event) => {
+        event.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (event) => {
+        event.preventDefault();
+        setIsDragging(false);
+        acceptFiles(event.dataTransfer.files);
     };
 
     const onSubmit = (values) => {
@@ -227,21 +251,51 @@ function SellWatchPage() {
                         </label>
                     </div>
 
-                    <label>
-                        Photographs (front, back, movement, box) &mdash; max {MAX_PHOTOS}
-                        <input type="file" accept="image/jpeg,image/png" multiple onChange={handleFiles} />
-                        <span className="field-hint">
-                            JPG or PNG, maximum 5 MB per photo, at least one photo is required.
-                        </span>
-                    </label>
+                    <div className="upload-field">
+                        <span className="upload-label">Photographs (front, back, movement, box) &mdash; max {MAX_PHOTOS}</span>
+                        <label
+                            htmlFor="photo-upload"
+                            className={`upload-zone${isDragging ? " is-dragging" : ""}`}
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                        >
+                            <svg
+                                className="upload-icon"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.6"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                            >
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="17 8 12 3 7 8" />
+                                <line x1="12" y1="3" x2="12" y2="15" />
+                            </svg>
+                            <span className="upload-title">Drag photos here or click to browse</span>
+                            <span className="upload-subtext">
+                                JPG or PNG &middot; max 5 MB per photo &middot; at least 1 required &middot; max {MAX_PHOTOS}
+                            </span>
+                            <input
+                                id="photo-upload"
+                                type="file"
+                                accept="image/jpeg,image/png"
+                                multiple
+                                onChange={handleFiles}
+                                style={{ display: "none" }}
+                            />
+                        </label>
 
-                    {previews.length > 0 && (
-                        <div className="modal-preview-grid">
-                            {previews.map((src, index) => (
-                                <img key={src} src={src} alt={`Preview ${index + 1}`} className="modal-thumb" />
-                            ))}
-                        </div>
-                    )}
+                        {previews.length > 0 && (
+                            <div className="upload-preview-grid">
+                                {previews.map((src, index) => (
+                                    <img key={src} src={src} alt={`Preview ${index + 1}`} className="upload-thumb" />
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
                     <div className="modal-actions" style={{ display: "flex", gap: "1rem", marginTop: "1.5rem" }}>
                         <button type="button" className="outline-button" onClick={() => navigate("/appraisals")}>

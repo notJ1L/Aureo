@@ -105,51 +105,49 @@ function ProfilePage() {
             <SiteHeader variant="solid" />
 
             <div className="profile-container">
-                <section className="profile-card">
-                    <div className="profile-top">
-                        <div className="avatar-wrapper">
-                            <img
-                                src={avatarPreview || user?.avatar?.url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80"}
-                                alt={user?.name || "User Avatar"}
-                                className="profile-avatar"
+                <section className="profile-hero">
+                    <div className="avatar-wrapper">
+                        <img
+                            src={avatarPreview || user?.avatar?.url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80"}
+                            alt={user?.name || "User Avatar"}
+                            className="profile-avatar"
+                        />
+                        <label className="avatar-upload-btn">
+                            <span>Change Photo</span>
+                            <input
+                                type="file"
+                                accept="image/png, image/jpeg, image/jpg"
+                                onChange={handleAvatarChange}
+                                style={{ display: "none" }}
                             />
-                            <label className="avatar-upload-btn">
-                                <span>Change Photo</span>
-                                <input
-                                    type="file"
-                                    accept="image/png, image/jpeg, image/jpg"
-                                    onChange={handleAvatarChange}
-                                    style={{ display: "none" }}
-                                />
-                            </label>
-                        </div>
+                        </label>
+                    </div>
 
-                        <div className="profile-meta">
-                            <p className="eyebrow">AUREO MEMBER</p>
-                            <h2>{user?.name}</h2>
-                            <p className="profile-email">{user?.email}</p>
-                            <div className="profile-badges" style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
-                                <span className="badge role-badge">{user?.role?.toUpperCase()}</span>
-                                <span className={`badge ${user?.isVerified ? "verified-badge" : "unverified-badge"}`}>
-                                    {user?.isVerified ? "✓ Verified" : "⚠ Unverified"}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div style={{ marginLeft: "auto" }}>
-                            <button type="button" className="outline-button" onClick={handleLogout}>
-                                Sign Out
-                            </button>
+                    <div className="profile-meta">
+                        <p className="eyebrow">AUREO MEMBER</p>
+                        <h2>{user?.name}</h2>
+                        <p className="profile-email">{user?.email}</p>
+                        <div className="profile-badges">
+                            <span className="badge role-badge">{user?.role?.toUpperCase()}</span>
+                            <span className={`badge ${user?.isVerified ? "verified-badge" : "unverified-badge"}`}>
+                                {user?.isVerified ? "✓ Verified" : "⚠ Unverified"}
+                            </span>
                         </div>
                     </div>
 
-                    {error && <div className="auth-error">{error}</div>}
-                    {savedMsg && <div className="auth-info">{savedMsg}</div>}
+                    <div className="profile-hero-actions">
+                        <button type="button" className="outline-button" onClick={handleLogout}>
+                            Sign Out
+                        </button>
+                    </div>
+                </section>
 
-                    <hr className="profile-divider" />
+                {error && <div className="auth-error">{error}</div>}
+                {savedMsg && <div className="auth-info">{savedMsg}</div>}
 
-                    <form onSubmit={handleSubmit(onProfileSubmit)} className="profile-form" noValidate>
-                        <h3>Personal Details</h3>
+                <form onSubmit={handleSubmit(onProfileSubmit)} className="profile-form" noValidate>
+                    <section className="profile-section">
+                        <p className="eyebrow">PERSONAL DETAILS</p>
 
                         <ValidatedField
                             control={control}
@@ -179,7 +177,10 @@ function ProfilePage() {
                             error={errors.contactNumber?.message}
                         />
 
-                        <h3 style={{ marginTop: "1.5rem" }}>Shipping Address</h3>
+                    </section>
+
+                    <section className="profile-section">
+                        <p className="eyebrow">SHIPPING ADDRESS</p>
 
                         <ValidatedField
                             control={control}
@@ -218,18 +219,18 @@ function ProfilePage() {
                             autoComplete="country-name"
                             error={errors.country?.message}
                         />
+                    </section>
 
-                        <div className="profile-actions" style={{ marginTop: "1.5rem" }}>
-                            <button
-                                type="submit"
-                                className="gold-button"
-                                disabled={updateLoading}
-                            >
-                                {updateLoading ? "Saving Changes..." : "Save Profile"}
-                            </button>
-                        </div>
-                    </form>
-                </section>
+                    <div className="profile-actions" style={{ marginTop: "1.5rem" }}>
+                        <button
+                            type="submit"
+                            className="gold-button"
+                            disabled={updateLoading}
+                        >
+                            {updateLoading ? "Saving Changes..." : "Save Profile"}
+                        </button>
+                    </div>
+                </form>
             </div>
 
             <SiteFooter />

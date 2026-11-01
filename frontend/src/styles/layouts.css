@@ -428,7 +428,6 @@ main,
 
 /* Unified Card Surface */
 .auth-card,
-.service-card,
 .ticket-card,
 .profile-card,
 .checkout-section-box,
@@ -444,7 +443,6 @@ main,
     transition: transform 250ms ease, border-color 250ms ease, box-shadow 250ms ease !important;
 }
 
-.service-card:hover,
 .ticket-card:hover,
 .wishlist-card:hover {
     border-color: rgba(201, 164, 92, 0.4) !important;
@@ -452,24 +450,67 @@ main,
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6) !important;
 }
 
-/* Unified Form Controls */
+/* Service cards match the watch-card language used on the catalogue and the
+ * homepage: a dark surface, a subtle gold border at rest, and a full gold
+ * border with a small lift on hover. */
+.service-card {
+    background: var(--bg-card) !important;
+    border: 1px solid rgba(201, 164, 92, 0.2) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
+    transition: transform 250ms ease, border-color 250ms ease, box-shadow 250ms ease !important;
+}
+
+.service-card:hover {
+    border-color: var(--gold) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Unified Form Controls
+ *
+ * Fix 1: this is the single source of truth for every text field, select,
+ * and textarea in the application. The dark surface, the subtle gold border
+ * at rest, the full gold border and glow on focus, and the muted placeholder
+ * are defined here and nowhere else, so no page can drift out of the theme. */
 input:not([type="checkbox"]):not([type="radio"]),
 select,
 textarea {
     background: var(--bg-elevated) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 6px !important;
+    border: 1px solid var(--gold-30) !important;
+    border-radius: 8px !important;
     color: var(--text-primary) !important;
     font-family: var(--font-body, "DM Sans", sans-serif) !important;
+    font-size: 0.92rem !important;
+    padding: 0.6rem 0.8rem !important;
     transition: border-color 200ms ease, box-shadow 200ms ease, background 200ms ease !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--text-muted) !important;
+    opacity: 1 !important;
+}
+
+select option {
+    background: var(--bg-card);
+    color: var(--text-primary);
 }
 
 input:focus,
 select:focus,
 textarea:focus {
     border-color: var(--gold) !important;
-    box-shadow: 0 0 0 3px rgba(201, 164, 92, 0.2) !important;
+    box-shadow: var(--focus-ring) !important;
     outline: none !important;
+}
+
+/* The error state is driven by the `aria-invalid` attribute that every Yup
+ * field already sets, so the red border needs no extra JavaScript. */
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+    border-color: var(--danger) !important;
 }
 
 /* Unified Buttons */
@@ -515,9 +556,9 @@ textarea:focus {
 
 .outline-button:hover,
 .btn-ghost:hover {
-    background: rgba(201, 164, 92, 0.12) !important;
+    background: var(--gold) !important;
     border-color: var(--gold) !important;
-    color: #f4efe6 !important;
+    color: #0b0c10 !important;
     transform: translateY(-1px) !important;
 }
 

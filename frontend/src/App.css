@@ -788,19 +788,33 @@ a {
     max-width: 800px;
     margin: 0 auto;
     padding: 2.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
-.profile-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    padding: 2.5rem;
-    box-shadow: 0 20px 60px var(--overlay-40);
-}
-
-.profile-top {
+.profile-hero {
     display: flex;
     align-items: center;
     gap: 2rem;
+    padding: 2rem;
+    background: var(--bg-card);
+    border: 1px solid var(--gold-30);
+    border-radius: 10px;
+    box-shadow: 0 20px 60px var(--overlay-40);
+}
+
+.profile-hero-actions {
+    margin-left: auto;
+}
+
+.profile-section {
+    display: grid;
+    gap: 1.1rem;
+    padding: 1.6rem;
+    background: var(--bg-card);
+    border: 1px solid rgba(201, 164, 92, 0.2);
+    border-radius: 10px;
 }
 
 .avatar-wrapper {
@@ -819,14 +833,26 @@ a {
 }
 
 .avatar-upload-btn {
-    font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+    padding: 0 0.9rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
     color: var(--gold);
+    background: transparent;
+    border: 1px solid rgba(201, 164, 92, 0.6);
+    border-radius: 4px;
     cursor: pointer;
-    text-decoration: underline;
+    transition: background 200ms ease, color 200ms ease, border-color 200ms ease;
 }
 
 .avatar-upload-btn:hover {
-    color: var(--gold-hover);
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #0b0c10;
 }
 
 .profile-meta h2 {
@@ -924,9 +950,12 @@ a {
 }
 
 @media (max-width: 640px) {
-    .profile-top {
+    .profile-hero {
         flex-direction: column;
         text-align: center;
+    }
+    .profile-hero-actions {
+        margin-left: 0;
     }
     .form-row-3 {
         grid-template-columns: 1fr;
@@ -2432,13 +2461,20 @@ a {
 }
 
 /* Sell your watch / appraisal pages */
+/* Fix 7: the page is a full-height flex column and the content area grows to
+ * fill the space, so the footer stays pinned to the bottom even when a list
+ * (for example the appraisal archive) is empty. */
 .sell-page {
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
     background: var(--bg-page);
     color: var(--text-primary);
 }
 
 .sell-container {
+    width: 100%;
+    flex: 1;
     max-width: 880px;
     margin: 0 auto;
     padding: 3rem 1.5rem 5rem;
@@ -2474,6 +2510,76 @@ a {
     width: 16px;
     height: 16px;
     accent-color: var(--gold);
+}
+
+/* Sell page photo upload zone (Fix 2) */
+.upload-field {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.upload-label {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.upload-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    background: var(--bg-elevated);
+    border: 1px dashed var(--gold-30);
+    border-radius: 10px;
+    transition: border-color 200ms ease, background 200ms ease, box-shadow 200ms ease;
+}
+
+.upload-zone:hover {
+    border-color: var(--gold);
+    background: rgba(201, 164, 92, 0.06);
+}
+
+.upload-zone.is-dragging {
+    border-color: var(--gold);
+    background: rgba(201, 164, 92, 0.12);
+    box-shadow: var(--focus-ring);
+}
+
+.upload-icon {
+    width: 32px;
+    height: 32px;
+    color: var(--gold);
+}
+
+.upload-title {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.upload-subtext {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
+.upload-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    gap: 0.6rem;
+    margin-top: 0.4rem;
+}
+
+.upload-thumb {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border: 1px solid var(--gold);
+    border-radius: 6px;
 }
 
 /* Appraisal cards */
@@ -2583,7 +2689,7 @@ a {
 
 .service-card p {
     margin: 0;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     font-size: 0.85rem;
     flex: 1;
 }

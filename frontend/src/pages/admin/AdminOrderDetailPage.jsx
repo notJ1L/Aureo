@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { getOrderDetails } from "../../redux/actions/orderActions";
+import { StatusBadge } from "../../components/ui";
 import api from "../../services/api";
 import AdminHeader from "../../components/layout/AdminHeader";
 import "../../styles/admin.css";
@@ -96,7 +97,7 @@ function AdminOrderDetailPage() {
                     </div>
 
                     <div className="head-right-actions" style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-                        <span className="badge role-badge">{order.status.toUpperCase()}</span>
+                        <StatusBadge status={order.status} label={order.status} />
 
                         {isCompletedOrPaid && (
                             <button

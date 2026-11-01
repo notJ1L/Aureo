@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getMyOrders, cancelOrder } from "../redux/actions/orderActions";
 import { confirmAction } from "../utils/sweetAlert";
+import { StatusBadge } from "../components/ui";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
 
@@ -35,22 +36,6 @@ function OrdersPage() {
 
         if (confirmed) {
             dispatch(cancelOrder(orderId));
-        }
-    };
-
-    const getStatusClass = (status) => {
-        switch (status) {
-            case "Paid":
-            case "Completed":
-                return "verified-badge";
-            case "Pending":
-                return "role-badge";
-            case "Shipped":
-                return "preowned-badge";
-            case "Cancelled":
-                return "sold-badge";
-            default:
-                return "role-badge";
         }
     };
 
@@ -109,9 +94,7 @@ function OrdersPage() {
                                         </span>
                                     </div>
                                     <div className="order-head-badges">
-                                        <span className={`badge ${getStatusClass(ord.status)}`}>
-                                            {ord.status.toUpperCase()}
-                                        </span>
+                                        <StatusBadge status={ord.status} label={ord.status} />
                                     </div>
                                 </div>
 

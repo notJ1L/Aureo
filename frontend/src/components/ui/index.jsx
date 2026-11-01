@@ -196,6 +196,32 @@ export function AureoBadge({ children, bg = "var(--gold)", ...rest }) {
     );
 }
 
+// Fix 6: the single status pill used by the order and inventory views. A page
+// passes the raw status and the component picks the tone, so the colours stay
+// identical everywhere.
+const STATUS_TONES = {
+    pending: "pending",
+    paid: "paid",
+    shipped: "shipped",
+    completed: "completed",
+    cancelled: "cancelled",
+    active: "active",
+    inactive: "inactive",
+    archived: "inactive",
+    new: "new",
+    "second-hand": "second"
+};
+
+export function StatusBadge({ status, label, className = "" }) {
+    const tone = STATUS_TONES[String(status ?? "").toLowerCase()] || "pending";
+
+    return (
+        <span className={`aureo-status aureo-status--${tone} ${className}`.trim()}>
+            {label ?? status}
+        </span>
+    );
+}
+
 export function AureoAlert({ variant = "info", children, ...rest }) {
     return (
         <Alert variant={variant} className={`aureo-alert aureo-alert-${variant}`} {...rest}>
@@ -243,6 +269,7 @@ export default {
     AureoPagination,
     AureoButton,
     AureoBadge,
+    StatusBadge,
     AureoAlert,
     AureoSpinner,
     AureoFormGroup,

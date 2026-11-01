@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { getOrderDetails, cancelOrder } from "../redux/actions/orderActions";
 import { confirmAction } from "../utils/sweetAlert";
+import { StatusBadge } from "../components/ui";
 import api from "../services/api";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
@@ -114,7 +115,7 @@ function OrderDetailPage() {
                     </div>
 
                     <div className="head-right-actions" style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-                        <span className="badge role-badge">{order.status.toUpperCase()}</span>
+                        <StatusBadge status={order.status} label={order.status} />
 
                         {isCompletedOrPaid && (
                             <button

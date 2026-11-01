@@ -121,8 +121,7 @@ function ServicesPage() {
                                     <strong className="service-price">{formatPrice(service.price)}</strong>
                                     <button
                                         type="button"
-                                        className="outline-button"
-                                        style={{ minHeight: "34px", padding: "0 0.9rem", fontSize: "0.75rem" }}
+                                        className="gold-button"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleSelectService(service);

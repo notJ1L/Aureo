@@ -13,6 +13,7 @@
     --text-muted: #7d786e;
     --danger: #e5484d;
     --success: #3fb97f;
+    --info: #6aa9ff;
 
     /* Derived tints. These keep the palette consistent: every translucent
      * fill in the application comes from one of the four colours above. */
@@ -40,6 +41,8 @@
     --success-30: rgba(63, 185, 127, 0.3);
     --success-35: rgba(63, 185, 127, 0.35);
     --success-40: rgba(63, 185, 127, 0.4);
+    --info-55: rgba(106, 169, 255, 0.55);
+    --muted-50: rgba(125, 120, 110, 0.5);
 
     /* A lighter red for error text, so it stays readable on the dark page. */
     --danger-text: #ff8588;
