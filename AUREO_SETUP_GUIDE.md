@@ -1,206 +1,232 @@
-﻿# Aureo Setup Guide
+# Aureo — Teammate & Setup Guide
 
-This guide explains how to run Aureo on another computer.
+This guide provides step-by-step instructions for teammates, partners, and collaborators to clone, configure, run, and test **Aureo** on their local machine.
 
-Aureo is a MERN application with:
+Aureo is a luxury haute horlogerie e-commerce platform built on the **MERN** stack:
+- **Frontend**: React 18, Vite, Redux Toolkit, React Router 6, Vanilla CSS (Haute Horlogerie dark luxury design system)
+- **Backend**: Node.js, Express, MongoDB (Mongoose)
+- **Authentication**: Dual-provider integration (Supabase email/password with 6-digit OTP, Firebase Google OAuth, backend-issued Bearer JWT)
+- **Cloud Assets**: Cloudinary for watch and appraisal photography
+- **Deployment**: Render (user-managed deployment)
 
-- React + Vite frontend
-- Node.js + Express backend
-- MongoDB database
-- Supabase email/password authentication
-- Firebase Google sign-in
-- Backend-issued Bearer JWT authentication
-- Cloudinary image storage
-- Render deployment after local development and testing
+---
 
 ## 1. Prerequisites
 
-Install the following:
+Before starting, ensure your system has:
+- **Node.js**: v20 or newer (v24 recommended)
+- **npm**: v10 or newer
+- **Git**: installed and configured
+- **MongoDB**: Access to the project's MongoDB Atlas cluster (ask the project lead to whitelist your public IP) OR a local MongoDB instance (`mongodb://127.0.0.1:27017/aureo`)
 
-- Git
-- Node.js 24 or newer
-- npm
-- MongoDB access through MongoDB Atlas or a local MongoDB installation
-- Supabase project
-- Firebase project with Google sign-in enabled
-- Cloudinary account
-- Render account for the final deployment phase
-
-Verify the tools:
-
-```powershell
+Check your installed versions in PowerShell or Terminal:
+```bash
 node --version
 npm --version
 git --version
 ```
 
-Node.js 20 or newer is also acceptable, but the development machine currently uses Node.js 24.
+---
 
-## 2. Clone the Repository
+## 2. Quick Start for Partners / Collaborators
 
-```powershell
+If your teammate has already shared the `.env` credentials with you, follow these 6 quick steps:
+
+```bash
+# 1. Clone repository
+git clone https://github.com/notJ1L/Aureo.git
+cd Aureo
+
+# 2. Setup backend
+cd backend
+npm install
+# Create backend/config/.env from the template or paste the team credentials
+npm run seed     # Seeds admin account, sample watches, and services
+npm run dev      # Runs API at http://localhost:3000
+
+# 3. Setup frontend (in a separate terminal)
+cd ../frontend
+npm install
+# Create frontend/.env from frontend/.env.example
+npm run dev      # Runs Storefront at http://localhost:5173
+```
+
+---
+
+## 3. Clone the Repository
+
+```bash
 git clone https://github.com/notJ1L/Aureo.git
 cd Aureo
 ```
 
-The repository contains source code and package files. It does not contain `node_modules` or real environment secrets.
+---
 
-## 3. Install Backend Dependencies
+## 4. Backend Configuration & Setup
 
-```powershell
+### 4.1 Install Dependencies
+From the project root:
+```bash
 cd backend
 npm install
 ```
 
-## 4. Create the Backend Environment File
+### 4.2 Create the Environment File
+Create the file `backend/config/.env` manually (you can copy `backend/config/.env.example` as a template):
 
-Create this file manually:
+```bash
+# Windows PowerShell:
+Copy-Item config/.env.example config/.env
 
-```text
-backend/config/.env
+# macOS / Linux:
+cp config/.env.example config/.env
 ```
 
-Use `backend/config/.env.example` as the template. Add the correct values for the new computer:
+Fill in `backend/config/.env`:
 
 ```env
 PORT=3000
 MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_new_long_random_secret
+JWT_SECRET=your_long_random_jwt_secret
 JWT_EXPIRE=7d
 CLIENT_URL=http://localhost:5173
-API_URL=http://localhost:3000/api/v1
 
+# Supabase Auth
 SUPABASE_URL=your_supabase_project_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
+# Firebase Google Sign-In
 FIREBASE_API_KEY=your_firebase_api_key
 FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
 FIREBASE_PROJECT_ID=your_firebase_project_id
 FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
 FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
 FIREBASE_APP_ID=your_firebase_app_id
-FIREBASE_CLIENT_EMAIL=your_firebase_service_account_client_email
-FIREBASE_PRIVATE_KEY="your_firebase_service_account_private_key"
+FIREBASE_CLIENT_EMAIL=your_firebase_service_account_email
+FIREBASE_PRIVATE_KEY="your_firebase_private_key"
 
+# Cloudinary Media
 CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
 CLOUDINARY_API_KEY=your_cloudinary_api_key
 CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 
+# SMTP Email Verification (Optional fallback)
 SMTP_HOST=smtp.gmail.com
-SMTP_SECURE=false
 SMTP_PORT=587
-SMTP_USER=your_email@example.com
+SMTP_SECURE=false
+SMTP_USER=your_email@gmail.com
 SMTP_PASSWORD=your_app_password
-EMAIL_FROM=Aureo <your_email@example.com>
+EMAIL_FROM=Aureo <your_email@gmail.com>
 VERIFICATION_CODE_EXPIRE_MINUTES=10
 
-ADMIN_EMAIL=your_admin_email@gmail.com
+# Initial Admin Credentials (used during npm run seed)
+ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=your_strong_admin_password
 ```
 
-`CLIENT_URL` holds the allowed frontend origins. Use a single value during local development and a comma separated list (for example `http://localhost:5173,https://aureo.onrender.com`) once the app is deployed.
+> [!IMPORTANT]
+> **MongoDB Atlas IP Access**: If using the team's MongoDB Atlas cluster, verify that your current public IP address is added to the Atlas **Network Access** IP whitelist. Otherwise, Mongoose will throw a `MongooseServerSelectionError`.
 
-The `SMTP_*` and `EMAIL_FROM` values are optional. They are only used to deliver the six digit
-verification code. Without them Aureo still works, because Supabase sends the confirmation message
-itself. The Firebase service account values (`FIREBASE_CLIENT_EMAIL` and `FIREBASE_PRIVATE_KEY`) are
-only needed when the Google sign-in token has to be verified against a real Firebase project.
+---
 
-Never commit or upload `backend/config/.env`.
+## 4.3 How Your Partner Can Access the MongoDB Database Directly
 
-### Supabase
+Your partner can inspect, query, and manage the database collections (`users`, `products`, `orders`, `appraisals`, `services`, `tickets`, `reviews`) using any of the following methods:
 
-Create a Supabase project and enable email/password authentication. Add `http://localhost:5173` to the Supabase authentication URL allowlist. The service-role key is backend-only and must never be exposed to the frontend.
+### Method A: MongoDB Compass (Desktop GUI — Recommended)
+MongoDB Compass provides a full visual desktop client to browse, search, and edit database documents without opening a terminal.
 
-**Email template (important):** in the Supabase dashboard open **Authentication → Email Templates → Confirmation Template** and use the **"Email code" (6 digit OTP)** variant. Aureo asks the user for a 6 digit code, so a plain confirmation link will not match the interface.
+1. **Download Compass**: Install [MongoDB Compass](https://www.mongodb.com/try/download/compass) (available for Windows, macOS, and Linux).
+2. **Whitelist IP Address**:
+   - The cluster owner logs into [MongoDB Atlas](https://cloud.mongodb.com/).
+   - Go to **Security** → **Network Access**.
+   - Click **Add IP Address** and either enter your partner's IP or click **Allow Access from Anywhere** (`0.0.0.0/0`) during collaborative development.
+3. **Get the Connection URI**:
+   - Copy the `MONGO_URI` from `backend/config/.env` (e.g. `mongodb+srv://<username>:<password>@cluster0.wkulir9.mongodb.net/aureo`).
+4. **Connect**:
+   - Open MongoDB Compass.
+   - Paste the connection string into the **URI connection field**.
+   - Click **Connect**.
+   - Select the `aureo` database from the left sidebar to view and edit all collections in real time.
 
-**Fallback code:** Aureo also emails its own 6 digit code through the SMTP settings below. If the Supabase SMTP provider is rate limited or not configured yet, the user can still complete the verification with the Aureo code. The backend accepts either channel.
+---
 
-**What Supabase owns:** the email address, the password and the confirmation link. The password is never stored in MongoDB, Aureo only keeps the `supabaseUserId` provider id and issues its own Bearer JWT after the identity is confirmed.
+### Method B: MongoDB Atlas Web Dashboard (No Install Required)
+If you want to grant your partner direct browser access to the cloud database:
 
-**Unverified accounts:** a user may sign in before confirming the address, but `isVerified` stays `false` and the `requireVerified` middleware answers with **403** on orders, appraisals and tickets until the code is accepted.
+1. **Invite Partner to the Atlas Project**:
+   - The cluster owner goes to **Project Access Manager** (or **Access Management**) in MongoDB Atlas.
+   - Click **Add New Member**.
+   - Enter your partner's email address and assign the role:
+     - `Project Data Access Read/Write` (or `Project Read Only` if they only need to view).
+   - Click **Save**.
+2. **Partner Access**:
+   - Your partner accepts the email invitation and logs in at [cloud.mongodb.com](https://cloud.mongodb.com/).
+   - Click **Database** under Deployment.
+   - Click the **Browse Collections** button on `Cluster0`.
+   - Under the `aureo` database, they can view all live documents, search with queries, and view indexes.
 
-### Firebase
+---
 
-Create a Firebase project, enable Google as a sign-in provider, and register the Vite web app. Add `localhost` to authorized domains during development. Use Firebase only for Google identity; Aureo application data remains in MongoDB.
+### Method C: Visual Studio Code MongoDB Extension
+If your partner uses VS Code, they can view the database without leaving their code editor:
 
-### Cloudinary
+1. In VS Code, go to the **Extensions** tab (`Ctrl+Shift+X` or `Cmd+Shift+X`).
+2. Search for and install **"MongoDB for VS Code"** (official extension by MongoDB).
+3. Click the green MongoDB leaf icon in the VS Code sidebar.
+4. Click **Add Connection** → **Connect with Connection String**.
+5. Paste the `MONGO_URI` connection string and press Enter.
+6. Expand `Cluster0` → `aureo` to inspect documents and run queries directly inside VS Code.
 
-Create an upload configuration for Aureo. Product, appraisal, and profile images are uploaded by the backend and only `{ public_id, url }` metadata is stored in MongoDB.
+---
 
-### MongoDB
+### Method D: Terminal via `mongosh` (Command Line)
+If your partner prefers the command line:
 
-If using MongoDB Atlas:
+1. Install `mongosh` (MongoDB Shell):
+   ```bash
+   npm install -g mongosh
+   ```
+2. Connect directly:
+   ```bash
+   mongosh "your_mongodb_connection_string"
+   ```
+3. Helpful commands to explore:
+   ```javascript
+   show dbs                  // Lists available databases
+   use aureo                 // Switches to the Aureo database
+   show collections          // Lists: users, products, orders, appraisals, services, tickets, reviews
+   db.products.countDocuments() // Shows count of seeded watches
+   db.products.find({ category: "diver" }).pretty() // Finds diver watches
+   db.users.find({ role: "admin" }) // Confirms admin account exists
+   ```
 
-- Use the Atlas connection string for `MONGO_URI`.
-- Add the computer's IP address to Atlas Network Access.
-- Make sure the database user has permission to read and write the Aureo database.
+---
 
-If using local MongoDB, use a connection string such as:
-
-```env
-MONGO_URI=mongodb://127.0.0.1:27017/aureo
-```
-
-## 5. Seed the Database
-
-From the `backend` directory:
-
-```powershell
+### 4.4 Seed the Database
+Initialize sample watches, categories, services, and the admin account:
+```bash
 npm run seed
 ```
 
-The seed script creates or updates:
-
-- The admin account
-- Sample watch products
-- Sample services
-
-The products use the categories `dress`, `diver`, and `chronograph`, so the category filter in the
-catalogue has something to match on the first run.
-
-Supabase and Firebase users are created through their authentication flows. The Aureo seed script creates the local MongoDB admin profile and must not create provider passwords.
-
-Expected output includes:
-
+Expected output:
 ```text
 MongoDB connected
 Admin account created
 Sample products and services seeded
 ```
 
-The script is safe to run more than once. It updates the admin account and the sample records
-instead of creating duplicates.
-
-If the admin password is ever lost, reset it with:
-
-```powershell
-npm run clear:users
-```
-
-## 6. Start the Backend
-
-From `backend`:
-
-```powershell
+### 4.5 Start the Backend Server
+```bash
 npm run dev
 ```
 
-Expected output:
-
-```text
-MongoDB connected
-Aureo server running on port 3000
-```
-
-Test the backend in a browser:
-
+The backend starts at `http://localhost:3000`. Test the health check endpoint in your browser:
 ```text
 http://localhost:3000/api/v1/health
 ```
-
 Expected response:
-
 ```json
 {
   "success": true,
@@ -208,256 +234,163 @@ Expected response:
 }
 ```
 
-Keep this terminal running.
+---
 
-## 7. Install Frontend Dependencies
+## 5. Frontend Configuration & Setup
 
-Open a second terminal from the project root:
-
-```powershell
+### 5.1 Install Dependencies
+Open a **second terminal** from the project root:
+```bash
 cd frontend
 npm install
 ```
 
-## 8. Build the Frontend
+### 5.2 Create the Frontend Environment File
+Create the file `frontend/.env` manually by copying `frontend/.env.example`:
 
-From `frontend`:
+```bash
+# Windows PowerShell:
+Copy-Item .env.example .env
 
-```powershell
+# macOS / Linux:
+cp .env.example .env
+```
+
+Ensure `frontend/.env` contains the required `VITE_` variables:
+
+```env
+# Backend API endpoint (v1)
+VITE_API_URL=http://localhost:3000/api/v1
+
+# Supabase Authentication Configuration
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_public_key
+
+# Firebase Google Authentication Configuration
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_firebase_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_firebase_project.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
+VITE_FIREBASE_APP_ID=your_firebase_web_app_id
+```
+
+> [!TIP]
+> Frontend environment variables in Vite **must** start with `VITE_`. If you change anything in `frontend/.env`, restart the Vite dev server for the changes to take effect.
+
+### 5.3 Verify the Production Build
+```bash
 npm run build
 ```
+This builds the production bundle in `frontend/dist/` in under 1 second with 0 errors.
 
-A successful build creates `frontend/dist/`. This directory is generated output and is ignored by Git.
-
-## 9. Start the Frontend
-
-From `frontend`:
-
-```powershell
+### 5.4 Start the Frontend Dev Server
+```bash
 npm run dev
 ```
-
-Vite will display a URL similar to:
-
+Vite will serve the application at:
 ```text
 http://localhost:5173/
 ```
 
-Open that URL in a browser. Do not type the URL into PowerShell.
+Open `http://localhost:5173/` in your browser.
 
-The current frontend routes include:
+---
 
-```text
-http://localhost:5173/                  store landing page with the 3D hero
-http://localhost:5173/catalog           catalogue with the price, category, ratings and review filters
-http://localhost:5173/product/:id       product detail with reviews
-http://localhost:5173/services          watch servicing services
-http://localhost:5173/sell              sell your watch (appraisal form)
-http://localhost:5173/login
-http://localhost:5173/register
-http://localhost:5173/me                profile, orders, appraisals, tickets, wishlist
-http://localhost:5173/cart
-http://localhost:5173/checkout
-http://localhost:5173/orders
-http://localhost:5173/order/:id
-```
+## 6. Frontend Pages & Navigation Routes
 
-The signed-in routes are protected, and the `/admin` routes additionally require the admin role:
+Aureo features a complete dark-theme Haute Horlogerie design:
 
-```text
-http://localhost:5173/admin/products    product datatable with bulk delete
-http://localhost:5173/admin/services    service datatable with bulk delete
-http://localhost:5173/admin/orders      transaction status controls
-http://localhost:5173/admin/appraisals  appraisal offers and conversion
-http://localhost:5173/admin/tickets     ticket status updates
-http://localhost:5173/admin/dashboard   sales charts with a date-range filter
-```
+| Route | Page & Key Features |
+|---|---|
+| `http://localhost:5173/` | **Storefront Landing**: Trust marquee, luxury editorial hero slider with CADRAN-inspired floating glass spotlight card, 4-column metrics proof bar (`2,400+ Delivered`, `100% Escapement Verified`, `±2s Variance`, `4.9 Collector Trust`), Four Pillars department banners, Curated Vault Collection with interactive filter tabs (`All Curations`, `Chronographs`, `Divers`, `Heritage Dress`, `Pre-Owned`), CADRAN-inspired interactive parameter selector ("Not Sure Which Reference Fits?"), Master Horology Atelier craftsmanship feature with 3 diagnostic pillars, verified collector testimonials, and private maison services. |
+| `http://localhost:5173/catalog` | **Curated Catalog**: Search keyword, filter by brand, movement (`automatic`, `manual`, `quartz`), condition (`new`, `second-hand`), category (`dress`, `diver`, `chronograph`, `sports`, `luxury`), price range, case size (`36mm` to `44mm`), ratings (`4+`, `3+`), reviews count (`1+`, `5+`, `10+`), URL query sync, and pagination. |
+| `http://localhost:5173/product/:id` | **Product Detail**: Image gallery, stock badge, price in champagne gold, 4-item Maison Assurance Matrix (Provenance, 2-Year Warranty, Armored Courier, Escrow), chronometric specifications table, customer reviews, and verified buyer review submission. |
+| `http://localhost:5173/services` | **Horological Services**: Movement overhauls, ultrasonic demagnetization, bezel restoration, case polish, water resistance recertification, and service ticket submission. |
+| `http://localhost:5173/sell` | **Sell / Consign Watch**: High-resolution appraisal submission form with image uploads. |
+| `http://localhost:5173/cart` | **Cart**: Item quantity management, live calculation, persistent local storage. |
+| `http://localhost:5173/checkout` | **Checkout**: Shipping address, payment method selection (Cash, Card, GCash, Bank Transfer), dynamic order pricing (total is calculated dynamically and never stored in the database). |
+| `http://localhost:5173/orders` | **Customer Orders**: Track orders, invoice generation, status tracking. |
+| `http://localhost:5173/me` | **Collector Profile**: Profile management, order history, appraisals, service tickets, and wishlist. |
 
-## 10. Basic Test Flow
+### Protected Admin Routes (Requires Admin Role)
+| Admin Route | Capabilities |
+|---|---|
+| `http://localhost:5173/admin/dashboard` | Sales charts, revenue analytics, order status breakdown with date-range filters. |
+| `http://localhost:5173/admin/products` | Watch product management, inventory tracking, photo uploads, bulk delete. |
+| `http://localhost:5173/admin/orders` | Transaction management, payment verification, status updates (`Paid` → `Shipped` → `Completed`), PDF receipt generation. |
+| `http://localhost:5173/admin/appraisals` | Review customer appraisal submissions, issue valuations/offers, convert accepted offers into certified pre-owned watches. |
+| `http://localhost:5173/admin/services` | Manage available maison horology services. |
+| `http://localhost:5173/admin/tickets` | Manage service requests and horological diagnostic tickets. |
 
-Use the frontend to test:
+---
 
-1. Open the store landing page. The 3D hero loads on its own and never blocks the page.
-2. Open the registration page.
-3. Register with a real recipient email.
-4. Enter the six-digit email verification code.
-5. Sign in.
-6. Confirm the JWT is saved in the browser.
-7. Update the profile.
-8. Sign out.
+## 7. Running Backend Automated Tests
 
-The backend API can also be tested at:
+Aureo has an extensive automated test suite covering all functional milestones:
 
-```text
-http://localhost:3000/api/v1/products
-```
-
-## 10.1 Full Feature Test Flow
-
-Once the basic flow works, the rest of Aureo can be checked in the browser:
-
-1. Filter the catalogue by price, category, ratings, and review count. The results and the URL
-   update together.
-2. Save a watch to the wishlist and remove it again.
-3. Add a watch to the cart, pick a payment method at checkout, and place the order.
-4. Pay the cash order from **Admin → Orders** and watch the status move to `Paid`, then `Shipped`,
-   then `Completed`. The customer receives a mocked email with the item list, the subtotals, the
-   grand total, and a PDF receipt.
-5. Submit a product review. Only a verified purchaser of a brand new watch is allowed to do this.
-6. Submit an appraisal with photos, then accept the offer from **Admin → Appraisals** and convert it
-   into a second-hand product.
-7. Open a service ticket and move it through its statuses from **Admin → Tickets**.
-8. Open **Admin → Dashboard** and narrow the sales chart with the from/to date fields.
-9. Open the chat widget, state a budget and a brand, and confirm the assistant remembers them.
-
-## 10.2 Backend Tests
-
-The backend has an automated test suite. It uses the database from `MONGO_URI` with the name
-`_test` appended, so it never touches the development data.
-
-```powershell
+```bash
 cd backend
 npm test
 ```
 
 Expected output:
-
 ```text
 Test Suites: 7 passed, 7 total
-Tests:       114 passed, 114 total
+Tests:       119 passed, 119 total
+Snapshots:   0 total
+Time:        ~8.5s
 ```
 
-The suite covers authentication, the product catalogue and filters, orders and the mock payment,
-reviews and the bad-word filter, appraisals, services and tickets, and the dashboard metrics. It
-needs a reachable MongoDB instance.
+The test suites cover:
+1. `auth.test.js` — Supabase registration, email OTP verification, Firebase Google auth, JWT validation, profile updates.
+2. `product.test.js` — Keyword search, brand, category, movement, condition, price range, case size, rating & review filters, pagination.
+3. `order.test.js` — Cart checkout, payment methods, dynamic total calculation without database persistence, order lifecycle status transitions, PDF receipts.
+4. `review.test.js` — Verified buyer restriction, star rating aggregation, profanity filtering.
+5. `appraisal.test.js` — Watch appraisal submissions, offers, conversion to pre-owned inventory.
+6. `service.test.js` — Service catalog management, ticket dispatching, diagnostic updates.
+7. `dashboard.test.js` — Analytics, revenue aggregations, date-range filtering.
 
-## 11. Final Deployment on Render
+---
 
-Deployment is intentionally last. Complete the local smoke test and production build first.
+## 8. Troubleshooting & Common Teammate Issues
 
-`render.yaml` in the repository root is the blueprint. It declares two services:
+### Problem 1: `MongooseServerSelectionError: connection timed out`
+- **Cause**: Your public IP address is not whitelisted in the MongoDB Atlas cluster.
+- **Solution**: Ask the project lead to add your current IP under Atlas **Network Access**, or add `0.0.0.0/0` (allow access from anywhere) during collaborative development.
 
-- `aureo-api` — the Express API, built with `npm install`, started with `npm start`, and health
-  checked at `/api/v1/health`.
-- `aureo-storefront` — the Vite storefront, built with `npm install && npm run build`, published
-  from `./dist`, with the SPA fallback rewrite for every unknown path.
+### Problem 2: Authentication buttons or Google Sign-In not working
+- **Cause**: Missing or incorrect `frontend/.env` file.
+- **Solution**: Ensure `frontend/.env` exists and contains valid `VITE_SUPABASE_*` and `VITE_FIREBASE_*` keys. Restart the Vite dev server with `npm run dev`.
 
-Steps:
+### Problem 3: `Port 3000` or `Port 5173` already in use
+- **Cause**: A previous process was not terminated cleanly.
+- **Solution**:
+  - Windows PowerShell:
+    ```powershell
+    Get-Process -Id (Get-NetTCPConnection -LocalPort 3000).OwningProcess | Stop-Process
+    ```
+  - Or terminate the terminal running the previous server with `Ctrl + C`.
 
-1. Push the repository to GitHub.
-2. In Render choose **New → Blueprint**, select the repository, and apply `render.yaml`.
-3. Fill in every environment variable marked `sync: false`. The API needs `MONGO_URI`,
-   `CLIENT_URL`, the Supabase keys, the Firebase keys, the Cloudinary keys, the SMTP keys, and the
-   admin credentials. The storefront needs `VITE_API_URL` and the `VITE_SUPABASE_*` and
-   `VITE_FIREBASE_*` keys.
-4. Use MongoDB Atlas for `MONGO_URI` in production.
-5. Set the production frontend URL in Render, Supabase redirect URLs, Firebase authorized domains,
-   Cloudinary settings, and the backend CORS list.
-6. Verify `/api/v1/health`, email/password auth, Google sign-in, JWT-protected requests, image
-   uploads, and the SPA fallback.
+### Problem 4: Seed script reports `admin already exists`
+- **Note**: This is normal and expected. The seed script is idempotent (`npm run seed`) and safely updates existing records without creating duplicates.
+- If you need a complete user table reset:
+  ```bash
+  cd backend
+  npm run clear:users
+  npm run seed
+  ```
 
-The frontend build reads `VITE_API_URL` at build time. Because Render rebuilds the static site on
-every deploy, a changed API URL only takes effect after a new build.
+---
 
-## 12. Common Problems
+## 9. Security & Repository Hygiene
 
-### Backend cannot connect
-
-Check:
-
-- MongoDB is running or Atlas is reachable.
-- `MONGO_URI` is correct.
-- Atlas Network Access allows the computer.
-- The database password has not expired or changed.
-
-### `Cannot find module`
-
-Run the install command from the correct folder:
-
-```powershell
-cd backend
-npm install
-```
-
-or:
-
-```powershell
-cd frontend
-npm install
-```
-
-### Frontend does not load
-
-Start Vite from the `frontend` folder:
-
-```powershell
-npm run dev
-```
-
-The browser URL belongs in the browser, not in the terminal.
-
-### Verification email does not arrive
-
-Check:
-
-- Supabase email provider settings.
-- Supabase redirect and site URL settings.
-- Spam or junk folder.
-- The user's email address and verification state in Supabase.
-
-### Port already in use
-
-Stop the old backend or frontend terminal with:
-
-```text
-Ctrl + C
-```
-
-Then restart the correct project.
-
-## 13. Security Rules
-
-Never commit:
-
-```text
-backend/config/.env
-```
-
-Never share:
-
-- MongoDB passwords
-- Supabase service-role keys
-- Firebase admin credentials
-- Cloudinary API secrets
-- JWT secrets
-- Admin passwords
-- JWT tokens
-
-If a secret is accidentally exposed, rotate it immediately in MongoDB Atlas, Google, or the local environment configuration.
-
-## 14. Documentation Files
-
-The project documents live in the repository root:
-
-- `AUREO_BUILD_PLAN.md` — the build phases and the current implementation status
-- `AUREO_PROJECT_SPEC.md` — the functional requirements, data model, and API table
-- `PROJECT_ARCHITECTURE_REFERENCE.md` — the layering, responsibilities, and request flow
-- `PROJECT_REQUIREMENTS.md` — the assessment items and the coverage matrix
-- `AUREO_SETUP_GUIDE.md` — this guide
-- `AUREO_CHANGE_LOG.md` — what was changed, why it was needed, and the commands that were run
-
-If a `.gitignore` rule hides any of them, remove that rule so the documents travel with the clone:
-
-```text
-git check-ignore -v AUREO_BUILD_PLAN.md
-```
-
-## 15. Repository Hygiene
-
-Two habits keep the repository clean:
-
-- `backend/node_modules` and `frontend/node_modules` are ignored. If they were ever committed, run
-  `git rm -r --cached backend/node_modules frontend/node_modules` to untrack them.
-- Every new source file has to be added to Git. A file that exists on disk but is not tracked breaks
-  a clean clone, which is exactly what Render builds from. Use `git status` before pushing and
-  confirm that no new file is listed as untracked.
+1. **Never commit `.env` files**:
+   - `backend/config/.env` and `frontend/.env` are in `.gitignore`. Never use `git add -f` to force them.
+2. **Never commit `node_modules` or `dist`**:
+   - Always verify with `git status` before committing.
+3. **Keep branches clean**:
+   - Work on feature branches or pull latest `main` before pushing:
+     ```bash
+     git pull origin main
+     ```
