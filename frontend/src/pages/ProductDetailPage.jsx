@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getProductDetails, addToWishlist, removeFromWishlist, getWishlist } from "../redux/actions/productActions";
@@ -17,9 +17,6 @@ import {
 import { toast } from "react-toastify";
 import "../styles/productDetail.css";
 
-// The 3D viewer is lazy loaded so Three.js is only fetched when needed.
-const ProductViewer = lazy(() => import("../components/three/ProductViewer"));
-
 function ProductDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -31,7 +28,6 @@ function ProductDetailPage() {
 
     const [selectedImage, setSelectedImage] = useState(0);
     const [addedNotice, setAddedNotice] = useState("");
-    const [showViewer, setShowViewer] = useState(false);
 
     useEffect(() => {
         dispatch(getProductDetails(id));
@@ -152,18 +148,7 @@ function ProductDetailPage() {
                     {/* Visual Stage (Sticky Left Column) */}
                     <div className="pdp-visual-stage">
                         <div className="pdp-frame">
-                            {showViewer ? (
-                                <Suspense
-                                    fallback={
-                                        <div
-                                            className="product-viewer product-viewer-loading"
-                                            aria-hidden="true"
-                                        />
-                                    }
-                                >
-                                    <ProductViewer productName={product.name} />
-                                </Suspense>
-                            ) : product.images?.[selectedImage]?.url ? (
+                            {product.images?.[selectedImage]?.url ? (
                                 <img
                                     src={product.images[selectedImage].url}
                                     alt={product.name}
@@ -180,29 +165,14 @@ function ProductDetailPage() {
                                     ? "1 of 1 · Certified Pre-Owned"
                                     : "Factory Vault New"}
                             </span>
-                        </div>
 
-                        {/* Mode Switcher */}
-                        <div className="pdp-view-mode-bar">
-                            <button
-                                type="button"
-                                className={`pdp-mode-btn ${!showViewer ? "is-active" : ""}`}
-                                onClick={() => setShowViewer(false)}
-                                disabled={!product.images?.length}
-                            >
-                                Photographs ({product.images?.length || 1})
-                            </button>
-                            <button
-                                type="button"
-                                className={`pdp-mode-btn ${showViewer ? "is-active" : ""}`}
-                                onClick={() => setShowViewer(true)}
-                            >
-                                3D Orbit Simulation ↺
-                            </button>
+                            <div className="pdp-hallmark-stamp" aria-hidden="true">
+                                <span>AUREO CERTIFIED</span>
+                            </div>
                         </div>
 
                         {/* Photographs Thumbnails */}
-                        {!showViewer && product.images?.length > 1 && (
+                        {product.images?.length > 1 && (
                             <div className="pdp-thumbs-row">
                                 {product.images.map((img, idx) => (
                                     <button

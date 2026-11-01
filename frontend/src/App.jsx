@@ -18,14 +18,11 @@ import ChatWidget from "./components/ChatWidget";
 import { getProducts } from "./redux/actions/productActions";
 import { PrivateRoute, AdminRoute } from "./routes/ProtectedRoutes";
 import { useInfiniteScroll } from "./hooks/useInfiniteScroll";
+import LuxuryHero from "./components/layout/LuxuryHero";
 import "./App.css";
 
-// Phase 11 / spec 3.2: the 3D hero is lazy loaded so Three.js never blocks
-// the first paint and never blocks navigation.
-const WatchHero = lazy(() => import("./components/three/WatchHero"));
-
 // The admin pages carry the heavy dependencies (Recharts and the data
-// tables), so they are split out of the main bundle as well.
+// tables), so they are split out of the main bundle.
 const AdminProductsPage = lazy(() => import("./pages/admin/AdminProductsPage"));
 const AdminOrdersPage = lazy(() => import("./pages/admin/AdminOrdersPage"));
 const AdminAppraisalsPage = lazy(() => import("./pages/admin/AdminAppraisalsPage"));
@@ -37,7 +34,6 @@ function RouteFallback() {
     return <div className="route-fallback">Loading the vault...</div>;
 }
 
-import { useRef } from "react";
 import SiteHeader from "./components/layout/SiteHeader";
 import SiteFooter from "./components/layout/SiteFooter";
 import { useReveal } from "./hooks/useReveal";
@@ -59,32 +55,12 @@ function StoreLanding() {
     const [page, setPage] = useState(1);
     const [visibleProducts, setVisibleProducts] = useState([]);
     const [loadedPage, setLoadedPage] = useState(0);
-    const [isInteractive3D, setIsInteractive3D] = useState(false);
-
-    const stageRef = useRef(null);
-    const progressRef = useRef(0);
 
     useReveal(visibleProducts.length);
 
     useEffect(() => {
         dispatch(getProducts({ page, limit: 8 }));
     }, [dispatch, page]);
-
-    // Track scroll progress through the 3D stage
-    useEffect(() => {
-        const handleScroll = () => {
-            if (!stageRef.current) return;
-            const rect = stageRef.current.getBoundingClientRect();
-            const scrollDistance = rect.height - window.innerHeight;
-            if (scrollDistance <= 0) return;
-            const p = Math.min(1, Math.max(0, -rect.top / scrollDistance));
-            progressRef.current = p;
-        };
-
-        window.addEventListener("scroll", handleScroll, { passive: true });
-        handleScroll();
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
 
     if (products?.length && page !== loadedPage) {
         setLoadedPage(page);
@@ -130,208 +106,21 @@ function StoreLanding() {
         <main className="storefront-luxury">
             <SiteHeader variant="overlay" />
 
-            {/* ---------------------------------------------------------------- */}
-            {/* 3D Showcase & Scroll Story Stage                                  */}
-            {/* ---------------------------------------------------------------- */}
-            <div ref={stageRef} className="stage-container" id="top">
-                <div className="stage-pinned">
-                    <Suspense fallback={<div className="hero-3d hero-3d-skeleton" aria-hidden="true" />}>
-                        <WatchHero
-                            progressRef={progressRef}
-                            interactive={isInteractive3D}
-                        />
-                    </Suspense>
-
-                    {/* Interactive 3D Control Pill */}
-                    <div className="stage-control-bar">
-                        <span className="stage-control-indicator">
-                            {isInteractive3D ? "Free 3D Orbit Mode" : "Scroll Choreography"}
-                        </span>
-                        <button
-                            type="button"
-                            className={`stage-mode-btn ${!isInteractive3D ? "is-active" : ""}`}
-                            onClick={() => setIsInteractive3D(false)}
-                            title="Watch turns as you scroll through chapters"
-                        >
-                            Story Mode
-                        </button>
-                        <button
-                            type="button"
-                            className={`stage-mode-btn ${isInteractive3D ? "is-active" : ""}`}
-                            onClick={() => setIsInteractive3D(true)}
-                            title="Drag to rotate, scroll to zoom"
-                        >
-                            3D Orbit
-                        </button>
-                    </div>
-                </div>
-
-                {/* Narrative Scroll Chapters Overlay */}
-                <div className="story-scroll-track">
-                    {/* Chapter 0: Hero Intro */}
-                    <section className="story-chapter story-chapter--left">
-                        <div className="chapter-card hero-chapter-card" data-reveal>
-                            <p className="lx-kicker">ARCHIVAL HOROLOGY · EST. 2026</p>
-                            <h1>The Architecture of Perpetual Time.</h1>
-                            <p>
-                                A considered sanctuary of rare mechanical chronometers, certified
-                                provenance, and dedicated aftercare for the pieces that anchor your legacy.
-                            </p>
-
-                            <div className="chapter-actions">
-                                <a href="#collection" className="btn-gold">
-                                    Explore Collection <IconArrow />
-                                </a>
-                                <button
-                                    type="button"
-                                    className="btn-ghost"
-                                    onClick={() => navigate("/sell")}
-                                >
-                                    Sell Your Watch
-                                </button>
-                            </div>
-
-                            <div className="hero-trust-bar">
-                                <span>18K Solid Gold</span>
-                                <span>Automatic Chronometer</span>
-                                <span>Verified Provenance</span>
-                                <span>Worldwide Delivery</span>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Chapter 1: The Dial */}
-                    <section className="story-chapter story-chapter--right">
-                        <div className="chapter-card" data-reveal>
-                            <span className="chapter-number">Chapter 01</span>
-                            <p className="lx-kicker">THE FACE OF MASTERY</p>
-                            <h2>Sunburst Lacquer Dial.</h2>
-                            <p>
-                                Deep obsidian lacquer with an ultra-fine radial sunray finish, capturing
-                                ambient light in warm golden streaks. Fitted with hand-applied 18K solid gold
-                                dauphine indices inlaid with luminescence for peerless legibility.
-                            </p>
-
-                            <div className="chapter-specs-row">
-                                <div className="chapter-spec-item">
-                                    <span>Dial Finish</span>
-                                    <strong>Radial Sunray Lacquer</strong>
-                                </div>
-                                <div className="chapter-spec-item">
-                                    <span>Indices</span>
-                                    <strong>18K Gold Faceted Batons</strong>
-                                </div>
-                                <div className="chapter-spec-item">
-                                    <span>Calendar</span>
-                                    <strong>Instantaneous Date at 3H</strong>
-                                </div>
-                                <div className="chapter-spec-item">
-                                    <span>Luminescence</span>
-                                    <strong>Swiss Super-LumiNova</strong>
-                                </div>
-                            </div>
-
-                            <div className="chapter-actions">
-                                <button
-                                    type="button"
-                                    className="stage-mode-btn is-active"
-                                    onClick={() => setIsInteractive3D(true)}
-                                >
-                                    Inspect Dial in 3D ↺
-                                </button>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Chapter 2: The Monobloc Case */}
-                    <section className="story-chapter story-chapter--left">
-                        <div className="chapter-card" data-reveal>
-                            <span className="chapter-number">Chapter 02</span>
-                            <p className="lx-kicker">SCULPTED IN GOLD</p>
-                            <h2>Monobloc Case &amp; Fluted Bezel.</h2>
-                            <p>
-                                Turned from a single billet of gold on high-precision lathes, then hand-mirror
-                                chamfered along the curved flanks. Protected by scratch-resistant sapphire crystal
-                                with anti-reflective treatment on both faces.
-                            </p>
-
-                            <div className="chapter-specs-row">
-                                <div className="chapter-spec-item">
-                                    <span>Case Architecture</span>
-                                    <strong>40mm Monobloc Lathe</strong>
-                                </div>
-                                <div className="chapter-spec-item">
-                                    <span>Crystal</span>
-                                    <strong>Scratch-Proof Sapphire</strong>
-                                </div>
-                                <div className="chapter-spec-item">
-                                    <span>Crown</span>
-                                    <strong>Twinlock Screw-Down</strong>
-                                </div>
-                                <div className="chapter-spec-item">
-                                    <span>Water Resistance</span>
-                                    <strong>100m / 330ft Certified</strong>
-                                </div>
-                            </div>
-
-                            <div className="chapter-actions">
-                                <a href="#collection" className="btn-ghost">
-                                    Browse 40mm Watches
-                                </a>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Chapter 3: The Bracelet */}
-                    <section className="story-chapter story-chapter--right">
-                        <div className="chapter-card" data-reveal>
-                            <span className="chapter-number">Chapter 03</span>
-                            <p className="lx-kicker">ERGONOMIC ARTICULATION</p>
-                            <h2>Integrated Three-Link Oyster.</h2>
-                            <p>
-                                Each solid link is curved to drape naturally over the wrist. Alternating satin-brushed
-                                outer shoulders and mirror-polished centre links culminate in a concealed deployment
-                                clasp adorned with the Aureo emblem.
-                            </p>
-
-                            <div className="chapter-specs-row">
-                                <div className="chapter-spec-item">
-                                    <span>Link Geometry</span>
-                                    <strong>Three-Piece Solid Gold</strong>
-                                </div>
-                                <div className="chapter-spec-item">
-                                    <span>Finish</span>
-                                    <strong>Satin Flanks &amp; Mirror Core</strong>
-                                </div>
-                                <div className="chapter-spec-item">
-                                    <span>Clasp</span>
-                                    <strong>Concealed Folding Crownclasp</strong>
-                                </div>
-                                <div className="chapter-spec-item">
-                                    <span>Movement</span>
-                                    <strong>Calibre A-2026 Automatic</strong>
-                                </div>
-                            </div>
-
-                            <div className="chapter-actions">
-                                <a href="#collection" className="btn-gold">
-                                    Acquire This Piece
-                                </a>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-            </div>
+            {/* Luxury Editorial Showcase (Reference-Inspired) */}
+            <LuxuryHero />
 
             {/* ---------------------------------------------------------------- */}
-            {/* The Curated Edit (Product Collection Grid)                         */}
+            {/* The Curated Edit ("OUR STORE" — inspired by reference design)    */}
             {/* ---------------------------------------------------------------- */}
             <section id="collection" className="collection-lux-section">
                 <div className="lux-container">
                     <div className="lux-section-header" data-reveal>
                         <div>
-                            <p className="lx-kicker">THE CURRENT EDIT</p>
-                            <h2>Selected Timepieces</h2>
+                            <div className="store-header-lead">
+                                <span className="store-arrow-nav" aria-hidden="true">← →</span>
+                                <p className="lx-kicker">OUR STORE · CERTIFIED VAULT</p>
+                            </div>
+                            <h2>Curated Timepieces</h2>
                         </div>
                         <Link to="/catalog" className="btn-ghost">
                             View Entire Vault <IconArrow />

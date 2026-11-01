@@ -53,10 +53,26 @@ export function SiteHeader({ variant = "solid" }) {
 
     return (
         <header className={classes}>
+            <div className="site-topbar">
+                <div className="site-topbar__inner">
+                    <span className="site-topbar__promo">
+                        Aureo Haute Horlogerie · Complimentary Insured Armored Transit &amp; Returns
+                    </span>
+                    <div className="site-topbar__right">
+                        <span className="site-topbar__phone">
+                            VIP Concierge: <strong>+63 (2) 8800-AUREO</strong>
+                        </span>
+                        <Link to="/catalog" className="site-topbar__link">
+                            Explore Vault
+                        </Link>
+                    </div>
+                </div>
+            </div>
+
             <div className="site-header__inner">
                 <Link to="/" className="site-logo" aria-label="Aureo home" onClick={closeMenu}>
                     <span className="site-logo__mark" aria-hidden="true" />
-                    AUREO
+                    <span className="site-logo__text">AUREO</span>
                 </Link>
 
                 <nav className="site-nav" aria-label="Primary">

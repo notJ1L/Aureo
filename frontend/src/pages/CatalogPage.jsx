@@ -3,10 +3,10 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { getProducts, addToWishlist, removeFromWishlist, getWishlist } from "../redux/actions/productActions";
-import { AureoChip, AureoRating } from "../components/ui";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
-import "../styles/aureo.css";
+import { IconArrow, IconHeart, IconSearch, IconStar } from "../components/layout/icons";
+import "../styles/catalogLuxury.css";
 
 function CatalogPage() {
     const dispatch = useDispatch();
@@ -14,7 +14,7 @@ function CatalogPage() {
 
     const { products, pagination, loading, error } = useSelector((state) => state.productList);
     const { wishlist } = useSelector((state) => state.wishlist);
-    const { isAuthenticated, user } = useSelector((state) => state.auth);
+    const { isAuthenticated } = useSelector((state) => state.auth);
 
     const [keyword, setKeyword] = useState(searchParams.get("keyword") || "");
     const [brand, setBrand] = useState(searchParams.get("brand") || "");
@@ -28,10 +28,18 @@ function CatalogPage() {
     const [minReviews, setMinReviews] = useState(searchParams.get("minReviews") || "");
     const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
 
-    const brandsList = ["Rolex", "Patek Philippe", "Audemars Piguet", "Omega", "Cartier", "Grand Seiko", "Tudor", "IWC"];
+    const brandsList = [
+        "Rolex",
+        "Patek Philippe",
+        "Audemars Piguet",
+        "Omega",
+        "Cartier",
+        "Grand Seiko",
+        "Tudor",
+        "IWC"
+    ];
     const caseSizesList = [36, 38, 39, 40, 41, 42, 44];
 
-    // MP2: the category filter uses the same values the product form stores.
     const categoriesList = [
         { value: "dress", label: "Dress" },
         { value: "diver", label: "Diver" },
@@ -41,17 +49,17 @@ function CatalogPage() {
     ];
 
     const ratingOptions = [
-        { value: "", label: "Any" },
-        { value: "4", label: "4.0 & up" },
-        { value: "3", label: "3.0 & up" },
-        { value: "2", label: "2.0 & up" }
+        { value: "", label: "Any Rating" },
+        { value: "4", label: "★ 4.0 & Up" },
+        { value: "3", label: "★ 3.0 & Up" },
+        { value: "2", label: "★ 2.0 & Up" }
     ];
 
     const reviewOptions = [
         { value: "", label: "Any" },
-        { value: "1", label: "1+ review" },
-        { value: "5", label: "5+ reviews" },
-        { value: "10", label: "10+ reviews" }
+        { value: "1", label: "1+ Review" },
+        { value: "5", label: "5+ Reviews" },
+        { value: "10", label: "10+ Reviews" }
     ];
 
     useEffect(() => {
@@ -60,10 +68,6 @@ function CatalogPage() {
         }
     }, [dispatch, isAuthenticated]);
 
-    // Keep the filter controls in step with the URL. The homepage links into
-    // the catalog with a query string, so the filters have to follow it even
-    // when the catalog page is already mounted. The state is adjusted while
-    // rendering, which is the React pattern for reacting to a changed input.
     const paramsString = searchParams.toString();
     const [syncedParams, setSyncedParams] = useState(paramsString);
 
@@ -119,7 +123,7 @@ function CatalogPage() {
             style: "currency",
             currency: "PHP",
             maximumFractionDigits: 0
-        }).format(price);
+        }).format(price || 0);
     };
 
     const isWishlisted = (productId) => {
@@ -154,266 +158,432 @@ function CatalogPage() {
         setPage(1);
     };
 
+    // Active filters summary
+    const activeFilters = [];
+    if (keyword) activeFilters.push({ label: `Search: "${keyword}"`, clear: () => setKeyword("") });
+    if (brand) activeFilters.push({ label: `Maison: ${brand}`, clear: () => setBrand("") });
+    if (movement) activeFilters.push({ label: `Calibre: ${movement}`, clear: () => setMovement("") });
+    if (condition) activeFilters.push({ label: condition === "second-hand" ? "Pre-Owned" : "Factory New", clear: () => setCondition("") });
+    if (category) activeFilters.push({ label: `Style: ${category}`, clear: () => setCategory("") });
+    if (caseSize) activeFilters.push({ label: `${caseSize}mm`, clear: () => setCaseSize("") });
+    if (minPrice || maxPrice) activeFilters.push({ label: `₱${minPrice || 0} – ₱${maxPrice || "Max"}`, clear: () => { setMinPrice(""); setMaxPrice(""); } });
+    if (minRating) activeFilters.push({ label: `★ ${minRating}.0+`, clear: () => setMinRating("") });
+    if (minReviews) activeFilters.push({ label: `${minReviews}+ Reviews`, clear: () => setMinReviews("") });
+
     return (
-        <main className="catalog-page">
+        <main className="catalog-luxury-page">
             <SiteHeader variant="solid" />
 
-            <div className="catalog-container">
-                {/* Filter Sidebar */}
-                <aside className="catalog-sidebar">
-                    <div className="sidebar-head">
-                        <h3>Filters</h3>
-                        <button type="button" onClick={handleResetFilters} className="clear-filters-btn">
-                            Reset All
-                        </button>
+            <div className="catalog-lux-container">
+                {/* ------------------------------------------------------------ */}
+                {/* Refined Seamless Left Sidebar                                */}
+                {/* ------------------------------------------------------------ */}
+                <aside className="catalog-lux-sidebar" aria-label="Vault Filters">
+                    <div className="sidebar-lux-head">
+                        <div>
+                            <p className="sidebar-lux-kicker">HOROLOGY ARCHIVE</p>
+                            <h3>Refine Vault</h3>
+                        </div>
+                        {activeFilters.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={handleResetFilters}
+                                className="clear-lux-btn"
+                                aria-label="Reset all filters"
+                            >
+                                Reset All
+                            </button>
+                        )}
                     </div>
 
-                    <div className="filter-group">
-                        <label className="filter-title">Search Timepieces</label>
-                        <input
-                            type="text"
-                            placeholder="Search model, brand..."
-                            value={keyword}
-                            onChange={(e) => { setKeyword(e.target.value); setPage(1); }}
-                            className="catalog-input"
-                        />
+                    {/* Search */}
+                    <div className="filter-lux-group">
+                        <label className="filter-lux-label" htmlFor="search-timepieces">
+                            <span>Search Vault</span>
+                        </label>
+                        <div className="search-lux-wrap">
+                            <span className="search-lux-icon" aria-hidden="true">
+                                <IconSearch width={16} height={16} />
+                            </span>
+                            <input
+                                id="search-timepieces"
+                                type="text"
+                                placeholder="Model, ref., dial..."
+                                value={keyword}
+                                onChange={(e) => {
+                                    setKeyword(e.target.value);
+                                    setPage(1);
+                                }}
+                                className="search-lux-input"
+                            />
+                        </div>
                     </div>
 
-                    <div className="filter-group">
-                        <label className="filter-title">Brand</label>
-                        <select
-                            value={brand}
-                            onChange={(e) => { setBrand(e.target.value); setPage(1); }}
-                            className="catalog-select"
-                        >
-                            <option value="">All Brands</option>
-                            {brandsList.map((b) => (
-                                <option key={b} value={b}>{b}</option>
-                            ))}
-                        </select>
+                    {/* Maison / Brand */}
+                    <div className="filter-lux-group">
+                        <label className="filter-lux-label" htmlFor="select-brand">
+                            <span>Maison / Brand</span>
+                        </label>
+                        <div className="select-lux-wrap">
+                            <select
+                                id="select-brand"
+                                value={brand}
+                                onChange={(e) => {
+                                    setBrand(e.target.value);
+                                    setPage(1);
+                                }}
+                                className="catalog-lux-select"
+                            >
+                                <option value="">All Prestigious Maisons</option>
+                                {brandsList.map((b) => (
+                                    <option key={b} value={b}>{b}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
-                    <div className="filter-group">
-                        <label className="filter-title">Movement</label>
-                        <div className="radio-pill-group">
-                            {["", "automatic", "manual", "quartz"].map((m) => (
+                    {/* Movement Calibre */}
+                    <div className="filter-lux-group">
+                        <span className="filter-lux-label">Calibre Movement</span>
+                        <div className="pills-lux-grid">
+                            {[
+                                { val: "", label: "All Movements" },
+                                { val: "automatic", label: "Automatic" },
+                                { val: "manual", label: "Manual Wind" },
+                                { val: "quartz", label: "Quartz" }
+                            ].map((m) => (
                                 <button
-                                    key={m}
+                                    key={m.val}
                                     type="button"
-                                    className={`pill-btn ${movement === m ? "active" : ""}`}
-                                    onClick={() => { setMovement(m); setPage(1); }}
+                                    className={`pill-lux-btn ${movement === m.val ? "is-active" : ""}`}
+                                    onClick={() => {
+                                        setMovement(m.val);
+                                        setPage(1);
+                                    }}
                                 >
-                                    {m === "" ? "Any" : m.charAt(0).toUpperCase() + m.slice(1)}
+                                    {m.label}
                                 </button>
                             ))}
                         </div>
                     </div>
 
-                    <div className="filter-group">
-                        <label className="filter-title">Condition</label>
-                        <div className="radio-pill-group">
-                            {["", "new", "second-hand"].map((c) => (
+                    {/* Condition */}
+                    <div className="filter-lux-group">
+                        <span className="filter-lux-label">Condition State</span>
+                        <div className="pills-lux-grid">
+                            {[
+                                { val: "", label: "All Pieces" },
+                                { val: "new", label: "Factory New" },
+                                { val: "second-hand", label: "Certified Pre-Owned" }
+                            ].map((c) => (
                                 <button
-                                    key={c}
+                                    key={c.val}
                                     type="button"
-                                    className={`pill-btn ${condition === c ? "active" : ""}`}
-                                    onClick={() => { setCondition(c); setPage(1); }}
+                                    className={`pill-lux-btn ${condition === c.val ? "is-active" : ""}`}
+                                    onClick={() => {
+                                        setCondition(c.val);
+                                        setPage(1);
+                                    }}
                                 >
-                                    {c === "" ? "Any" : c === "second-hand" ? "Second-hand" : "Brand New"}
+                                    {c.label}
                                 </button>
                             ))}
                         </div>
                     </div>
 
-                    <div className="filter-group">
-                        <label className="filter-title">Case Size (mm)</label>
-                        <select
-                            value={caseSize}
-                            onChange={(e) => { setCaseSize(e.target.value); setPage(1); }}
-                            className="catalog-select"
-                        >
-                            <option value="">Any size</option>
-                            {caseSizesList.map((size) => (
-                                <option key={size} value={size}>{size}mm</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="filter-group">
-                        <label className="filter-title">Price Range (PHP)</label>
-                        <div className="price-inputs">
-                            <input
-                                type="number"
-                                placeholder="Min"
-                                value={minPrice}
-                                onChange={(e) => { setMinPrice(e.target.value); setPage(1); }}
-                                className="catalog-input"
-                            />
-                            <span>—</span>
-                            <input
-                                type="number"
-                                placeholder="Max"
-                                value={maxPrice}
-                                onChange={(e) => { setMaxPrice(e.target.value); setPage(1); }}
-                                className="catalog-input"
-                            />
+                    {/* Category */}
+                    <div className="filter-lux-group">
+                        <label className="filter-lux-label" htmlFor="select-category">
+                            <span>Horological Style</span>
+                        </label>
+                        <div className="select-lux-wrap">
+                            <select
+                                id="select-category"
+                                value={category}
+                                onChange={(e) => {
+                                    setCategory(e.target.value);
+                                    setPage(1);
+                                }}
+                                className="catalog-lux-select"
+                            >
+                                <option value="">All Categories</option>
+                                {categoriesList.map((c) => (
+                                    <option key={c.value} value={c.value}>{c.label}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 
-                    {/* MP2: category filter */}
-                    <div className="filter-group">
-                        <label className="filter-title">Category</label>
-                        <select
-                            value={category}
-                            onChange={(e) => { setCategory(e.target.value); setPage(1); }}
-                            className="catalog-select"
-                        >
-                            <option value="">All Categories</option>
-                            {categoriesList.map((c) => (
-                                <option key={c.value} value={c.value}>{c.label}</option>
-                            ))}
-                        </select>
+                    {/* Case Diameter */}
+                    <div className="filter-lux-group">
+                        <label className="filter-lux-label" htmlFor="select-case-size">
+                            <span>Case Diameter</span>
+                        </label>
+                        <div className="select-lux-wrap">
+                            <select
+                                id="select-case-size"
+                                value={caseSize}
+                                onChange={(e) => {
+                                    setCaseSize(e.target.value);
+                                    setPage(1);
+                                }}
+                                className="catalog-lux-select"
+                            >
+                                <option value="">Any Diameter</option>
+                                {caseSizesList.map((size) => (
+                                    <option key={size} value={size}>{size} mm</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
-                    {/* MP2: ratings filter */}
-                    <div className="filter-group">
-                        <label className="filter-title">Minimum Rating</label>
-                        <div className="radio-pill-group">
+                    {/* Price Range */}
+                    <div className="filter-lux-group">
+                        <span className="filter-lux-label">Investment Range (PHP)</span>
+                        <div className="price-lux-inputs">
+                            <div className="price-field-wrap">
+                                <span>₱</span>
+                                <input
+                                    type="number"
+                                    placeholder="Min"
+                                    value={minPrice}
+                                    onChange={(e) => {
+                                        setMinPrice(e.target.value);
+                                        setPage(1);
+                                    }}
+                                    className="price-lux-input"
+                                />
+                            </div>
+                            <span className="price-lux-sep">—</span>
+                            <div className="price-field-wrap">
+                                <span>₱</span>
+                                <input
+                                    type="number"
+                                    placeholder="Max"
+                                    value={maxPrice}
+                                    onChange={(e) => {
+                                        setMaxPrice(e.target.value);
+                                        setPage(1);
+                                    }}
+                                    className="price-lux-input"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Minimum Rating */}
+                    <div className="filter-lux-group">
+                        <span className="filter-lux-label">Collector Rating</span>
+                        <div className="pills-lux-grid">
                             {ratingOptions.map((option) => (
                                 <button
                                     key={option.value}
                                     type="button"
-                                    className={`pill-btn ${minRating === option.value ? "active" : ""}`}
-                                    onClick={() => { setMinRating(option.value); setPage(1); }}
+                                    className={`pill-lux-btn ${minRating === option.value ? "is-active" : ""}`}
+                                    onClick={() => {
+                                        setMinRating(option.value);
+                                        setPage(1);
+                                    }}
                                 >
-                                    {option.value ? (
-                                        <>
-                                            <AureoRating value={Number(option.value)} readOnly size="small" />
-                                            <span className="pill-rating-label">{option.label}</span>
-                                        </>
-                                    ) : (
-                                        option.label
-                                    )}
+                                    {option.label}
                                 </button>
                             ))}
                         </div>
                     </div>
 
-                    {/* MP2: review count filter */}
-                    <div className="filter-group">
-                        <label className="filter-title">Review Count</label>
-                        <div className="radio-pill-group">
+                    {/* Review Volume */}
+                    <div className="filter-lux-group">
+                        <span className="filter-lux-label">Collector Reviews</span>
+                        <div className="pills-lux-grid">
                             {reviewOptions.map((option) => (
-                                <AureoChip
+                                <button
                                     key={option.value}
-                                    label={option.label}
-                                    color={minReviews === option.value ? "default" : "muted"}
-                                    onClick={() => { setMinReviews(option.value); setPage(1); }}
-                                    sx={{
-                                        cursor: "pointer",
-                                        border: minReviews === option.value
-                                            ? "1px solid var(--gold)"
-                                            : "1px solid var(--border)"
+                                    type="button"
+                                    className={`pill-lux-btn ${minReviews === option.value ? "is-active" : ""}`}
+                                    onClick={() => {
+                                        setMinReviews(option.value);
+                                        setPage(1);
                                     }}
-                                />
+                                >
+                                    {option.label}
+                                </button>
                             ))}
                         </div>
                     </div>
                 </aside>
 
-                {/* Main Product Grid Area */}
-                <section className="catalog-main">
-                    <div className="catalog-header-info">
+                {/* ------------------------------------------------------------ */}
+                {/* Main Product Grid Area                                       */}
+                {/* ------------------------------------------------------------ */}
+                <section className="catalog-lux-main">
+                    <div className="catalog-lux-header">
                         <div>
-                            <p className="eyebrow">TIMEPIECE CATALOG</p>
+                            <div className="catalog-header-lead">
+                                <span className="catalog-arrow-nav" aria-hidden="true">← →</span>
+                                <p className="catalog-lux-kicker">OUR STORE · CERTIFIED VAULT</p>
+                            </div>
                             <h1>Curated Timepieces</h1>
                         </div>
-                        <span className="result-count">
-                            {loading ? "Searching..." : `${pagination?.totalProducts || products.length} Available`}
+                        <span className="catalog-count-pill">
+                            {loading
+                                ? "Auditing Vault..."
+                                : `${pagination?.totalProducts ?? products.length} Pieces Available`}
                         </span>
                     </div>
 
-                    {error && (
-                        <div className="empty-state">
-                            <p>Unable to retrieve watch catalog.</p>
-                            <span>{error}</span>
-                        </div>
-                    )}
-
-                    {!loading && products.length === 0 && !error && (
-                        <div className="empty-state">
-                            <p>No watches matched your filter criteria.</p>
-                            <span>Try adjusting price or condition filters.</span>
-                            <button type="button" className="gold-button" onClick={handleResetFilters} style={{ marginTop: "1rem" }}>
-                                View All Watches
+                    {/* Active Filter Chips */}
+                    {activeFilters.length > 0 && (
+                        <div className="active-filters-strip">
+                            {activeFilters.map((f, i) => (
+                                <span key={i} className="active-filter-chip">
+                                    {f.label}
+                                    <button
+                                        type="button"
+                                        onClick={f.clear}
+                                        aria-label={`Remove filter ${f.label}`}
+                                    >
+                                        ✕
+                                    </button>
+                                </span>
+                            ))}
+                            <button
+                                type="button"
+                                onClick={handleResetFilters}
+                                className="clear-lux-btn"
+                                style={{ marginLeft: "0.5rem" }}
+                            >
+                                Clear All
                             </button>
                         </div>
                     )}
 
-                    <div className="product-grid">
+                    {error && (
+                        <div className="lux-empty-state">
+                            <h3>Archival Retrieval Error</h3>
+                            <p>{error}</p>
+                            <button
+                                type="button"
+                                className="btn-gold"
+                                onClick={() => dispatch(getProducts({}))}
+                            >
+                                Reload Vault
+                            </button>
+                        </div>
+                    )}
+
+                    {!loading && products.length === 0 && !error && (
+                        <div className="lux-empty-state">
+                            <h3>No Matching Timepieces</h3>
+                            <p>No watches in our vault match the selected criteria.</p>
+                            <button
+                                type="button"
+                                className="btn-gold"
+                                onClick={handleResetFilters}
+                            >
+                                View Complete Collection <IconArrow />
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Haute Horlogerie Gallery Cards */}
+                    <div className="catalog-lux-grid">
                         {products.map((watch) => {
                             const isSold = watch.stock === 0;
                             const isPreowned = watch.condition === "second-hand";
                             const inWishlist = isWishlisted(watch._id);
 
                             return (
-                                <article className={`product-card ${isSold ? "sold-card" : ""}`} key={watch._id}>
-                                    <div className="product-image-wrap">
+                                <article
+                                    className={`lux-gallery-card ${isSold ? "is-sold" : ""}`}
+                                    key={watch._id}
+                                >
+                                    <div className="lux-card-stage">
                                         {watch.images?.[0]?.url ? (
                                             <img
                                                 src={watch.images[0].url}
                                                 alt={watch.name}
-                                                className="product-image"
+                                                loading="lazy"
                                             />
                                         ) : (
-                                            <div className="product-placeholder">
-                                                <span>No photo</span>
+                                            <div className="lux-stage-placeholder">
+                                                <span>Archival Photo Pending</span>
                                             </div>
                                         )}
 
-                                        <div className="badge-overlay">
-                                            {isSold ? (
-                                                <span className="badge sold-badge">SOLD</span>
-                                            ) : isPreowned ? (
-                                                <span className="badge preowned-badge">PRE-OWNED</span>
-                                            ) : (
-                                                <span className="badge new-badge">NEW</span>
-                                            )}
+                                        <div className="lux-card-badge-wrap">
+                                            <span
+                                                className={`lux-badge-pill ${
+                                                    isSold ? "lux-badge-pill--sold" : ""
+                                                }`}
+                                            >
+                                                {isSold
+                                                    ? "Archived / Sold"
+                                                    : isPreowned
+                                                    ? "1 of 1 · Certified Pre-Owned"
+                                                    : "Factory New"}
+                                            </span>
                                         </div>
 
                                         <button
                                             type="button"
-                                            className={`wishlist-heart-btn ${inWishlist ? "active" : ""}`}
+                                            className={`lux-card-wish-btn ${
+                                                inWishlist ? "is-active" : ""
+                                            }`}
                                             onClick={(e) => handleWishlistToggle(e, watch._id)}
-                                            title={inWishlist ? "Remove from wishlist" : "Save to wishlist"}
+                                            aria-label={
+                                                inWishlist
+                                                    ? "Remove from wishlist"
+                                                    : "Save to wishlist"
+                                            }
                                         >
-                                            ♥
+                                            <IconHeart
+                                                width={16}
+                                                height={16}
+                                                fill={inWishlist ? "currentColor" : "none"}
+                                            />
                                         </button>
                                     </div>
 
-                                    <Link to={`/product/${watch._id}`} className="product-info-link">
-                                        <div className="product-info">
-                                            <span className="product-brand">{watch.brand}</span>
-                                            <h3 className="product-title">{watch.name}</h3>
-                                            <p className="product-meta">
-                                                {watch.movement} &bull; {watch.caseSize}mm &bull; {watch.condition}
-                                            </p>
-                                            {watch.numOfReviews > 0 ? (
-                                                <div className="product-rating-row">
-                                                    <AureoRating value={watch.ratings || 0} readOnly size="small" />
-                                                    <span className="product-rating-count">
-                                                        {(watch.ratings || 0).toFixed(1)} ({watch.numOfReviews})
-                                                    </span>
-                                                </div>
-                                            ) : null}
-                                            <div className="card-footer-price">
-                                                <span className="product-price">
-                                                    {formatPrice(watch.price)}
+                                    <Link
+                                        to={`/product/${watch._id}`}
+                                        className="lux-card-content"
+                                    >
+                                        <span className="lux-card-brand-kicker">
+                                            {watch.brand}
+                                        </span>
+                                        <h2 className="lux-card-title">{watch.name}</h2>
+                                        <p className="lux-card-specs">
+                                            {watch.movement?.toUpperCase() || "AUTOMATIC"} ·{" "}
+                                            {watch.caseSize ? `${watch.caseSize}mm` : "40mm"} ·{" "}
+                                            {isPreowned ? "Pre-Owned" : "Factory New"}
+                                        </p>
+
+                                        {watch.numOfReviews > 0 ? (
+                                            <div className="lux-card-rating">
+                                                <span className="star-icon" aria-hidden="true">
+                                                    ★
                                                 </span>
-                                                <span className="view-detail-label">
-                                                    Details →
-                                                </span>
+                                                <strong>
+                                                    {(watch.ratings || 0).toFixed(1)}
+                                                </strong>
+                                                <span>({watch.numOfReviews} collector reviews)</span>
                                             </div>
+                                        ) : (
+                                            <div className="lux-card-rating">
+                                                <span className="star-icon" aria-hidden="true">
+                                                    ★
+                                                </span>
+                                                <span>Pristine Vault Specimen</span>
+                                            </div>
+                                        )}
+
+                                        <div className="lux-card-bottom">
+                                            <span className="lux-card-price">
+                                                {formatPrice(watch.price)}
+                                            </span>
+                                            <span className="lux-inspect-link">
+                                                Inspect <IconArrow width={14} height={14} />
+                                            </span>
                                         </div>
                                     </Link>
                                 </article>
@@ -423,30 +593,33 @@ function CatalogPage() {
 
                     {/* Pagination */}
                     {pagination?.totalPages > 1 && (
-                        <div className="pagination-bar">
+                        <div className="lux-pagination-bar">
                             <button
                                 type="button"
-                                className="pagination-btn"
+                                className="lux-page-nav-btn"
                                 disabled={page <= 1}
                                 onClick={() => setPage((p) => Math.max(p - 1, 1))}
                             >
-                                ← Previous
+                                ← Previous Pieces
                             </button>
-                            <span className="page-indicator">
+                            <span className="lux-page-indicator">
                                 Page {pagination.page} of {pagination.totalPages}
                             </span>
                             <button
                                 type="button"
-                                className="pagination-btn"
+                                className="lux-page-nav-btn"
                                 disabled={page >= pagination.totalPages}
-                                onClick={() => setPage((p) => Math.min(p + 1, pagination.totalPages))}
+                                onClick={() =>
+                                    setPage((p) => Math.min(p + 1, pagination.totalPages))
+                                }
                             >
-                                Next →
+                                Next Pieces →
                             </button>
                         </div>
                     )}
                 </section>
             </div>
+
             <SiteFooter />
         </main>
     );

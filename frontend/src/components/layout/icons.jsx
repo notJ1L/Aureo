@@ -149,3 +149,16 @@ export const IconStar = (props) => (
         <path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3z" />
     </svg>
 );
+
+export const IconSearch = (props) => (
+    <svg {...base} {...props}>
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.35-4.35" />
+    </svg>
+);
+
+export const IconFilter = (props) => (
+    <svg {...base} {...props}>
+        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+    </svg>
+);
