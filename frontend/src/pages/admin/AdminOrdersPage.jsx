@@ -195,7 +195,7 @@ function AdminOrdersPage() {
                                                     ))}
 
                                                     <Link
-                                                        to={`/order/${order._id}`}
+                                                        to={`/admin/orders/${order._id}`}
                                                         className="admin-btn edit-btn"
                                                     >
                                                         View

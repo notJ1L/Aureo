@@ -58,7 +58,7 @@ export function AdminHeader() {
                 </nav>
 
                 <div className="admin-vault-actions">
-                    <Link to="/catalog" className="admin-quick-btn" title="View Public Storefront" onClick={closeMenu}>
+                    <Link to="/" className="admin-quick-btn" title="View Public Storefront" onClick={closeMenu}>
                         <IconStore /> <span>Storefront</span>
                     </Link>
                     <Link to="/me" className="admin-user-pill" title="Administrator Profile" onClick={closeMenu}>

@@ -26,6 +26,7 @@ import "./App.css";
 // tables), so they are split out of the main bundle.
 const AdminProductsPage = lazy(() => import("./pages/admin/AdminProductsPage"));
 const AdminOrdersPage = lazy(() => import("./pages/admin/AdminOrdersPage"));
+const AdminOrderDetailPage = lazy(() => import("./pages/admin/AdminOrderDetailPage"));
 const AdminAppraisalsPage = lazy(() => import("./pages/admin/AdminAppraisalsPage"));
 const AdminServicesPage = lazy(() => import("./pages/admin/AdminServicesPage"));
 const AdminTicketsPage = lazy(() => import("./pages/admin/AdminTicketsPage"));
@@ -143,7 +144,12 @@ function StoreLanding() {
 
     return (
         <main className="storefront-luxury">
-            {/* Top Maison Trust Guarantee Banner */}
+            <SiteHeader variant="overlay" />
+
+            {/* Editorial Hero Slider */}
+            <LuxuryHero />
+
+            {/* Maison Trust Guarantee Banner */}
             <div className="home-top-marquee" aria-label="Maison Guarantees">
                 <div className="home-top-marquee__inner">
                     <span><IconTruck width={13} height={13} /> Complimentary Armored Courier Worldwide</span>
@@ -155,11 +161,6 @@ function StoreLanding() {
                     <span><IconSparkle width={13} height={13} /> Escrow-Secured Settlement</span>
                 </div>
             </div>
-
-            <SiteHeader variant="overlay" />
-
-            {/* Editorial Hero Slider */}
-            <LuxuryHero />
 
             {/* CADRAN-inspired Heritage Proof Metrics Bar */}
             <section className="home-metrics" aria-label="Horology Metrics & Provenance">
@@ -550,6 +551,22 @@ function StoreLanding() {
     );
 }
 
+// The public landing page. Administrators skip the storefront and land
+// straight on the admin dashboard.
+function LandingRoute() {
+    const { isAuthenticated, loading, user } = useSelector((state) => state.auth);
+
+    if (loading) {
+        return <RouteFallback />;
+    }
+
+    if (isAuthenticated && user?.role === "admin") {
+        return <Navigate to="/admin/dashboard" replace />;
+    }
+
+    return <StoreLanding />;
+}
+
 function App() {
     return (
         <BrowserRouter>
@@ -597,6 +614,14 @@ function App() {
                     element={
                         <AdminRoute>
                             <AdminOrdersPage />
+                        </AdminRoute>
+                    }
+                />
+                <Route
+                    path="/admin/orders/:id"
+                    element={
+                        <AdminRoute>
+                            <AdminOrderDetailPage />
                         </AdminRoute>
                     }
                 />

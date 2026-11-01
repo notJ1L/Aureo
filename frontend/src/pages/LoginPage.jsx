@@ -15,7 +15,7 @@ function LoginPage() {
     const location = useLocation();
     const dispatch = useDispatch();
 
-    const { isAuthenticated, loading, error } = useSelector((state) => state.auth);
+    const { isAuthenticated, loading, error, user } = useSelector((state) => state.auth);
 
     const {
         control,
@@ -31,9 +31,11 @@ function LoginPage() {
 
     useEffect(() => {
         if (isAuthenticated) {
-            navigate(from, { replace: true });
+            // Administrators land on their dashboard instead of the storefront.
+            const target = user?.role === "admin" ? "/admin/dashboard" : from;
+            navigate(target, { replace: true });
         }
-    }, [isAuthenticated, navigate, from]);
+    }, [isAuthenticated, user, navigate, from]);
 
     useEffect(() => {
         return () => {
