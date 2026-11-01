@@ -57,6 +57,8 @@ export default function AdminUsersPage() {
     const [selectedIds, setSelectedIds] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState("all");
+    const [sortField, setSortField] = useState("name");
+    const [sortOrder, setSortOrder] = useState("asc");
 
     const {
         register,
@@ -151,9 +153,18 @@ export default function AdminUsersPage() {
         };
     }, [users]);
 
-    // Filter & search
+    const handleSort = (field) => {
+        if (sortField === field) {
+            setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+        } else {
+            setSortField(field);
+            setSortOrder(field === "name" ? "asc" : "desc");
+        }
+    };
+
+    // Filter & search & sort
     const filteredUsers = useMemo(() => {
-        let list = users || [];
+        let list = [...(users || [])];
 
         if (activeTab === "active") {
             list = list.filter((u) => u.isActive !== false);
@@ -180,8 +191,20 @@ export default function AdminUsersPage() {
             );
         }
 
+        list.sort((a, b) => {
+            let comp = 0;
+            if (sortField === "role") {
+                comp = (a.role || "").localeCompare(b.role || "");
+            } else if (sortField === "joined") {
+                comp = new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+            } else {
+                comp = (a.name || "").localeCompare(b.name || "");
+            }
+            return sortOrder === "asc" ? comp : -comp;
+        });
+
         return list;
-    }, [users, activeTab, searchQuery]);
+    }, [users, activeTab, searchQuery, sortField, sortOrder]);
 
     const handleOpenCreate = () => {
         setEditingUser(null);
@@ -426,40 +449,60 @@ export default function AdminUsersPage() {
                         </button>
                     </div>
 
-                    <div style={{ position: "relative", minWidth: "260px" }}>
-                        <input
-                            type="text"
-                            placeholder="Search by name, email, phone..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            style={{
-                                width: "100%",
-                                padding: "0.6rem 1rem",
-                                background: "var(--bg-elevated)",
-                                border: "1px solid var(--border)",
-                                borderRadius: "6px",
-                                color: "var(--ivory)",
-                                fontSize: "0.85rem"
+                    <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
+                        <select
+                            className="admin-filter-select"
+                            value={`${sortField}-${sortOrder}`}
+                            onChange={(e) => {
+                                const [field, order] = e.target.value.split("-");
+                                setSortField(field);
+                                setSortOrder(order);
                             }}
-                        />
-                        {searchQuery && (
-                            <button
-                                type="button"
-                                onClick={() => setSearchQuery("")}
+                            aria-label="Sort users"
+                        >
+                            <option value="name-asc">Name: A to Z</option>
+                            <option value="name-desc">Name: Z to A</option>
+                            <option value="joined-desc">Joined: Newest First</option>
+                            <option value="joined-asc">Joined: Oldest First</option>
+                            <option value="role-desc">Role: Admins First</option>
+                            <option value="role-asc">Role: Clients First</option>
+                        </select>
+
+                        <div style={{ position: "relative", minWidth: "240px" }}>
+                            <input
+                                type="text"
+                                placeholder="Search by name, email, phone..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
                                 style={{
-                                    position: "absolute",
-                                    right: "0.8rem",
-                                    top: "50%",
-                                    transform: "translateY(-50%)",
-                                    background: "none",
-                                    border: "none",
-                                    color: "var(--text-muted)",
-                                    cursor: "pointer"
+                                    width: "100%",
+                                    padding: "0.5rem 1rem",
+                                    background: "var(--bg-elevated)",
+                                    border: "1px solid var(--border)",
+                                    borderRadius: "6px",
+                                    color: "var(--ivory)",
+                                    fontSize: "0.82rem"
                                 }}
-                            >
-                                ×
-                            </button>
-                        )}
+                            />
+                            {searchQuery && (
+                                <button
+                                    type="button"
+                                    onClick={() => setSearchQuery("")}
+                                    style={{
+                                        position: "absolute",
+                                        right: "0.8rem",
+                                        top: "50%",
+                                        transform: "translateY(-50%)",
+                                        background: "none",
+                                        border: "none",
+                                        color: "var(--text-muted)",
+                                        cursor: "pointer"
+                                    }}
+                                >
+                                    ×
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -523,12 +566,33 @@ export default function AdminUsersPage() {
                                             onChange={handleSelectAll}
                                         />
                                     </th>
-                                    <th>User</th>
+                                    <th
+                                        className={`sortable-th ${sortField === "name" ? "is-sorted" : ""}`}
+                                        onClick={() => handleSort("name")}
+                                        title="Click to sort by Name"
+                                    >
+                                        User
+                                        <span className="sort-icon">{sortField === "name" ? (sortOrder === "asc" ? "▲" : "▼") : "↕"}</span>
+                                    </th>
                                     <th>Email & Contact</th>
-                                    <th>Role</th>
+                                    <th
+                                        className={`sortable-th ${sortField === "role" ? "is-sorted" : ""}`}
+                                        onClick={() => handleSort("role")}
+                                        title="Click to sort by Role"
+                                    >
+                                        Role
+                                        <span className="sort-icon">{sortField === "role" ? (sortOrder === "asc" ? "▲" : "▼") : "↕"}</span>
+                                    </th>
                                     <th>Status</th>
                                     <th>Provider</th>
-                                    <th>Joined</th>
+                                    <th
+                                        className={`sortable-th ${sortField === "joined" ? "is-sorted" : ""}`}
+                                        onClick={() => handleSort("joined")}
+                                        title="Click to sort by Date Joined"
+                                    >
+                                        Joined
+                                        <span className="sort-icon">{sortField === "joined" ? (sortOrder === "asc" ? "▲" : "▼") : "↕"}</span>
+                                    </th>
                                     <th style={{ textAlign: "right" }}>Actions</th>
                                 </tr>
                             </thead>

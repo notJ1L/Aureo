@@ -42,6 +42,9 @@ function AdminTicketsPage() {
     } = useSelector((state) => state.adminTicketStatus);
 
     const [statusFilter, setStatusFilter] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sortField, setSortField] = useState("createdAt");
+    const [sortOrder, setSortOrder] = useState("desc");
 
     useEffect(() => {
         dispatch(getAdminTickets());
@@ -68,14 +71,44 @@ function AdminTicketsPage() {
         }
     };
 
-    const visible = (tickets || []).filter(
-        (ticket) => !statusFilter || ticket.status === statusFilter
-    );
+    const allTickets = tickets || [];
+    const counts = {
+        all: allTickets.length,
+        Received: allTickets.filter((t) => t.status === "Received").length,
+        Diagnosing: allTickets.filter((t) => t.status === "Diagnosing").length,
+        "Waiting for Parts": allTickets.filter((t) => t.status === "Waiting for Parts").length,
+        Completed: allTickets.filter((t) => t.status === "Completed").length
+    };
 
-    const totalCount = (tickets || []).length;
-    const activeRepairsCount = (tickets || []).filter((t) => ["Received", "Diagnosing"].includes(t.status)).length;
-    const awaitingPartsCount = (tickets || []).filter((t) => t.status === "Waiting for Parts").length;
-    const completedCount = (tickets || []).filter((t) => t.status === "Completed").length;
+    const totalCount = allTickets.length;
+    const activeRepairsCount = allTickets.filter((t) => ["Received", "Diagnosing"].includes(t.status)).length;
+    const awaitingPartsCount = allTickets.filter((t) => t.status === "Waiting for Parts").length;
+    const completedCount = allTickets.filter((t) => t.status === "Completed").length;
+
+    const visible = allTickets
+        .filter((ticket) => {
+            if (statusFilter && ticket.status !== statusFilter) return false;
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase();
+                const matchesNum = (ticket.ticketNumber || "").toLowerCase().includes(q);
+                const matchesUser = (ticket.user?.name || "").toLowerCase().includes(q);
+                const matchesEmail = (ticket.user?.email || "").toLowerCase().includes(q);
+                const matchesIssue = (ticket.issueDescription || "").toLowerCase().includes(q);
+                return matchesNum || matchesUser || matchesEmail || matchesIssue;
+            }
+            return true;
+        })
+        .sort((a, b) => {
+            let comp = 0;
+            if (sortField === "ticket") {
+                comp = (a.ticketNumber || "").localeCompare(b.ticketNumber || "");
+            } else if (sortField === "user") {
+                comp = (a.user?.name || "").localeCompare(b.user?.name || "");
+            } else {
+                comp = new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+            }
+            return sortOrder === "asc" ? comp : -comp;
+        });
 
     return (
         <main className="admin-page">
@@ -87,23 +120,10 @@ function AdminTicketsPage() {
                         <p className="eyebrow">SUPPORT DESK</p>
                         <h1>Service Tickets</h1>
                     </div>
-                    <div style={{ width: "240px" }}>
-                        <AureoSelect
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            options={[
-                                { value: "", label: "All statuses" },
-                                ...Object.keys(TICKET_STATUS_FLOW).map((status) => ({
-                                    value: status,
-                                    label: status
-                                }))
-                            ]}
-                        />
-                    </div>
                 </div>
 
                 {/* Metric Summary Cards */}
-                <div className="vault-metrics-grid">
+                <div className="vault-metrics-grid" style={{ marginBottom: "2rem" }}>
                     <div className="vault-metric-card">
                         <div className="vault-metric-head">
                             <span>TOTAL TICKETS</span>
@@ -146,6 +166,67 @@ function AdminTicketsPage() {
                         </div>
                         <div className="vault-metric-val">{completedCount}</div>
                         <div className="vault-metric-hint">Restored & ready for return</div>
+                    </div>
+                </div>
+
+                {/* Status Tabs & Filter/Search Bar */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
+                    <div className="admin-status-tabs" style={{ marginBottom: 0 }}>
+                        <button
+                            type="button"
+                            className={`admin-tab-btn ${statusFilter === "" ? "is-active" : ""}`}
+                            onClick={() => setStatusFilter("")}
+                        >
+                            All Tickets <span className="admin-tab-count">{counts.all}</span>
+                        </button>
+                        {Object.keys(TICKET_STATUS_FLOW).map((st) => (
+                            <button
+                                key={st}
+                                type="button"
+                                className={`admin-tab-btn ${statusFilter === st ? "is-active" : ""}`}
+                                onClick={() => setStatusFilter(st)}
+                            >
+                                {st} <span className="admin-tab-count">{counts[st] || 0}</span>
+                            </button>
+                        ))}
+                    </div>
+
+                    <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
+                        <select
+                            className="admin-filter-select"
+                            value={`${sortField}-${sortOrder}`}
+                            onChange={(e) => {
+                                const [field, order] = e.target.value.split("-");
+                                setSortField(field);
+                                setSortOrder(order);
+                            }}
+                            aria-label="Sort tickets"
+                        >
+                            <option value="createdAt-desc">Newest First</option>
+                            <option value="createdAt-asc">Oldest First</option>
+                            <option value="ticket-asc">Ticket #: A to Z</option>
+                            <option value="ticket-desc">Ticket #: Z to A</option>
+                            <option value="user-asc">Collector: A to Z</option>
+                        </select>
+
+                        <input
+                            type="text"
+                            className="catalog-input"
+                            placeholder="Search ticket #, collector, email..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            style={{ minWidth: "220px", padding: "0.45rem 0.8rem", fontSize: "0.82rem" }}
+                        />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                className="outline-button"
+                                onClick={() => setSearchQuery("")}
+                                style={{ padding: "0.45rem 0.75rem", fontSize: "0.78rem" }}
+                            >
+                                Clear
+                            </button>
+                        )}
                     </div>
                 </div>
 

@@ -53,6 +53,9 @@ function AdminServicesPage() {
     const [editingService, setEditingService] = useState(null);
     const [selectedIds, setSelectedIds] = useState([]);
     const [activeTab, setActiveTab] = useState("active");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sortField, setSortField] = useState("name");
+    const [sortOrder, setSortOrder] = useState("asc");
 
     const {
         register,
@@ -125,11 +128,36 @@ function AdminServicesPage() {
         archived: (services || []).filter((s) => s.isActive === false).length
     };
 
-    const filteredServices = (services || []).filter((s) => {
-        if (activeTab === "active") return s.isActive !== false;
-        if (activeTab === "archived") return s.isActive === false;
-        return true;
-    });
+    const handleSort = (field) => {
+        if (sortField === field) {
+            setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+        } else {
+            setSortField(field);
+            setSortOrder(field === "name" ? "asc" : "desc");
+        }
+    };
+
+    const filteredServices = (services || [])
+        .filter((s) => {
+            if (activeTab === "active" && s.isActive === false) return false;
+            if (activeTab === "archived" && s.isActive !== false) return false;
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase();
+                const matchesName = (s.name || "").toLowerCase().includes(q);
+                const matchesDesc = (s.description || "").toLowerCase().includes(q);
+                return matchesName || matchesDesc;
+            }
+            return true;
+        })
+        .sort((a, b) => {
+            let comp = 0;
+            if (sortField === "price") {
+                comp = (Number(a.price) || 0) - (Number(b.price) || 0);
+            } else {
+                comp = (a.name || "").localeCompare(b.name || "");
+            }
+            return sortOrder === "asc" ? comp : -comp;
+        });
 
     const handleOpenCreate = () => {
         setEditingService(null);
@@ -278,29 +306,68 @@ function AdminServicesPage() {
                     </article>
                 </div>
 
-                {/* Status Tabs */}
-                <div className="admin-status-tabs" style={{ marginBottom: "1.5rem" }}>
-                    <button
-                        type="button"
-                        className={`admin-tab-btn ${activeTab === "active" ? "is-active" : ""}`}
-                        onClick={() => setActiveTab("active")}
-                    >
-                        Active <span className="admin-tab-count">{counts.active}</span>
-                    </button>
-                    <button
-                        type="button"
-                        className={`admin-tab-btn ${activeTab === "archived" ? "is-active" : ""}`}
-                        onClick={() => setActiveTab("archived")}
-                    >
-                        Archived <span className="admin-tab-count">{counts.archived}</span>
-                    </button>
-                    <button
-                        type="button"
-                        className={`admin-tab-btn ${activeTab === "all" ? "is-active" : ""}`}
-                        onClick={() => setActiveTab("all")}
-                    >
-                        All Services <span className="admin-tab-count">{counts.total}</span>
-                    </button>
+                {/* Status Tabs & Filter/Search Bar */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
+                    <div className="admin-status-tabs" style={{ marginBottom: 0 }}>
+                        <button
+                            type="button"
+                            className={`admin-tab-btn ${activeTab === "active" ? "is-active" : ""}`}
+                            onClick={() => setActiveTab("active")}
+                        >
+                            Active <span className="admin-tab-count">{counts.active}</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`admin-tab-btn ${activeTab === "archived" ? "is-active" : ""}`}
+                            onClick={() => setActiveTab("archived")}
+                        >
+                            Archived <span className="admin-tab-count">{counts.archived}</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`admin-tab-btn ${activeTab === "all" ? "is-active" : ""}`}
+                            onClick={() => setActiveTab("all")}
+                        >
+                            All Services <span className="admin-tab-count">{counts.total}</span>
+                        </button>
+                    </div>
+
+                    <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
+                        <select
+                            className="admin-filter-select"
+                            value={`${sortField}-${sortOrder}`}
+                            onChange={(e) => {
+                                const [field, order] = e.target.value.split("-");
+                                setSortField(field);
+                                setSortOrder(order);
+                            }}
+                            aria-label="Sort services"
+                        >
+                            <option value="name-asc">Name: A to Z</option>
+                            <option value="name-desc">Name: Z to A</option>
+                            <option value="price-desc">Price: High to Low</option>
+                            <option value="price-asc">Price: Low to High</option>
+                        </select>
+
+                        <input
+                            type="text"
+                            className="catalog-input"
+                            placeholder="Search services..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            style={{ minWidth: "220px", padding: "0.45rem 0.8rem", fontSize: "0.82rem" }}
+                        />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                className="outline-button"
+                                onClick={() => setSearchQuery("")}
+                                style={{ padding: "0.45rem 0.75rem", fontSize: "0.78rem" }}
+                            >
+                                Clear
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {error && <div className="auth-error">{error}</div>}
@@ -332,9 +399,23 @@ function AdminServicesPage() {
                                             onChange={handleSelectAll}
                                         />
                                     </th>
-                                    <th>Service</th>
+                                    <th
+                                        className={`sortable-th ${sortField === "name" ? "is-sorted" : ""}`}
+                                        onClick={() => handleSort("name")}
+                                        title="Click to sort by Name"
+                                    >
+                                        Service
+                                        <span className="sort-icon">{sortField === "name" ? (sortOrder === "asc" ? "▲" : "▼") : "↕"}</span>
+                                    </th>
                                     <th>Description</th>
-                                    <th>Price</th>
+                                    <th
+                                        className={`sortable-th ${sortField === "price" ? "is-sorted" : ""}`}
+                                        onClick={() => handleSort("price")}
+                                        title="Click to sort by Price"
+                                    >
+                                        Price
+                                        <span className="sort-icon">{sortField === "price" ? (sortOrder === "asc" ? "▲" : "▼") : "↕"}</span>
+                                    </th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>

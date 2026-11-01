@@ -48,6 +48,9 @@ function AdminAppraisalsPage() {
 
     const [offerInputs, setOfferInputs] = useState({});
     const [statusFilter, setStatusFilter] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sortField, setSortField] = useState("createdAt");
+    const [sortOrder, setSortOrder] = useState("desc");
     const [selectedAppraisal, setSelectedAppraisal] = useState(null);
     const [activePhotoIndex, setActivePhotoIndex] = useState(0);
 
@@ -118,9 +121,39 @@ function AdminAppraisalsPage() {
         }
     };
 
-    const visible = (appraisals || []).filter(
-        (appraisal) => !statusFilter || appraisal.status === statusFilter
-    );
+    const allAppraisals = appraisals || [];
+    const counts = {
+        all: allAppraisals.length,
+        Pending: allAppraisals.filter((a) => a.status === "Pending").length,
+        "Offer Made": allAppraisals.filter((a) => a.status === "Offer Made").length,
+        Accepted: allAppraisals.filter((a) => a.status === "Accepted").length,
+        Rejected: allAppraisals.filter((a) => a.status === "Rejected").length
+    };
+
+    const visible = allAppraisals
+        .filter((appraisal) => {
+            if (statusFilter && appraisal.status !== statusFilter) return false;
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase();
+                const matchesBrand = (appraisal.brand || "").toLowerCase().includes(q);
+                const matchesModel = (appraisal.model || "").toLowerCase().includes(q);
+                const matchesUser = (appraisal.user?.name || "").toLowerCase().includes(q);
+                const matchesEmail = (appraisal.user?.email || "").toLowerCase().includes(q);
+                return matchesBrand || matchesModel || matchesUser || matchesEmail;
+            }
+            return true;
+        })
+        .sort((a, b) => {
+            let comp = 0;
+            if (sortField === "brand") {
+                comp = (a.brand || "").localeCompare(b.brand || "");
+            } else if (sortField === "offer") {
+                comp = (Number(a.offerPrice) || 0) - (Number(b.offerPrice) || 0);
+            } else {
+                comp = new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+            }
+            return sortOrder === "asc" ? comp : -comp;
+        });
 
     return (
         <main className="admin-page">
@@ -131,19 +164,6 @@ function AdminAppraisalsPage() {
                     <div>
                         <p className="eyebrow">APPRAISAL DESK</p>
                         <h1>Collector Appraisals</h1>
-                    </div>
-                    <div style={{ width: "220px" }}>
-                        <AureoSelect
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            options={[
-                                { value: "", label: "All statuses" },
-                                ...["Pending", "Offer Made", "Accepted", "Rejected"].map((status) => ({
-                                    value: status,
-                                    label: status
-                                }))
-                            ]}
-                        />
                     </div>
                 </div>
 
@@ -197,6 +217,68 @@ function AdminAppraisalsPage() {
                         </div>
                         <span className="vault-metric-hint">Consignment capital committed</span>
                     </article>
+                </div>
+
+                {/* Status Tabs & Filter/Search Bar */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
+                    <div className="admin-status-tabs" style={{ marginBottom: 0 }}>
+                        <button
+                            type="button"
+                            className={`admin-tab-btn ${statusFilter === "" ? "is-active" : ""}`}
+                            onClick={() => setStatusFilter("")}
+                        >
+                            All Appraisals <span className="admin-tab-count">{counts.all}</span>
+                        </button>
+                        {["Pending", "Offer Made", "Accepted", "Rejected"].map((st) => (
+                            <button
+                                key={st}
+                                type="button"
+                                className={`admin-tab-btn ${statusFilter === st ? "is-active" : ""}`}
+                                onClick={() => setStatusFilter(st)}
+                            >
+                                {st} <span className="admin-tab-count">{counts[st] || 0}</span>
+                            </button>
+                        ))}
+                    </div>
+
+                    <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
+                        <select
+                            className="admin-filter-select"
+                            value={`${sortField}-${sortOrder}`}
+                            onChange={(e) => {
+                                const [field, order] = e.target.value.split("-");
+                                setSortField(field);
+                                setSortOrder(order);
+                            }}
+                            aria-label="Sort appraisals"
+                        >
+                            <option value="createdAt-desc">Submission: Newest First</option>
+                            <option value="createdAt-asc">Submission: Oldest First</option>
+                            <option value="brand-asc">Brand: A to Z</option>
+                            <option value="brand-desc">Brand: Z to A</option>
+                            <option value="offer-desc">Offer: High to Low</option>
+                            <option value="offer-asc">Offer: Low to High</option>
+                        </select>
+
+                        <input
+                            type="text"
+                            className="catalog-input"
+                            placeholder="Search brand, model, collector..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            style={{ minWidth: "220px", padding: "0.45rem 0.8rem", fontSize: "0.82rem" }}
+                        />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                className="outline-button"
+                                onClick={() => setSearchQuery("")}
+                                style={{ padding: "0.45rem 0.75rem", fontSize: "0.78rem" }}
+                            >
+                                Clear
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {loading && <p className="catalog-message">Loading appraisals...</p>}

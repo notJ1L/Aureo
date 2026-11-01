@@ -69,6 +69,10 @@ function AdminProductsPage() {
     const [editingProduct, setEditingProduct] = useState(null);
     const [selectedIds, setSelectedIds] = useState([]);
     const [statusFilter, setStatusFilter] = useState("all");
+    const [conditionFilter, setConditionFilter] = useState("");
+    const [stockFilter, setStockFilter] = useState("");
+    const [sortField, setSortField] = useState("createdAt");
+    const [sortOrder, setSortOrder] = useState("desc");
     const [searchQuery, setSearchQuery] = useState("");
 
     // Unit 1: the product form is validated with Yup through React Hook Form.
@@ -345,19 +349,47 @@ function AdminProductsPage() {
     const activeCount = allProducts.filter((p) => p.isActive).length;
     const archivedCount = allProducts.filter((p) => !p.isActive).length;
 
-    const visibleProducts = allProducts.filter((prod) => {
-        if (statusFilter === "active" && !prod.isActive) return false;
-        if (statusFilter === "archived" && prod.isActive) return false;
-
-        if (searchQuery.trim()) {
-            const q = searchQuery.toLowerCase();
-            const matchesName = prod.name?.toLowerCase().includes(q);
-            const matchesBrand = prod.brand?.toLowerCase().includes(q);
-            return matchesName || matchesBrand;
+    const handleSort = (field) => {
+        if (sortField === field) {
+            setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+        } else {
+            setSortField(field);
+            setSortOrder(field === "name" ? "asc" : "desc");
         }
+    };
 
-        return true;
-    });
+    const visibleProducts = allProducts
+        .filter((prod) => {
+            if (statusFilter === "active" && !prod.isActive) return false;
+            if (statusFilter === "archived" && prod.isActive) return false;
+            if (conditionFilter && prod.condition !== conditionFilter) return false;
+            if (stockFilter === "in-stock" && (Number(prod.stock) || 0) <= 0) return false;
+            if (stockFilter === "out-of-stock" && (Number(prod.stock) || 0) > 0) return false;
+
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase();
+                const matchesName = prod.name?.toLowerCase().includes(q);
+                const matchesBrand = prod.brand?.toLowerCase().includes(q);
+                return matchesName || matchesBrand;
+            }
+
+            return true;
+        })
+        .sort((a, b) => {
+            let comparison = 0;
+            if (sortField === "name") {
+                comparison = (a.name || "").localeCompare(b.name || "");
+            } else if (sortField === "price") {
+                comparison = (Number(a.price) || 0) - (Number(b.price) || 0);
+            } else if (sortField === "stock") {
+                comparison = (Number(a.stock) || 0) - (Number(b.stock) || 0);
+            } else if (sortField === "condition") {
+                comparison = (a.condition || "").localeCompare(b.condition || "");
+            } else {
+                comparison = new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+            }
+            return sortOrder === "asc" ? comparison : -comparison;
+        });
 
     const handleSelectAll = () => {
         const visibleIds = visibleProducts.map((p) => p._id);
@@ -508,14 +540,57 @@ function AdminProductsPage() {
                         </button>
                     </div>
 
-                    <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                    <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
+                        <select
+                            className="admin-filter-select"
+                            value={conditionFilter}
+                            onChange={(e) => setConditionFilter(e.target.value)}
+                            aria-label="Filter by condition"
+                        >
+                            <option value="">All Conditions</option>
+                            <option value="new">New</option>
+                            <option value="second-hand">Second-hand</option>
+                            <option value="vintage">Vintage</option>
+                        </select>
+
+                        <select
+                            className="admin-filter-select"
+                            value={stockFilter}
+                            onChange={(e) => setStockFilter(e.target.value)}
+                            aria-label="Filter by stock"
+                        >
+                            <option value="">All Stock Levels</option>
+                            <option value="in-stock">In Stock (&gt; 0)</option>
+                            <option value="out-of-stock">Out of Stock (0)</option>
+                        </select>
+
+                        <select
+                            className="admin-filter-select"
+                            value={`${sortField}-${sortOrder}`}
+                            onChange={(e) => {
+                                const [field, order] = e.target.value.split("-");
+                                setSortField(field);
+                                setSortOrder(order);
+                            }}
+                            aria-label="Sort inventory"
+                        >
+                            <option value="createdAt-desc">Newest Added</option>
+                            <option value="createdAt-asc">Oldest Added</option>
+                            <option value="price-desc">Price: High to Low</option>
+                            <option value="price-asc">Price: Low to High</option>
+                            <option value="stock-asc">Stock: Low to High</option>
+                            <option value="stock-desc">Stock: High to Low</option>
+                            <option value="name-asc">Name: A to Z</option>
+                            <option value="name-desc">Name: Z to A</option>
+                        </select>
+
                         <input
                             type="text"
                             className="catalog-input"
                             placeholder="Search by model or brand..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            style={{ minWidth: "240px", padding: "0.45rem 0.8rem", fontSize: "0.82rem" }}
+                            style={{ minWidth: "220px", padding: "0.45rem 0.8rem", fontSize: "0.82rem" }}
                         />
                         {searchQuery && (
                             <button
@@ -584,11 +659,39 @@ function AdminProductsPage() {
                                     />
                                 </th>
                                 <th>Photo</th>
-                                <th>Name & Brand</th>
+                                <th
+                                    className={`sortable-th ${sortField === "name" ? "is-sorted" : ""}`}
+                                    onClick={() => handleSort("name")}
+                                    title="Click to sort by Name"
+                                >
+                                    Name & Brand
+                                    <span className="sort-icon">{sortField === "name" ? (sortOrder === "asc" ? "▲" : "▼") : "↕"}</span>
+                                </th>
                                 <th>Movement</th>
-                                <th>Condition</th>
-                                <th>Price</th>
-                                <th>Stock</th>
+                                <th
+                                    className={`sortable-th ${sortField === "condition" ? "is-sorted" : ""}`}
+                                    onClick={() => handleSort("condition")}
+                                    title="Click to sort by Condition"
+                                >
+                                    Condition
+                                    <span className="sort-icon">{sortField === "condition" ? (sortOrder === "asc" ? "▲" : "▼") : "↕"}</span>
+                                </th>
+                                <th
+                                    className={`sortable-th ${sortField === "price" ? "is-sorted" : ""}`}
+                                    onClick={() => handleSort("price")}
+                                    title="Click to sort by Price"
+                                >
+                                    Price
+                                    <span className="sort-icon">{sortField === "price" ? (sortOrder === "asc" ? "▲" : "▼") : "↕"}</span>
+                                </th>
+                                <th
+                                    className={`sortable-th ${sortField === "stock" ? "is-sorted" : ""}`}
+                                    onClick={() => handleSort("stock")}
+                                    title="Click to sort by Stock"
+                                >
+                                    Stock
+                                    <span className="sort-icon">{sortField === "stock" ? (sortOrder === "asc" ? "▲" : "▼") : "↕"}</span>
+                                </th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>

@@ -1499,6 +1499,68 @@ a {
     letter-spacing: 0.05rem;
 }
 
+.admin-table th.sortable-th {
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s ease, background 0.15s ease;
+    white-space: nowrap;
+}
+
+.admin-table th.sortable-th:hover {
+    color: var(--gold-light, #f3d48d);
+}
+
+.admin-table th.sortable-th .sort-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.35rem;
+    font-size: 0.75rem;
+    opacity: 0.45;
+    transition: all 0.15s ease;
+}
+
+.admin-table th.sortable-th.is-sorted {
+    color: var(--gold);
+}
+
+.admin-table th.sortable-th.is-sorted .sort-icon {
+    opacity: 1;
+    color: var(--gold);
+}
+
+.admin-filter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.admin-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.admin-filter-select {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--ivory);
+    border-radius: 6px;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.82rem;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.admin-filter-select:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 1px rgba(201, 164, 92, 0.25);
+}
+
 .admin-table td {
     padding: 1rem 1.2rem;
     border-bottom: 1px solid var(--border);

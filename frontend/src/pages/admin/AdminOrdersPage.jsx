@@ -37,6 +37,9 @@ function AdminOrdersPage() {
     } = useSelector((state) => state.adminOrderMutation);
 
     const [statusFilter, setStatusFilter] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sortField, setSortField] = useState("createdAt");
+    const [sortOrder, setSortOrder] = useState("desc");
 
     useEffect(() => {
         dispatch(getAdminOrders());
@@ -91,9 +94,50 @@ function AdminOrdersPage() {
         }
     };
 
-    const visibleOrders = (orders || []).filter(
-        (order) => !statusFilter || order.status === statusFilter
-    );
+    const allOrders = orders || [];
+    const counts = {
+        all: allOrders.length,
+        Pending: allOrders.filter((o) => o.status === "Pending").length,
+        Paid: allOrders.filter((o) => o.status === "Paid").length,
+        Shipped: allOrders.filter((o) => o.status === "Shipped").length,
+        Completed: allOrders.filter((o) => o.status === "Completed").length,
+        Cancelled: allOrders.filter((o) => o.status === "Cancelled").length
+    };
+
+    const handleSort = (field) => {
+        if (sortField === field) {
+            setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+        } else {
+            setSortField(field);
+            setSortOrder(field === "customer" ? "asc" : "desc");
+        }
+    };
+
+    const visibleOrders = allOrders
+        .filter((order) => {
+            if (statusFilter && order.status !== statusFilter) return false;
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase();
+                const matchesId = (order._id || "").toLowerCase().includes(q);
+                const matchesUser = (order.user?.name || "").toLowerCase().includes(q);
+                const matchesEmail = (order.user?.email || "").toLowerCase().includes(q);
+                return matchesId || matchesUser || matchesEmail;
+            }
+            return true;
+        })
+        .sort((a, b) => {
+            let comp = 0;
+            if (sortField === "customer") {
+                comp = (a.user?.name || "").localeCompare(b.user?.name || "");
+            } else if (sortField === "total") {
+                const totalA = a.totalPrice || calculateTotal(a);
+                const totalB = b.totalPrice || calculateTotal(b);
+                comp = totalA - totalB;
+            } else {
+                comp = new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+            }
+            return sortOrder === "asc" ? comp : -comp;
+        });
 
     return (
         <main className="admin-page">
@@ -104,19 +148,6 @@ function AdminOrdersPage() {
                     <div>
                         <p className="eyebrow">TRANSACTION CONTROL</p>
                         <h1>Orders &amp; Status Flow</h1>
-                    </div>
-                    <div style={{ width: "220px" }}>
-                        <AureoSelect
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            options={[
-                                { value: "", label: "All statuses" },
-                                ...Object.keys(ORDER_STATUS_FLOW).map((status) => ({
-                                    value: status,
-                                    label: status
-                                }))
-                            ]}
-                        />
                     </div>
                 </div>
 
@@ -172,6 +203,68 @@ function AdminOrdersPage() {
                     </article>
                 </div>
 
+                {/* Filter and Search Bar */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
+                    <div className="admin-status-tabs">
+                        <button
+                            type="button"
+                            className={`admin-tab-btn ${statusFilter === "" ? "is-active" : ""}`}
+                            onClick={() => setStatusFilter("")}
+                        >
+                            All Orders <span className="admin-tab-count">{counts.all}</span>
+                        </button>
+                        {Object.keys(ORDER_STATUS_FLOW).map((st) => (
+                            <button
+                                key={st}
+                                type="button"
+                                className={`admin-tab-btn ${statusFilter === st ? "is-active" : ""}`}
+                                onClick={() => setStatusFilter(st)}
+                            >
+                                {st} <span className="admin-tab-count">{counts[st] || 0}</span>
+                            </button>
+                        ))}
+                    </div>
+
+                    <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
+                        <select
+                            className="admin-filter-select"
+                            value={`${sortField}-${sortOrder}`}
+                            onChange={(e) => {
+                                const [field, order] = e.target.value.split("-");
+                                setSortField(field);
+                                setSortOrder(order);
+                            }}
+                            aria-label="Sort orders"
+                        >
+                            <option value="createdAt-desc">Date: Newest First</option>
+                            <option value="createdAt-asc">Date: Oldest First</option>
+                            <option value="total-desc">Total: High to Low</option>
+                            <option value="total-asc">Total: Low to High</option>
+                            <option value="customer-asc">Customer: A to Z</option>
+                            <option value="customer-desc">Customer: Z to A</option>
+                        </select>
+
+                        <input
+                            type="text"
+                            className="catalog-input"
+                            placeholder="Search order #, customer, email..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            style={{ minWidth: "220px", padding: "0.45rem 0.8rem", fontSize: "0.82rem" }}
+                        />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                className="outline-button"
+                                onClick={() => setSearchQuery("")}
+                                style={{ padding: "0.45rem 0.75rem", fontSize: "0.78rem" }}
+                            >
+                                Clear
+                            </button>
+                        )}
+                    </div>
+                </div>
+
                 {loading && <p className="catalog-message">Loading orders...</p>}
 
                 {!loading && visibleOrders.length === 0 && (
@@ -186,10 +279,31 @@ function AdminOrdersPage() {
                         <table className="admin-table">
                             <thead>
                                 <tr>
-                                    <th>Order</th>
-                                    <th>Customer</th>
+                                    <th
+                                        className={`sortable-th ${sortField === "createdAt" ? "is-sorted" : ""}`}
+                                        onClick={() => handleSort("createdAt")}
+                                        title="Click to sort by Date"
+                                    >
+                                        Order
+                                        <span className="sort-icon">{sortField === "createdAt" ? (sortOrder === "asc" ? "▲" : "▼") : "↕"}</span>
+                                    </th>
+                                    <th
+                                        className={`sortable-th ${sortField === "customer" ? "is-sorted" : ""}`}
+                                        onClick={() => handleSort("customer")}
+                                        title="Click to sort by Customer Name"
+                                    >
+                                        Customer
+                                        <span className="sort-icon">{sortField === "customer" ? (sortOrder === "asc" ? "▲" : "▼") : "↕"}</span>
+                                    </th>
                                     <th>Items</th>
-                                    <th>Total</th>
+                                    <th
+                                        className={`sortable-th ${sortField === "total" ? "is-sorted" : ""}`}
+                                        onClick={() => handleSort("total")}
+                                        title="Click to sort by Total Amount"
+                                    >
+                                        Total
+                                        <span className="sort-icon">{sortField === "total" ? (sortOrder === "asc" ? "▲" : "▼") : "↕"}</span>
+                                    </th>
                                     <th>Payment</th>
                                     <th>Status</th>
                                     <th>Actions</th>
