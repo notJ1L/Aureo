@@ -46,6 +46,7 @@ function AdminServicesPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingService, setEditingService] = useState(null);
     const [selectedIds, setSelectedIds] = useState([]);
+    const [activeTab, setActiveTab] = useState("active");
 
     const {
         register,
@@ -102,15 +103,27 @@ function AdminServicesPage() {
             toast.success("Service updated");
             dispatch({ type: SERVICE_UPDATE_RESET });
         } else if (mutationKey === "delete") {
-            toast.success("Service removed");
+            toast.success("Service deactivated (soft deleted)");
             dispatch({ type: SERVICE_DELETE_RESET });
         } else {
-            toast.success("Bulk delete complete");
+            toast.success("Bulk deactivation complete");
             dispatch({ type: SERVICE_BULK_DELETE_RESET });
         }
 
         dispatch(getAdminServices());
     }, [mutationKey, dispatch]);
+
+    const counts = {
+        total: (services || []).length,
+        active: (services || []).filter((s) => s.isActive !== false).length,
+        archived: (services || []).filter((s) => s.isActive === false).length
+    };
+
+    const filteredServices = (services || []).filter((s) => {
+        if (activeTab === "active") return s.isActive !== false;
+        if (activeTab === "archived") return s.isActive === false;
+        return true;
+    });
 
     const handleOpenCreate = () => {
         setEditingService(null);
@@ -136,16 +149,31 @@ function AdminServicesPage() {
         }
     };
 
-    const handleDelete = async (service) => {
-        const confirmed = await confirmAction({
-            title: "Remove this service?",
-            message: `"${service.name}" will no longer be offered on the storefront.`,
-            confirmText: "Remove service",
-            danger: true
-        });
+    const handleToggleActive = async (service) => {
+        const isCurrentlyActive = service.isActive !== false;
 
-        if (confirmed) {
-            dispatch(deleteService(service._id));
+        if (isCurrentlyActive) {
+            const confirmed = await confirmAction({
+                title: `Deactivate service "${service.name}"?`,
+                message: "This service will be hidden from the storefront, but existing ticket history is preserved. You can restore it anytime.",
+                confirmText: "Deactivate Service",
+                danger: true
+            });
+
+            if (confirmed) {
+                dispatch(deleteService(service._id));
+            }
+        } else {
+            const confirmed = await confirmAction({
+                title: `Restore service "${service.name}"?`,
+                message: "This service will be reactivated and offered on the storefront again.",
+                confirmText: "Restore Service",
+                danger: false
+            });
+
+            if (confirmed) {
+                dispatch(updateService(service._id, { isActive: true }));
+            }
         }
     };
 
@@ -160,7 +188,7 @@ function AdminServicesPage() {
     };
 
     const handleSelectAll = () => {
-        const allIds = (services || []).map((service) => service._id);
+        const allIds = filteredServices.map((service) => service._id);
         const allSelected = allIds.length > 0 && allIds.every((id) => selectedIds.includes(id));
 
         setSelectedIds(allSelected ? [] : allIds);
@@ -173,9 +201,9 @@ function AdminServicesPage() {
         }
 
         const confirmed = await confirmAction({
-            title: `Delete ${selectedIds.length} selected service(s)?`,
-            message: "The services will no longer be offered on the storefront.",
-            confirmText: "Delete selected",
+            title: `Deactivate ${selectedIds.length} selected service(s)?`,
+            message: "The services will be hidden from the storefront, but all history is preserved.",
+            confirmText: "Deactivate Selected",
             danger: true
         });
 
@@ -199,6 +227,31 @@ function AdminServicesPage() {
                     </button>
                 </div>
 
+                {/* Status Tabs */}
+                <div className="admin-status-tabs" style={{ marginBottom: "1.5rem" }}>
+                    <button
+                        type="button"
+                        className={`admin-tab-btn ${activeTab === "active" ? "is-active" : ""}`}
+                        onClick={() => setActiveTab("active")}
+                    >
+                        Active <span className="admin-tab-count">{counts.active}</span>
+                    </button>
+                    <button
+                        type="button"
+                        className={`admin-tab-btn ${activeTab === "archived" ? "is-active" : ""}`}
+                        onClick={() => setActiveTab("archived")}
+                    >
+                        Archived <span className="admin-tab-count">{counts.archived}</span>
+                    </button>
+                    <button
+                        type="button"
+                        className={`admin-tab-btn ${activeTab === "all" ? "is-active" : ""}`}
+                        onClick={() => setActiveTab("all")}
+                    >
+                        All Services <span className="admin-tab-count">{counts.total}</span>
+                    </button>
+                </div>
+
                 {error && <div className="auth-error">{error}</div>}
                 {mutationError && <div className="auth-error">{mutationError}</div>}
 
@@ -206,7 +259,7 @@ function AdminServicesPage() {
                     <div className="admin-bulk-bar">
                         <span>{selectedIds.length} service(s) selected</span>
                         <button type="button" className="admin-btn del-btn" onClick={handleBulkDelete}>
-                            Delete Selected
+                            Deactivate Selected
                         </button>
                     </div>
                 )}
@@ -222,8 +275,8 @@ function AdminServicesPage() {
                                         <AureoCheckbox
                                             inputProps={{ "aria-label": "Select all services" }}
                                             checked={
-                                                (services || []).length > 0 &&
-                                                (services || []).every((s) => selectedIds.includes(s._id))
+                                                filteredServices.length > 0 &&
+                                                filteredServices.every((s) => selectedIds.includes(s._id))
                                             }
                                             onChange={handleSelectAll}
                                         />
@@ -231,11 +284,12 @@ function AdminServicesPage() {
                                     <th>Service</th>
                                     <th>Description</th>
                                     <th>Price</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {(services || []).map((service) => (
+                                {filteredServices.map((service) => (
                                     <tr key={service._id} className={isSelected(service._id) ? "row-selected" : ""}>
                                         <td>
                                             <AureoCheckbox
@@ -252,6 +306,22 @@ function AdminServicesPage() {
                                             <strong className="text-gold">{formatPrice(service.price)}</strong>
                                         </td>
                                         <td>
+                                            <span
+                                                style={{
+                                                    display: "inline-block",
+                                                    padding: "0.2rem 0.55rem",
+                                                    borderRadius: "4px",
+                                                    fontSize: "0.75rem",
+                                                    fontWeight: 600,
+                                                    background: service.isActive !== false ? "rgba(34, 197, 94, 0.15)" : "rgba(239, 68, 68, 0.15)",
+                                                    color: service.isActive !== false ? "#4ade80" : "#f87171",
+                                                    border: service.isActive !== false ? "1px solid rgba(34, 197, 94, 0.3)" : "1px solid rgba(239, 68, 68, 0.3)"
+                                                }}
+                                            >
+                                                {service.isActive !== false ? "Active" : "Archived"}
+                                            </span>
+                                        </td>
+                                        <td>
                                             <div className="admin-actions">
                                                 <button
                                                     type="button"
@@ -260,13 +330,25 @@ function AdminServicesPage() {
                                                 >
                                                     Edit
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    className="admin-btn del-btn"
-                                                    onClick={() => handleDelete(service)}
-                                                >
-                                                    Delete
-                                                </button>
+                                                {service.isActive === false ? (
+                                                    <button
+                                                        type="button"
+                                                        className="admin-btn restore-btn"
+                                                        onClick={() => handleToggleActive(service)}
+                                                        title="Restore to storefront"
+                                                    >
+                                                        Restore
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        className="admin-btn del-btn"
+                                                        onClick={() => handleToggleActive(service)}
+                                                        title="Deactivate service"
+                                                    >
+                                                        Deactivate
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

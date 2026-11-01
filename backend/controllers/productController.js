@@ -190,7 +190,7 @@ const updateProduct = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Admin: Delete product (soft delete if in orders)
+// Admin: Delete product (Strictly soft delete - no hard delete)
 const deleteProduct = catchAsyncErrors(async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         return next(new ErrorHandler("Invalid product ID", 400));
@@ -201,35 +201,23 @@ const deleteProduct = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Product not found", 404));
     }
 
-    // Check if product exists in any completed/existing orders
-    const hasOrders = await Order.findOne({ "orderItems.product": req.params.id });
+    // Strictly soft delete: mark isActive = false
+    product.isActive = false;
+    await product.save({ validateBeforeSave: false });
 
-    if (hasOrders) {
-        product.isActive = false;
-        await product.save({ validateBeforeSave: false });
-        return res.status(200).json({
-            success: true,
-            message: "Product exists in existing orders; marked as inactive instead of deleting."
-        });
-    }
-
-    // Also remove from any user's wishlist
+    // Also remove from any user's active wishlist
     await User.updateMany(
         { wishlist: req.params.id },
         { $pull: { wishlist: req.params.id } }
     );
 
-    await product.deleteOne();
-
     res.status(200).json({
         success: true,
-        message: "Product deleted successfully"
+        message: "Product deactivated (soft deleted) successfully"
     });
 });
 
-// Admin: Bulk delete products (MP1 - datatable checkbox bulk delete).
-// A product that is referenced by an existing order is deactivated instead of
-// being removed so historic orders keep their snapshot data.
+// Admin: Bulk delete products (Strictly soft delete - no hard delete)
 const bulkDeleteProducts = catchAsyncErrors(async (req, res, next) => {
     const { ids } = req.body;
 
@@ -246,42 +234,21 @@ const bulkDeleteProducts = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("No valid product ids were provided", 400));
     }
 
-    let deactivated = 0;
-    let deleted = 0;
+    const result = await Product.updateMany(
+        { _id: { $in: validIds } },
+        { isActive: false }
+    );
 
-    for (const id of validIds) {
-        const product = await Product.findById(id);
-
-        if (!product) {
-            continue;
-        }
-
-        const hasOrders = await Order.findOne({ "orderItems.product": id });
-
-        if (hasOrders) {
-            if (product.isActive) {
-                product.isActive = false;
-                await product.save({ validateBeforeSave: false });
-            }
-
-            deactivated += 1;
-            continue;
-        }
-
-        await User.updateMany(
-            { wishlist: id },
-            { $pull: { wishlist: id } }
-        );
-
-        await product.deleteOne();
-        deleted += 1;
-    }
+    // Also remove from wishlists
+    await User.updateMany(
+        { wishlist: { $in: validIds } },
+        { $pull: { wishlist: { $in: validIds } } }
+    );
 
     res.status(200).json({
         success: true,
-        message: `Bulk delete complete. ${deleted} deleted, ${deactivated} deactivated.`,
-        deleted,
-        deactivated,
+        message: `Bulk deactivation complete. ${result.modifiedCount} product(s) marked as inactive (soft deleted).`,
+        deleted: result.modifiedCount,
         skipped
     });
 });

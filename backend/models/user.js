@@ -67,6 +67,11 @@ const userSchema = new mongoose.Schema(
             default: false
         },
 
+        isActive: {
+            type: Boolean,
+            default: true
+        },
+
         // Fallback verification code. Supabase is the primary sender of the
         // verification message, this guarantees the flow always completes.
         verificationCodeHash: {

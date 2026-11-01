@@ -4,9 +4,10 @@ const Ticket = require("../models/ticket");
 const ErrorHandler = require("../utils/ErrorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncErrors");
 
-// FR 5.1: everybody can see the services.
+// FR 5.1: Storefront visitors see active services; admins see all in directory
 const getServices = catchAsyncErrors(async (req, res) => {
-    const services = await Service.find().sort({ createdAt: -1 });
+    const filter = req.baseUrl?.includes("/admin") ? {} : { isActive: { $ne: false } };
+    const services = await Service.find(filter).sort({ createdAt: -1 });
 
     res.status(200).json({
         success: true,
@@ -105,6 +106,10 @@ const updateService = catchAsyncErrors(async (req, res, next) => {
         updates.price = parsedPrice;
     }
 
+    if (req.body.isActive !== undefined) {
+        updates.isActive = Boolean(req.body.isActive);
+    }
+
     Object.assign(service, updates);
     await service.save();
 
@@ -114,6 +119,7 @@ const updateService = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
+// Admin: Delete service (Strictly soft delete - no hard delete)
 const deleteService = catchAsyncErrors(async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         return next(new ErrorHandler("Invalid service ID", 400));
@@ -125,31 +131,18 @@ const deleteService = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Service not found", 404));
     }
 
-    // A service that already has tickets keeps its history, it is only hidden
-    // from the public list.
-    const hasTickets = await Ticket.findOne({ service: service._id });
-
-    if (hasTickets) {
-        await service.deleteOne();
-
-        return res.status(200).json({
-            success: true,
-            message:
-                "Service removed. Its existing tickets keep their record.",
-            service
-        });
-    }
-
-    await service.deleteOne();
+    // Strictly soft delete: mark isActive = false
+    service.isActive = false;
+    await service.save();
 
     res.status(200).json({
         success: true,
-        message: "Service removed.",
+        message: "Service deactivated (soft deleted) successfully",
         service
     });
 });
 
-// MP1: the service datatable offers a checkbox bulk delete.
+// Admin: Bulk delete services (Strictly soft delete - no hard delete)
 const bulkDeleteServices = catchAsyncErrors(async (req, res, next) => {
     const { ids } = req.body;
 
@@ -166,12 +159,15 @@ const bulkDeleteServices = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("No valid service ids were provided", 400));
     }
 
-    const deleted = await Service.deleteMany({ _id: { $in: validIds } });
+    const result = await Service.updateMany(
+        { _id: { $in: validIds } },
+        { isActive: false }
+    );
 
     res.status(200).json({
         success: true,
-        message: `Bulk delete complete. ${deleted.deletedCount} service(s) removed.`,
-        deleted: deleted.deletedCount,
+        message: `Bulk deactivation complete. ${result.modifiedCount} service(s) marked as inactive (soft deleted).`,
+        deleted: result.modifiedCount,
         skipped
     });
 });

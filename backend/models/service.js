@@ -1,4 +1,4 @@
-﻿const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 
 const serviceSchema = new mongoose.Schema(
     {
@@ -19,6 +19,11 @@ const serviceSchema = new mongoose.Schema(
             type: Number,
             required: [true, "Service price is required"],
             min: [0.01, "Service price must be greater than zero"]
+        },
+
+        isActive: {
+            type: Boolean,
+            default: true
         }
     },
     {

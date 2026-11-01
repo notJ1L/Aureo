@@ -137,10 +137,13 @@ export default function AdminUsersPage() {
     }, [error, mutationError, dispatch]);
 
     // Summary counts
+    // Summary counts
     const counts = useMemo(() => {
         const list = users || [];
         return {
             total: list.length,
+            active: list.filter((u) => u.isActive !== false).length,
+            archived: list.filter((u) => u.isActive === false).length,
             clients: list.filter((u) => u.role === "user").length,
             admins: list.filter((u) => u.role === "admin").length,
             verified: list.filter((u) => u.isVerified).length,
@@ -152,7 +155,11 @@ export default function AdminUsersPage() {
     const filteredUsers = useMemo(() => {
         let list = users || [];
 
-        if (activeTab === "clients") {
+        if (activeTab === "active") {
+            list = list.filter((u) => u.isActive !== false);
+        } else if (activeTab === "archived") {
+            list = list.filter((u) => u.isActive === false);
+        } else if (activeTab === "clients") {
             list = list.filter((u) => u.role === "user");
         } else if (activeTab === "admins") {
             list = list.filter((u) => u.role === "admin");
@@ -209,21 +216,36 @@ export default function AdminUsersPage() {
         }
     };
 
-    const handleDelete = async (targetUser) => {
+    const handleToggleActive = async (targetUser) => {
         if (targetUser._id === currentUser?._id) {
-            toast.warn("You cannot delete your own administrator account.");
+            toast.warn("You cannot deactivate your own administrator account.");
             return;
         }
 
-        const confirmed = await confirmAction({
-            title: `Delete user "${targetUser.name}"?`,
-            message: `This will permanently remove the account (${targetUser.email}). This action cannot be reversed.`,
-            confirmText: "Delete Account",
-            danger: true
-        });
+        const isCurrentlyActive = targetUser.isActive !== false;
 
-        if (confirmed) {
-            dispatch(deleteUser(targetUser._id));
+        if (isCurrentlyActive) {
+            const confirmed = await confirmAction({
+                title: `Deactivate user "${targetUser.name}"?`,
+                message: `This will archive the account (${targetUser.email}). The user will not be able to log in, but all transaction history is safely preserved. You can restore it anytime.`,
+                confirmText: "Deactivate Account",
+                danger: true
+            });
+
+            if (confirmed) {
+                dispatch(deleteUser(targetUser._id));
+            }
+        } else {
+            const confirmed = await confirmAction({
+                title: `Restore user "${targetUser.name}"?`,
+                message: `This will reactivate the account (${targetUser.email}) and restore normal login and purchasing access.`,
+                confirmText: "Restore Account",
+                danger: false
+            });
+
+            if (confirmed) {
+                dispatch(updateUser(targetUser._id, { isActive: true }));
+            }
         }
     };
 
@@ -369,6 +391,13 @@ export default function AdminUsersPage() {
                         </button>
                         <button
                             type="button"
+                            className={`admin-tab-btn ${activeTab === "active" ? "is-active" : ""}`}
+                            onClick={() => setActiveTab("active")}
+                        >
+                            Active <span className="admin-tab-count">{counts.active}</span>
+                        </button>
+                        <button
+                            type="button"
                             className={`admin-tab-btn ${activeTab === "clients" ? "is-active" : ""}`}
                             onClick={() => setActiveTab("clients")}
                         >
@@ -390,10 +419,10 @@ export default function AdminUsersPage() {
                         </button>
                         <button
                             type="button"
-                            className={`admin-tab-btn ${activeTab === "unverified" ? "is-active" : ""}`}
-                            onClick={() => setActiveTab("unverified")}
+                            className={`admin-tab-btn ${activeTab === "archived" ? "is-active" : ""}`}
+                            onClick={() => setActiveTab("archived")}
                         >
-                            Pending <span className="admin-tab-count">{counts.unverified}</span>
+                            Archived <span className="admin-tab-count">{counts.archived}</span>
                         </button>
                     </div>
 
@@ -614,26 +643,45 @@ export default function AdminUsersPage() {
                                                 </span>
                                             </td>
                                             <td>
-                                                <span
-                                                    style={{
-                                                        display: "inline-block",
-                                                        padding: "0.2rem 0.55rem",
-                                                        borderRadius: "4px",
-                                                        fontSize: "0.75rem",
-                                                        fontWeight: 500,
-                                                        background: targetUser.isVerified
-                                                            ? "rgba(34, 197, 94, 0.15)"
-                                                            : "rgba(245, 158, 11, 0.15)",
-                                                        color: targetUser.isVerified
-                                                            ? "#4ade80"
-                                                            : "#fbbf24",
-                                                        border: targetUser.isVerified
-                                                            ? "1px solid rgba(34, 197, 94, 0.3)"
-                                                            : "1px solid rgba(245, 158, 11, 0.3)"
-                                                    }}
-                                                >
-                                                    {targetUser.isVerified ? "Verified" : "Pending"}
-                                                </span>
+                                                <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem", alignItems: "flex-start" }}>
+                                                    <span
+                                                        style={{
+                                                            display: "inline-block",
+                                                            padding: "0.2rem 0.55rem",
+                                                            borderRadius: "4px",
+                                                            fontSize: "0.75rem",
+                                                            fontWeight: 500,
+                                                            background: targetUser.isVerified
+                                                                ? "rgba(34, 197, 94, 0.15)"
+                                                                : "rgba(245, 158, 11, 0.15)",
+                                                            color: targetUser.isVerified
+                                                                ? "#4ade80"
+                                                                : "#fbbf24",
+                                                            border: targetUser.isVerified
+                                                                ? "1px solid rgba(34, 197, 94, 0.3)"
+                                                                : "1px solid rgba(245, 158, 11, 0.3)"
+                                                        }}
+                                                    >
+                                                        {targetUser.isVerified ? "Verified" : "Pending"}
+                                                    </span>
+                                                    {targetUser.isActive === false && (
+                                                        <span
+                                                            style={{
+                                                                display: "inline-block",
+                                                                padding: "0.15rem 0.45rem",
+                                                                borderRadius: "4px",
+                                                                fontSize: "0.68rem",
+                                                                fontWeight: 600,
+                                                                letterSpacing: "0.04em",
+                                                                background: "rgba(239, 68, 68, 0.15)",
+                                                                color: "#f87171",
+                                                                border: "1px solid rgba(239, 68, 68, 0.3)"
+                                                            }}
+                                                        >
+                                                            ARCHIVED
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td style={{ textTransform: "capitalize", color: "var(--text-muted)", fontSize: "0.8rem" }}>
                                                 {targetUser.authSource || "local"}
@@ -665,15 +713,26 @@ export default function AdminUsersPage() {
                                                     >
                                                         {isAdmin ? "Demote" : "Promote"}
                                                     </button>
-                                                    <button
-                                                        type="button"
-                                                        className="admin-btn del-btn"
-                                                        onClick={() => handleDelete(targetUser)}
-                                                        disabled={isSelf}
-                                                        title={isSelf ? "You cannot delete your own account" : "Delete User"}
-                                                    >
-                                                        Delete
-                                                    </button>
+                                                    {targetUser.isActive === false ? (
+                                                        <button
+                                                            type="button"
+                                                            className="admin-btn restore-btn"
+                                                            onClick={() => handleToggleActive(targetUser)}
+                                                            title="Restore this user account"
+                                                        >
+                                                            Restore
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            className="admin-btn del-btn"
+                                                            onClick={() => handleToggleActive(targetUser)}
+                                                            disabled={isSelf}
+                                                            title={isSelf ? "You cannot deactivate your own account" : "Deactivate (Soft Delete) User"}
+                                                        >
+                                                            Deactivate
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>

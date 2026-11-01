@@ -436,6 +436,12 @@ const loginUser = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler(INVALID_CREDENTIALS, 401));
     }
 
+    if (user.isActive === false) {
+        return next(
+            new ErrorHandler("This account has been deactivated. Please contact support.", 403)
+        );
+    }
+
     // Link the provider identity on first successful sign-in.
     if (providerUser) {
         const conflictingLink = await User.findOne({
@@ -797,6 +803,15 @@ const updateUserByAdmin = catchAsyncErrors(async (req, res, next) => {
         user.isVerified = Boolean(isVerified);
     }
 
+    if (req.body.isActive !== undefined) {
+        if (user._id.toString() === req.user._id.toString() && !req.body.isActive) {
+            return next(
+                new ErrorHandler("You cannot deactivate your own administrator account", 400)
+            );
+        }
+        user.isActive = Boolean(req.body.isActive);
+    }
+
     if (password && String(password).trim().length >= 8) {
         user.password = String(password).trim();
     }
@@ -815,7 +830,7 @@ const updateUserByAdmin = catchAsyncErrors(async (req, res, next) => {
 
 const updateUserRole = updateUserByAdmin;
 
-// Admin: Bulk delete users
+// Admin: Bulk delete users (Strictly soft delete - no hard delete)
 const bulkDeleteUsers = catchAsyncErrors(async (req, res, next) => {
     const { ids } = req.body;
 
@@ -823,22 +838,22 @@ const bulkDeleteUsers = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Please provide an array of user IDs", 400));
     }
 
-    // Never allow an admin to delete their own account in bulk
+    // Never allow an admin to deactivate their own account in bulk
     const safeIds = ids.filter((id) => id.toString() !== req.user._id.toString());
 
     if (safeIds.length === 0) {
-        return next(new ErrorHandler("You cannot delete your own administrator account", 400));
+        return next(new ErrorHandler("You cannot deactivate your own administrator account", 400));
     }
 
-    await User.deleteMany({ _id: { $in: safeIds } });
+    const result = await User.updateMany({ _id: { $in: safeIds } }, { isActive: false });
 
     res.status(200).json({
         success: true,
-        message: `${safeIds.length} user(s) removed successfully`
+        message: `${result.modifiedCount} user(s) deactivated (soft deleted) successfully`
     });
 });
 
-// Admin: Delete user (FR 1.4)
+// Admin: Delete user (Strictly soft delete - no hard delete)
 const deleteUser = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findById(req.params.id);
 
@@ -848,15 +863,16 @@ const deleteUser = catchAsyncErrors(async (req, res, next) => {
 
     if (user._id.toString() === req.user._id.toString()) {
         return next(
-            new ErrorHandler("An administrator cannot delete their own account", 400)
+            new ErrorHandler("An administrator cannot deactivate their own account", 400)
         );
     }
 
-    await user.deleteOne();
+    user.isActive = false;
+    await user.save({ validateBeforeSave: false });
 
     res.status(200).json({
         success: true,
-        message: "User deleted successfully"
+        message: "User account deactivated (soft deleted) successfully"
     });
 });
 
