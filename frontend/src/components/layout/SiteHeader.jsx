@@ -8,7 +8,7 @@ import "./site.css";
 const NAV_ITEMS = [
     { to: "/catalog", label: "Collection" },
     { to: "/services", label: "Services" },
-    { to: "/sell", label: "Sell a watch" },
+    { to: "/sell", label: "Sell" },
     { to: "/appraisals", label: "Appraisals" }
 ];
 
@@ -53,26 +53,9 @@ export function SiteHeader({ variant = "solid" }) {
 
     return (
         <header className={classes}>
-            <div className="site-topbar">
-                <div className="site-topbar__inner">
-                    <span className="site-topbar__promo">
-                        Aureo Haute Horlogerie · Complimentary Insured Armored Transit &amp; Returns
-                    </span>
-                    <div className="site-topbar__right">
-                        <span className="site-topbar__phone">
-                            VIP Concierge: <strong>+63 (2) 8800-AUREO</strong>
-                        </span>
-                        <Link to="/catalog" className="site-topbar__link">
-                            Explore Vault
-                        </Link>
-                    </div>
-                </div>
-            </div>
-
             <div className="site-header__inner">
                 <Link to="/" className="site-logo" aria-label="Aureo home" onClick={closeMenu}>
-                    <span className="site-logo__mark" aria-hidden="true" />
-                    <span className="site-logo__text">AUREO</span>
+                    AUREO
                 </Link>
 
                 <nav className="site-nav" aria-label="Primary">
@@ -97,7 +80,7 @@ export function SiteHeader({ variant = "solid" }) {
                     )}
                     {user?.role === "admin" && (
                         <NavLink to="/admin/dashboard" onClick={closeMenu} className="site-nav__link site-nav__link--admin">
-                            Admin vault
+                            Admin
                         </NavLink>
                     )}
                 </nav>

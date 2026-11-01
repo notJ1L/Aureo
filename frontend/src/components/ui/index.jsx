@@ -228,6 +228,8 @@ export function AureoProgressBar({ now = 0, label, ...rest }) {
     );
 }
 
+export { AureoSkeleton, WatchCardSkeleton, ProductDetailSkeleton } from "./Skeleton";
+
 export default {
     AureoCard,
     AureoChip,

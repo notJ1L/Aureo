@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { IconArrow } from "./icons";
 import heroGold from "../../assets/hero-gold.jpg";
 import heroSkeleton from "../../assets/hero-skeleton.jpg";
@@ -9,169 +9,149 @@ import "./luxuryHero.css";
 const SLIDES = [
     {
         id: "gold",
-        kicker: "CAPTURING LIFE · SWISS CALIBRE",
-        titleMain: "ONE SECOND",
-        titleItalic: "at a TIME.",
-        subtitle:
-            "A masterwork of 18K solid gold and black sunburst chronometry. Hand-regulated by certified master horologists for pieces that anchor your legacy.",
+        kicker: "Haute Horlogerie · Archival Vault",
+        title: "Where Seconds Are Sculpted in Gold & Steel.",
+        text: "A curated sanctuary of authenticated Swiss horology—hand-regulated across five positions and sealed in our vault for discerning collectors worldwide.",
         image: heroGold,
-        imageAlt: "Aureo 18K Gold Chronograph Watch on fine Italian leather",
-        primaryCta: { text: "Explore Collection", link: "/catalog" },
-        secondaryCta: { text: "Sell Your Watch", link: "/sell" },
-        badges: ["18K Solid Gold", "Automatic Chronometer", "Verified Provenance", "Worldwide Insured Delivery"]
+        imageAlt: "Gold chronograph watch on black leather",
+        highlightTag: "Vault Spotlight",
+        highlightTitle: "Patek Philippe Grand Complications",
+        highlightSpec: "Ref. 5270P · Perpetual Calendar Chronograph",
+        highlightBadge: "Geneva Seal Certified"
     },
     {
         id: "skeleton",
-        kicker: "BESPOKE HOROLOGY · TOURBILLON CALIBRE",
-        titleMain: "CUSTOM WATCHES",
-        titleItalic: "FOR ANY OCCASION.",
-        subtitle:
-            "Intricate openworked skeleton dials and flying tourbillon calibres sculpted in aerospace titanium and carbon ceramic. True mechanical art on the wrist.",
+        kicker: "Openworked Architecture",
+        title: "Mechanics Made Pure Art.",
+        text: "Skeletonized tourbillons and high-frequency balance wheels revealing every breath of human craftsmanship inside the escapement.",
         image: heroSkeleton,
-        imageAlt: "Aureo Tourbillon Skeleton Complication Timepiece",
-        primaryCta: { text: "Discover Complications", link: "/catalog?movement=automatic" },
-        secondaryCta: { text: "Atelier Services", link: "/services" },
-        badges: ["Tourbillon Escapement", "Titanium Monobloc", "Sapphire Crystal", "48-Hour Mechanical Audit"]
+        imageAlt: "Skeleton dial watch with exposed escapement",
+        highlightTag: "Master Piece",
+        highlightTitle: "Audemars Piguet Double Balance Wheel",
+        highlightSpec: "Openworked Calibre 3132 · 18K Frosted Gold",
+        highlightBadge: "Full Box & Archival Extract"
     },
     {
         id: "diver",
-        kicker: "PROFESSIONAL CHRONOMETER · 600M",
-        titleMain: "ABSOLUTE DEPTH &",
-        titleItalic: "ENDURING PRECISION.",
-        subtitle:
-            "Engineered for abyssal depths with scratch-proof ceramic diving bezels, helium relief valves, and Swiss Super-LumiNova luminescence.",
+        kicker: "Abyss Exploration",
+        title: "Engineered for Extreme Depths.",
+        text: "Titanium grade 5 and high-density ceramic tool watches tested for deep ocean saturation, extreme shocks, and zero-compromise legibility.",
         image: heroDiver,
-        imageAlt: "Aureo Deep Sea Professional Dive Chronometer",
-        primaryCta: { text: "Shop Dive Series", link: "/catalog?category=sports" },
-        secondaryCta: { text: "Request Appraisal", link: "/sell" },
-        badges: ["600m / 2000ft Certified", "Ceramic Unidirectional Bezel", "COSC Certified", "5-Year Vault Warranty"]
+        imageAlt: "Ceramic diver chronometer with luminous bezel",
+        highlightTag: "Deep Sea Tool",
+        highlightTitle: "Omega Seamaster Ultra Deep",
+        highlightSpec: "Co-Axial Master Chronometer · 6,000m Water Resistance",
+        highlightBadge: "METAS Certified ±0 to +5s"
     }
 ];
 
 export function LuxuryHero() {
-    const navigate = useNavigate();
-    const [currentSlide, setCurrentSlide] = useState(0);
-    const [isPaused, setIsPaused] = useState(false);
+    const [current, setCurrent] = useState(0);
+    const [paused, setPaused] = useState(false);
 
-    // Auto-advance slides every 7 seconds
     useEffect(() => {
-        if (isPaused) return;
+        if (paused) return undefined;
         const timer = setInterval(() => {
-            setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
-        }, 7000);
+            setCurrent((prev) => (prev + 1) % SLIDES.length);
+        }, 7500);
         return () => clearInterval(timer);
-    }, [isPaused]);
+    }, [paused]);
 
-    const nextSlide = () => {
-        setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
-    };
+    const slide = SLIDES[current];
 
     const prevSlide = () => {
-        setCurrentSlide((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
+        setCurrent((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
     };
 
-    const slide = SLIDES[currentSlide];
+    const nextSlide = () => {
+        setCurrent((prev) => (prev + 1) % SLIDES.length);
+    };
 
     return (
         <section
-            className="lx-hero-wrap"
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
-            aria-label="Aureo Featured Horology Showcase"
+            className="hero"
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+            aria-label="Featured timepieces"
         >
-            {/* Background Slides */}
-            <div className="lx-hero-bg-container">
+            <div className="hero__stage" aria-hidden="true">
                 {SLIDES.map((s, idx) => (
-                    <div
-                        key={s.id}
-                        className={`lx-hero-bg-slide ${idx === currentSlide ? "is-active" : ""}`}
-                        aria-hidden={idx !== currentSlide}
-                    >
-                        <img
-                            src={s.image}
-                            alt={s.imageAlt}
-                            className="lx-hero-watch-img"
-                            loading={idx === 0 ? "eager" : "lazy"}
-                        />
-                        <div className="lx-hero-vignette" />
+                    <div key={s.id} className={`hero__slide ${idx === current ? "is-active" : ""}`}>
+                        <img src={s.image} alt={s.imageAlt} loading={idx === 0 ? "eager" : "lazy"} />
                     </div>
                 ))}
+                <div className="hero__shade" />
+                <div className="hero__radial" />
             </div>
 
-            {/* Content Foreground */}
-            <div className="lx-hero-container">
-                <div className="lx-hero-content-col" key={slide.id}>
-                    <p className="lx-kicker">{slide.kicker}</p>
-
-                    <h1 className="lx-hero-title">
-                        <span className="lx-title-main">{slide.titleMain}</span>
-                        <span className="lx-title-italic">{slide.titleItalic}</span>
-                    </h1>
-
-                    <p className="lx-hero-desc">{slide.subtitle}</p>
-
-                    <div className="lx-hero-ctas">
-                        <Link to={slide.primaryCta.link} className="btn-gold" id="hero-primary-cta">
-                            {slide.primaryCta.text} <IconArrow />
+            <div className="hero__inner">
+                {/* Main Editorial Copy */}
+                <div className="hero__copy" key={slide.id}>
+                    <span className="hero__kicker">{slide.kicker}</span>
+                    <h1 className="hero__title">{slide.title}</h1>
+                    <p className="hero__text">{slide.text}</p>
+                    <div className="hero__actions">
+                        <Link to="/catalog" className="btn-gold" id="hero-primary-cta">
+                            Explore Curated Vault <IconArrow />
                         </Link>
-                        <button
-                            type="button"
-                            className="btn-ghost"
-                            onClick={() => navigate(slide.secondaryCta.link)}
-                            id="hero-secondary-cta"
-                        >
-                            {slide.secondaryCta.text}
-                        </button>
-                    </div>
-
-                    <div className="lx-hero-trust-bar">
-                        {slide.badges.map((b, i) => (
-                            <span key={i} className="lx-trust-item">
-                                <span className="lx-trust-dot" aria-hidden="true" />
-                                {b}
-                            </span>
-                        ))}
+                        <Link to="/sell" className="btn-ghost" id="hero-secondary-cta">
+                            Request Private Appraisal
+                        </Link>
                     </div>
                 </div>
 
-                {/* Slider Controls (Bottom Bar) */}
-                <div className="lx-hero-controls">
-                    {/* Dots indicator */}
-                    <div className="lx-hero-dots">
-                        {SLIDES.map((_, idx) => (
-                            <button
-                                key={idx}
-                                type="button"
-                                className={`lx-hero-dot ${idx === currentSlide ? "is-active" : ""}`}
-                                onClick={() => setCurrentSlide(idx)}
-                                aria-label={`Switch to slide ${idx + 1}`}
-                            >
-                                <span className="lx-dot-inner" />
-                            </button>
-                        ))}
-                        <span className="lx-slide-number">
-                            0{currentSlide + 1} <span className="lx-slide-sep">/</span> 0{SLIDES.length}
-                        </span>
+                {/* Floating Glass Spec Card (CADRAN-inspired personality feature) */}
+                <div className="hero__floating-card" key={`card-${slide.id}`}>
+                    <div className="hero__card-glass">
+                        <div className="hero__card-status">
+                            <span className="hero__card-dot" />
+                            <span className="hero__card-tag">{slide.highlightTag}</span>
+                            <span className="hero__card-badge">{slide.highlightBadge}</span>
+                        </div>
+                        <h4 className="hero__card-title">{slide.highlightTitle}</h4>
+                        <p className="hero__card-spec">{slide.highlightSpec}</p>
+                        <Link to="/catalog" className="hero__card-link">
+                            View Reference Specification →
+                        </Link>
                     </div>
+                </div>
 
-                    {/* Left / Right Arrows */}
-                    <div className="lx-hero-arrows">
+                {/* Bottom Navigation Controls */}
+                <div className="hero__controls">
+                    <div className="hero__arrows">
                         <button
                             type="button"
-                            className="lx-arrow-btn"
+                            className="hero__arrow"
                             onClick={prevSlide}
-                            aria-label="Previous timepiece highlight"
+                            aria-label="Previous slide"
                         >
                             ←
                         </button>
                         <button
                             type="button"
-                            className="lx-arrow-btn"
+                            className="hero__arrow"
                             onClick={nextSlide}
-                            aria-label="Next timepiece highlight"
+                            aria-label="Next slide"
                         >
                             →
                         </button>
+                    </div>
+
+                    <div className="hero__dots" role="tablist" aria-label="Choose slide">
+                        {SLIDES.map((s, idx) => (
+                            <button
+                                key={s.id}
+                                type="button"
+                                role="tab"
+                                aria-selected={idx === current}
+                                aria-label={`Slide ${idx + 1}`}
+                                className={`hero__dot ${idx === current ? "is-active" : ""}`}
+                                onClick={() => setCurrent(idx)}
+                            >
+                                <span className="hero__dot-num">0{idx + 1}</span>
+                                <span className="hero__dot-bar" />
+                            </button>
+                        ))}
                     </div>
                 </div>
             </div>

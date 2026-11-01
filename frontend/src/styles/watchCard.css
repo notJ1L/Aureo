@@ -1,0 +1,325 @@
+/* ==========================================================================
+   Watch Card — Luxury Horology Edition
+   Warm dark obsidian backing, radial golden halo, frosted tags,
+   spec chips, gold prices, and fluid hover cues.
+   ========================================================================== */
+
+.watch-grid {
+    display: grid;
+    gap: 2.25rem 1.75rem;
+}
+
+.watch-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.watch-grid--4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 1200px) {
+    .watch-grid--4 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 880px) {
+    .watch-grid--3,
+    .watch-grid--4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.75rem 1rem;
+    }
+}
+
+@media (max-width: 520px) {
+    .watch-grid--3,
+    .watch-grid--4 {
+        grid-template-columns: 1fr;
+    }
+}
+
+@keyframes card-in {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.watch-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: #0f1116;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 4px;
+    padding: 0.85rem;
+    overflow: hidden;
+    transition: transform 380ms cubic-bezier(0.2, 0.8, 0.2, 1),
+                border-color 380ms ease,
+                box-shadow 380ms ease;
+    animation: card-in 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--i, 0) * 50ms);
+}
+
+.watch-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(201, 164, 92, 0.35);
+    box-shadow: 0 16px 40px -15px rgba(0, 0, 0, 0.8),
+                0 0 25px rgba(201, 164, 92, 0.08);
+}
+
+/* Subtle radial halo behind the watch photography */
+.watch-card__halo {
+    position: absolute;
+    top: 15%;
+    left: 50%;
+    transform: translate(-50%, -20%);
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201, 164, 92, 0.07) 0%, transparent 70%);
+    pointer-events: none;
+    transition: opacity 400ms ease, transform 400ms ease;
+    opacity: 0.7;
+}
+
+.watch-card:hover .watch-card__halo {
+    opacity: 1;
+    transform: translate(-50%, -20%) scale(1.15);
+}
+
+.watch-card__media {
+    position: relative;
+    display: block;
+    aspect-ratio: 1 / 1.08;
+    overflow: hidden;
+    border-radius: 2px;
+    background: #151820;
+}
+
+.watch-card__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.watch-card:hover .watch-card__media img {
+    transform: scale(1.05);
+}
+
+.watch-card.is-sold .watch-card__media img {
+    opacity: 0.4;
+    filter: grayscale(40%);
+}
+
+.watch-card__empty {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+}
+
+/* Status Badges */
+.watch-card__tag {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.28rem 0.65rem;
+    border-radius: 2px;
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
+    z-index: 2;
+}
+
+.tag--certified {
+    background: rgba(15, 17, 21, 0.85);
+    color: #e5cb93;
+    border: 1px solid rgba(201, 164, 92, 0.35);
+}
+
+.tag--preowned {
+    background: rgba(201, 164, 92, 0.18);
+    color: #f7eedc;
+    border: 1px solid rgba(201, 164, 92, 0.5);
+}
+
+.tag--sold {
+    background: rgba(229, 72, 77, 0.2);
+    color: #ff9da1;
+    border: 1px solid rgba(229, 72, 77, 0.4);
+}
+
+/* Hover Quick-Inspect CTA overlay */
+.watch-card__hover-cta {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.7rem;
+    background: linear-gradient(180deg, transparent 0%, rgba(11, 13, 17, 0.92) 80%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 300ms ease, transform 300ms ease;
+    z-index: 2;
+}
+
+.watch-card__hover-cta span {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #d8b672;
+}
+
+.watch-card:hover .watch-card__hover-cta {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Wishlist Button */
+.watch-card__wish {
+    position: absolute;
+    top: 0.7rem;
+    right: 0.7rem;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 50%;
+    color: #f4efe6;
+    background: rgba(15, 17, 22, 0.75);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    transition: opacity 250ms ease, background 250ms ease, border-color 250ms ease, color 250ms ease, transform 200ms ease;
+    cursor: pointer;
+    z-index: 3;
+}
+
+.watch-card:hover .watch-card__wish,
+.watch-card__wish:focus-visible,
+.watch-card__wish.is-active {
+    opacity: 1;
+}
+
+.watch-card__wish:hover {
+    background: rgba(20, 24, 32, 0.95);
+    border-color: rgba(201, 164, 92, 0.4);
+    transform: scale(1.08);
+}
+
+.watch-card__wish.is-active {
+    color: #e5686d;
+    border-color: rgba(229, 72, 77, 0.5);
+    background: rgba(229, 72, 77, 0.15);
+}
+
+@media (hover: none) {
+    .watch-card__wish {
+        opacity: 1;
+    }
+}
+
+/* Info Section */
+.watch-card__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.9rem 0.25rem 0.25rem;
+    color: inherit;
+    text-decoration: none;
+}
+
+.watch-card__header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.watch-card__brand {
+    color: #c9a45c;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.watch-card__spec-pill {
+    font-size: 0.65rem;
+    color: #9d998f;
+    letter-spacing: 0.04em;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.15rem 0.45rem;
+    border-radius: 2px;
+}
+
+.watch-card__name {
+    margin: 0;
+    color: #f4efe6;
+    font-family: var(--font-body);
+    font-size: 0.98rem;
+    font-weight: 500;
+    line-height: 1.35;
+    transition: color 200ms ease;
+}
+
+.watch-card:hover .watch-card__name {
+    color: #ecd6a6;
+}
+
+.watch-card__meta-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.35rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.watch-card__price {
+    color: #ecd6a6;
+    font-size: 1.05rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+}
+
+.watch-card__rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #c9a45c;
+    font-size: 0.74rem;
+}
+
+.watch-card__rating-score {
+    font-weight: 600;
+    color: #d8b672;
+}
+
+.watch-card__rating-count {
+    color: #8d877b;
+    font-size: 0.68rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .watch-card {
+        animation: none;
+    }
+}

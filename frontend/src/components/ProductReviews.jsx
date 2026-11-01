@@ -130,21 +130,18 @@ function ProductReviews({ productId, onReviewAdded }) {
     return (
         <section className="product-reviews-section">
             <div className="reviews-head">
-                <div>
-                    <p className="eyebrow">CUSTOMER PROVENANCE</p>
-                    <h2>Client Reviews & Impressions</h2>
-                </div>
+                <h2>Reviews</h2>
                 <span className="review-count-badge">
-                    {reviews.length} {reviews.length === 1 ? "Review" : "Reviews"}
+                    {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
                 </span>
             </div>
 
             {/* Submission Form */}
             {isAuthenticated ? (
                 <div className="review-form-card">
-                    <h3>Leave an Impression for this Timepiece</h3>
+                    <h3>Write a review</h3>
                     <p className="review-disclaimer">
-                        In accordance with the Aureo Standard (FR 6.x), only verified clients who purchased this timepiece may submit an evaluation.
+                        Only customers who purchased this watch can leave a review.
                     </p>
 
                     {errorMsg && <div className="auth-error">{errorMsg}</div>}
@@ -175,12 +172,12 @@ function ProductReviews({ productId, onReviewAdded }) {
                         </div>
 
                         <label>
-                            Your Evaluation / Review:
+                            Your review
                             <textarea
                                 rows={3}
                                 value={comment}
                                 onChange={(e) => setComment(e.target.value)}
-                                placeholder="Share your experience regarding timekeeping accuracy, finishing, and case presence..."
+                                placeholder="Share your experience with this watch"
                                 required
                             />
                         </label>
@@ -190,23 +187,23 @@ function ProductReviews({ productId, onReviewAdded }) {
                             className="gold-button submit-review-btn"
                             disabled={submitting}
                         >
-                            {submitting ? "Submitting Evaluation..." : "Submit Review"}
+                            {submitting ? "Submitting…" : "Submit review"}
                         </button>
                     </form>
                 </div>
             ) : (
                 <div className="review-login-prompt">
-                    <span>Interested in evaluating this piece? </span>
-                    <a href="/login" style={{ color: "var(--gold)", textDecoration: "underline" }}>Sign in with your verified Aureo account</a>
+                    <a href="/login">Sign in</a>
+                    <span> to leave a review.</span>
                 </div>
             )}
 
             {/* Reviews List */}
             {loading ? (
-                <p className="loading-state">Loading client impressions...</p>
+                <p className="loading-state">Loading reviews…</p>
             ) : reviews.length === 0 ? (
                 <div className="empty-reviews">
-                    <p>No client evaluations recorded yet for this piece.</p>
+                    <p>No reviews yet.</p>
                 </div>
             ) : (
                 <div className="reviews-list">

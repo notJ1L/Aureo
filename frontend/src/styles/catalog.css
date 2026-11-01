@@ -1,0 +1,312 @@
+/* ==========================================================================
+   Catalog — minimal
+   ========================================================================== */
+
+.cat-page {
+    min-height: 100vh;
+    background: var(--ink);
+    color: var(--ivory);
+}
+
+.cat-layout {
+    width: min(1280px, calc(100% - 64px));
+    margin: 0 auto;
+    padding: 3.5rem 0 6rem;
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr);
+    gap: 4rem;
+    align-items: start;
+}
+
+/* ---------------------------------------------------------------- Filters */
+
+.cat-filters {
+    position: sticky;
+    top: 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.cat-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.cat-field label,
+.cat-label {
+    color: var(--muted);
+    font-size: 0.74rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.cat-field select,
+.cat-field input {
+    width: 100%;
+    min-height: 40px;
+    padding: 0 0.8rem;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    color: var(--ivory);
+    background: transparent;
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 200ms ease;
+}
+
+.cat-field select {
+    cursor: pointer;
+}
+
+.cat-field select option {
+    color: #111;
+    background: #fff;
+}
+
+.cat-field select:hover,
+.cat-field input:hover {
+    border-color: var(--line-strong);
+}
+
+.cat-field select:focus,
+.cat-field input:focus {
+    border-color: var(--ivory);
+}
+
+.cat-field input::placeholder {
+    color: #5f5f5c;
+}
+
+.cat-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.cat-search svg {
+    position: absolute;
+    left: 0.75rem;
+    color: var(--muted);
+    pointer-events: none;
+}
+
+.cat-search input {
+    padding-left: 2.2rem;
+}
+
+.cat-range {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--muted);
+}
+
+.cat-range input {
+    min-width: 0;
+}
+
+.cat-range input::-webkit-outer-spin-button,
+.cat-range input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.cat-range input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.cat-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.cat-chip {
+    min-height: 32px;
+    padding: 0 0.85rem;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    color: var(--muted);
+    background: transparent;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: color 200ms ease, border-color 200ms ease, background 200ms ease;
+}
+
+.cat-chip:hover {
+    color: var(--ivory);
+    border-color: var(--line-strong);
+}
+
+.cat-chip.is-active {
+    color: var(--ink-on-ivory);
+    border-color: var(--ivory);
+    background: var(--ivory);
+}
+
+/* ------------------------------------------------------------------- Main */
+
+.cat-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+}
+
+.cat-head h1 {
+    margin: 0;
+    color: var(--ivory);
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 3.4vw, 2.8rem);
+    font-weight: 500;
+    line-height: 1.1;
+}
+
+.cat-count {
+    color: var(--muted);
+    font-size: 0.88rem;
+}
+
+.cat-active {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.cat-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 30px;
+    padding: 0 0.7rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 2px;
+    color: var(--ivory);
+    background: transparent;
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: border-color 200ms ease;
+}
+
+.cat-tag span {
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.cat-tag:hover {
+    border-color: var(--ivory);
+}
+
+.cat-clear {
+    border: 0;
+    color: var(--muted);
+    background: transparent;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+.cat-clear:hover {
+    color: var(--ivory);
+}
+
+.cat-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 5rem 1rem;
+    border: 1px solid var(--line);
+    text-align: center;
+}
+
+.cat-empty p {
+    margin: 0;
+    color: var(--ivory);
+    font-size: 1.05rem;
+}
+
+.cat-empty span {
+    color: var(--muted);
+    font-size: 0.88rem;
+}
+
+.cat-pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.88rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.cat-pager button {
+    min-height: 40px;
+    padding: 0 1.2rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 2px;
+    color: var(--ivory);
+    background: transparent;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: border-color 200ms ease, opacity 200ms ease;
+}
+
+.cat-pager button:hover:not(:disabled) {
+    border-color: var(--ivory);
+}
+
+.cat-pager button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* ------------------------------------------------------------- Responsive */
+
+@media (max-width: 960px) {
+    .cat-layout {
+        width: calc(100% - 32px);
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        padding-top: 2rem;
+    }
+
+    .cat-filters {
+        position: static;
+        max-height: none;
+        overflow: visible;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--line);
+    }
+}
+
+@media (max-width: 520px) {
+    .cat-filters {
+        grid-template-columns: 1fr;
+    }
+}
