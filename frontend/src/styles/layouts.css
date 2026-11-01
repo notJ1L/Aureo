@@ -367,7 +367,6 @@
 
     /* The account and admin containers use a fixed gutter that is too wide
      * for a phone. */
-    .profile-container,
     .admin-container,
     .admin-header-bar,
     .catalog-container {
