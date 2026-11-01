@@ -3,6 +3,7 @@
 // The component owns the markup and the error display. The page owns the
 // `useForm` call, so the same field works inside any form.
 
+import { useState } from "react";
 import { Controller } from "react-hook-form";
 import { AureoSelect } from "./index";
 import "./ui.css";
@@ -23,6 +24,7 @@ export function ValidatedField({
     onValueChange,
     className = ""
 }) {
+    const [showPassword, setShowPassword] = useState(false);
     const fieldId = `aureo-field-${name}`;
     const hasError = Boolean(error);
 
@@ -87,6 +89,64 @@ export function ValidatedField({
                         notify(event.target.value === "" ? undefined : event.target.valueAsNumber)
                     }
                 />
+            );
+        }
+
+        if (type === "password") {
+            return (
+                <div className="aureo-field-input-wrapper">
+                    <input
+                        {...field}
+                        {...sharedProps}
+                        type={showPassword ? "text" : "password"}
+                        placeholder={placeholder}
+                        readOnly={readOnly}
+                        autoComplete={autoComplete}
+                        value={field.value ?? ""}
+                        onChange={(event) => notify(event.target.value)}
+                        className={`aureo-field-input aureo-field-input--password`}
+                    />
+                    <button
+                        type="button"
+                        className="aureo-field-password-toggle"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        title={showPassword ? "Hide password" : "Show password"}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        tabIndex={-1}
+                    >
+                        {showPassword ? (
+                            <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                            >
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                                <line x1="1" y1="1" x2="23" y2="23" />
+                            </svg>
+                        ) : (
+                            <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                            >
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                        )}
+                    </button>
+                </div>
             );
         }
 

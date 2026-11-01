@@ -51,6 +51,39 @@ const seedAdmin = async () => {
             console.log("Admin account updated and password reset");
         }
 
+        const userEmail = (process.env.USER_EMAIL || "user@aureo.com").trim().toLowerCase();
+        const userPassword = process.env.USER_PASSWORD || "aureouser123";
+
+        let user = await User.findOne({
+            email: userEmail
+        }).select("+password");
+
+        if (!user) {
+            await User.create({
+                name: "Aureo Collector",
+                email: userEmail,
+                password: userPassword,
+                role: "user",
+                authSource: "local",
+                isVerified: true,
+                address: "123 Luxury Lane, Makati City, Metro Manila",
+                contactNumber: "+639171234567"
+            });
+
+            console.log("User account created");
+        } else {
+            user.name = "Aureo Collector";
+            user.password = userPassword;
+            user.role = "user";
+            user.authSource = "local";
+            user.isVerified = true;
+            user.address = user.address || "123 Luxury Lane, Makati City, Metro Manila";
+            user.contactNumber = user.contactNumber || "+639171234567";
+            await user.save();
+
+            console.log("User account updated and password reset");
+        }
+
         const sampleProducts = [
             {
                 name: "Presage Cocktail Time",

@@ -379,6 +379,46 @@
     margin-top: 0.3rem;
 }
 
+.aureo-field-input-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.aureo-field-input.aureo-field-input--password,
+.auth-card input.aureo-field-input--password {
+    padding-right: 2.85rem !important;
+}
+
+.aureo-field-password-toggle {
+    position: absolute;
+    right: 0.6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    padding: 0.35rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted, #8a8a8a);
+    border-radius: 4px;
+    transition: color 0.15s ease, background-color 0.15s ease;
+    z-index: 2;
+}
+
+.aureo-field-password-toggle:hover {
+    color: var(--gold, #d4af37);
+    background-color: var(--gold-07, rgba(212, 175, 55, 0.08));
+}
+
+.aureo-field-password-toggle:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--gold);
+}
+
 /* -------------------------------------------------------------------------- */
 /* Status badges (Fix 6)                                                      */
 /* -------------------------------------------------------------------------- */
