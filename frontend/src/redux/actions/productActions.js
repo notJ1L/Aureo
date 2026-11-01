@@ -7,6 +7,7 @@ import {
     PRODUCT_UPDATE_REQUEST, PRODUCT_UPDATE_SUCCESS, PRODUCT_UPDATE_FAIL,
     PRODUCT_DELETE_REQUEST, PRODUCT_DELETE_SUCCESS, PRODUCT_DELETE_FAIL,
     PRODUCT_BULK_DELETE_REQUEST, PRODUCT_BULK_DELETE_SUCCESS, PRODUCT_BULK_DELETE_FAIL,
+    PRODUCT_BULK_STATUS_REQUEST, PRODUCT_BULK_STATUS_SUCCESS, PRODUCT_BULK_STATUS_FAIL,
     WISHLIST_GET_REQUEST, WISHLIST_GET_SUCCESS, WISHLIST_GET_FAIL,
     WISHLIST_TOGGLE_REQUEST, WISHLIST_TOGGLE_SUCCESS, WISHLIST_TOGGLE_FAIL,
     PRODUCT_CLEAR_ERRORS
@@ -125,6 +126,23 @@ export const bulkDeleteProducts = (ids) => async (dispatch) => {
         dispatch({
             type: PRODUCT_BULK_DELETE_FAIL,
             payload: err.response?.data?.message || "Failed to delete the selected products"
+        });
+    }
+};
+
+// Bulk archive or restore products
+export const bulkUpdateProductStatus = (ids, isActive) => async (dispatch) => {
+    dispatch({ type: PRODUCT_BULK_STATUS_REQUEST });
+    try {
+        const { data } = await api.post("/admin/products/bulk-status", { ids, isActive });
+        dispatch({
+            type: PRODUCT_BULK_STATUS_SUCCESS,
+            payload: data.message
+        });
+    } catch (err) {
+        dispatch({
+            type: PRODUCT_BULK_STATUS_FAIL,
+            payload: err.response?.data?.message || "Failed to update selected timepieces"
         });
     }
 };

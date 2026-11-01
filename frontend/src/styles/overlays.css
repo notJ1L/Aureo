@@ -61,35 +61,118 @@
 }
 
 /* -------------------------------------------------------------------------- */
-/* Toastify                                                                   */
+/* Toastify - Executive Aureo Dark Glassmorphism                              */
 /* -------------------------------------------------------------------------- */
 
-/* The progress bar at the bottom of a toast. */
-.Toastify__progress-bar {
-    background: var(--gold) !important;
+.Toastify__toast-container {
+    z-index: 999999 !important;
+    width: min(420px, calc(100vw - 32px)) !important;
+    padding: 1rem !important;
 }
 
-/* The title and the body of a toast. */
-.Toastify__toast-title {
-    color: var(--text-primary) !important;
-    font-weight: 700;
+.Toastify__toast {
+    position: relative !important;
+    background: rgba(14, 16, 22, 0.95) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid rgba(226, 187, 118, 0.28) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(226, 187, 118, 0.1) !important;
+    color: var(--ivory, #f4efe6) !important;
+    font-family: var(--font-body, "Inter", sans-serif) !important;
+    padding: 1rem 1.25rem !important;
+    min-height: 56px !important;
+    margin-bottom: 0.85rem !important;
+    overflow: hidden !important;
+    outline: none !important;
+}
+
+.Toastify__toast:focus,
+.Toastify__toast:focus-visible {
+    outline: none !important;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(226, 187, 118, 0.2) !important;
+}
+
+.Toastify__toast--success {
+    border-left: 4px solid var(--gold-bright, #f3d48d) !important;
+}
+
+.Toastify__toast--error {
+    border-left: 4px solid var(--danger, #ef4444) !important;
+}
+
+.Toastify__toast--warning {
+    border-left: 4px solid var(--gold, #d4af37) !important;
+}
+
+.Toastify__toast--info {
+    border-left: 4px solid var(--gold-light, #e2bb76) !important;
 }
 
 .Toastify__toast-body {
-    color: var(--text-secondary) !important;
-    font-size: 0.85rem;
+    display: flex !important;
+    align-items: center !important;
+    color: var(--ivory, #f4efe6) !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.01em !important;
+    line-height: 1.45 !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
-/* The close button on a toast. */
+.Toastify__toast-title {
+    color: var(--gold-light, #e2bb76) !important;
+    font-weight: 700 !important;
+    font-size: 0.9rem !important;
+    margin-bottom: 0.2rem !important;
+}
+
+.Toastify__toast-icon {
+    width: 22px !important;
+    margin-right: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+}
+
+.Toastify__toast--success .Toastify__toast-icon svg {
+    fill: var(--gold-light, #e2bb76) !important;
+}
+
+.Toastify__toast--error .Toastify__toast-icon svg {
+    fill: var(--danger, #ef4444) !important;
+}
+
+.Toastify__toast--warning .Toastify__toast-icon svg {
+    fill: var(--gold, #d4af37) !important;
+}
+
+.Toastify__toast--info .Toastify__toast-icon svg {
+    fill: var(--gold-light, #e2bb76) !important;
+}
+
 .Toastify__close-button {
-    color: var(--text-muted) !important;
+    color: var(--text-muted, #8a8a8a) !important;
+    opacity: 0.55 !important;
+    align-self: center !important;
+    padding: 4px !important;
+    margin-left: 8px !important;
+    transition: all 0.2s ease !important;
+    outline: none !important;
 }
 
 .Toastify__close-button:hover {
-    color: var(--gold) !important;
+    color: var(--gold-light, #e2bb76) !important;
+    opacity: 1 !important;
+    transform: scale(1.15) !important;
 }
 
-/* The container that holds the stack of toasts. */
-.Toastify__toast-container {
-    z-index: 9999;
+.Toastify__progress-bar {
+    height: 3px !important;
+    background: linear-gradient(90deg, #b38728, #fbf5b7, #daae51) !important;
+    border-radius: 0 0 12px 12px !important;
+    box-shadow: 0 0 8px rgba(226, 187, 118, 0.4) !important;
+    opacity: 0.9 !important;
 }

@@ -144,7 +144,7 @@ const updateProduct = catchAsyncErrors(async (req, res, next) => {
         );
     }
 
-    if (Array.isArray(req.body.images) && req.body.images.length > 0) {
+    if (Array.isArray(req.body.images)) {
         const newImages = [];
         for (const img of req.body.images) {
             if (typeof img === "string" && img.startsWith("data:image")) {
@@ -161,6 +161,21 @@ const updateProduct = catchAsyncErrors(async (req, res, next) => {
                 newImages.push(img);
             }
         }
+
+        // Clean up removed Cloudinary images if they were deleted by the admin
+        if (product.images && product.images.length > 0) {
+            const keptPublicIds = new Set(newImages.map((i) => i.public_id).filter(Boolean));
+            for (const oldImg of product.images) {
+                if (oldImg.public_id && !keptPublicIds.has(oldImg.public_id)) {
+                    try {
+                        await cloudinary.uploader.destroy(oldImg.public_id);
+                    } catch (err) {
+                        // ignore cloudinary deletion error
+                    }
+                }
+            }
+        }
+
         req.body.images = newImages;
     }
 
@@ -271,6 +286,35 @@ const bulkDeleteProducts = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
+// Admin: Bulk update product active/archived status
+const bulkUpdateProductStatus = catchAsyncErrors(async (req, res, next) => {
+    const { ids, isActive } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return next(
+            new ErrorHandler("Provide at least one product ID", 400)
+        );
+    }
+
+    const validIds = ids.filter((id) => mongoose.Types.ObjectId.isValid(id));
+    if (validIds.length === 0) {
+        return next(new ErrorHandler("No valid product IDs provided", 400));
+    }
+
+    const targetStatus = Boolean(isActive);
+
+    await Product.updateMany(
+        { _id: { $in: validIds } },
+        { $set: { isActive: targetStatus } }
+    );
+
+    res.status(200).json({
+        success: true,
+        message: `${validIds.length} timepiece(s) ${targetStatus ? "restored to active catalog" : "archived"}.`,
+        updatedCount: validIds.length
+    });
+});
+
 // User: Get Wishlist (FR 2.4)
 const getWishlist = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findById(req.user._id).populate({
@@ -349,6 +393,7 @@ module.exports = {
     updateProduct,
     deleteProduct,
     bulkDeleteProducts,
+    bulkUpdateProductStatus,
     getWishlist,
     addToWishlist,
     removeFromWishlist

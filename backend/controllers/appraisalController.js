@@ -151,7 +151,7 @@ const respondToOffer = catchAsyncErrors(async (req, res, next) => {
 // FR 3.3: the admin reviews every appraisal.
 const getAdminAppraisals = catchAsyncErrors(async (req, res) => {
     const appraisals = await Appraisal.find()
-        .populate("user", "name email avatar")
+        .populate("user", "name email avatar contactNumber")
         .populate("convertedProduct", "name price stock condition")
         .sort({ createdAt: -1 });
 

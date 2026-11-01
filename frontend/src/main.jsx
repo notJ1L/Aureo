@@ -24,7 +24,7 @@ createRoot(document.getElementById("root")).render(
             <AureoProvider>
                 <App />
                 <ToastContainer
-                    position="bottom-right"
+                    position="top-right"
                     autoClose={3200}
                     theme="dark"
                     pauseOnFocusLoss
