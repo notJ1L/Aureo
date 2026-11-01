@@ -8,11 +8,16 @@ const {
     getCurrentUser,
     logoutUser,
     updateProfile,
-    uploadAvatar
+    uploadAvatar,
+    getAllUsers,
+    getSingleUser,
+    updateUserRole,
+    deleteUser
 } = require("../controllers/authController");
 
 const {
     isAuthenticatedUser,
+    authorizeRoles,
     requireVerified
 } = require("../middlewares/auth");
 
@@ -29,5 +34,13 @@ router.get("/me", isAuthenticatedUser, getCurrentUser);
 router.get("/logout", isAuthenticatedUser, logoutUser);
 router.put("/me/update", isAuthenticatedUser, requireVerified, updateProfile);
 router.put("/me/avatar", isAuthenticatedUser, uploadAvatar);
+
+// Admin: User management (FR 1.4)
+router.get("/admin/users", isAuthenticatedUser, authorizeRoles("admin"), getAllUsers);
+router
+    .route("/admin/user/:id")
+    .get(isAuthenticatedUser, authorizeRoles("admin"), getSingleUser)
+    .put(isAuthenticatedUser, authorizeRoles("admin"), updateUserRole)
+    .delete(isAuthenticatedUser, authorizeRoles("admin"), deleteUser);
 
 module.exports = router;

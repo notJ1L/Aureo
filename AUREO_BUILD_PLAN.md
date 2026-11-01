@@ -264,8 +264,10 @@ the observable behaviour required by the FRD intact.
 | The second-hand stock rule is enforced in the product controller, not in the model `pre("validate")` hook. | A second-hand watch reaches stock 0 once it is sold, so the model permits 0 and the controller forces 1 on create and update. |
 | `utils/mockPayment.js` is planned but not yet extracted. | Payment logic currently lives inside the order controller. Extraction happens with the Phase 12 cleanup. |
 | The service CRUD datatable and service bulk delete use `POST /api/v1/admin/services/bulk-delete`, mirroring the product route. | The specification's REST table lists only the single-service delete. MP1 requires a bulk delete, so the batch route follows the product pattern. |
+| The database does not persist `Order.totalPrice` / `total`. | The professor specified that totals must not be stored in the database. Totals are calculated dynamically at runtime from item price and quantity via `order.calculateTotal()`. |
 
 ## Reference Files
+
 
 - [AUREO_PROJECT_SPEC.md](AUREO_PROJECT_SPEC.md) - functional requirements, data model, API table, design requirements, assumptions, and build order.
 - [PROJECT_ARCHITECTURE_REFERENCE.md](PROJECT_ARCHITECTURE_REFERENCE.md) - reference layering, backend responsibilities, frontend responsibilities, and request flow.

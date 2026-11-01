@@ -686,6 +686,79 @@ const uploadAvatar = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
+// Admin: Get all users (FR 1.4)
+const getAllUsers = catchAsyncErrors(async (req, res, next) => {
+    const users = await User.find().select("-password").sort({ createdAt: -1 });
+
+    res.status(200).json({
+        success: true,
+        users,
+        total: users.length
+    });
+});
+
+// Admin: Get single user details (FR 1.4)
+const getSingleUser = catchAsyncErrors(async (req, res, next) => {
+    const user = await User.findById(req.params.id).select("-password");
+
+    if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+    }
+
+    res.status(200).json({
+        success: true,
+        user
+    });
+});
+
+// Admin: Update user role (FR 1.4)
+const updateUserRole = catchAsyncErrors(async (req, res, next) => {
+    const { role } = req.body;
+
+    if (!role || !["user", "admin"].includes(role)) {
+        return next(
+            new ErrorHandler("Please provide a valid role ('user' or 'admin')", 400)
+        );
+    }
+
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+    }
+
+    user.role = role;
+    await user.save({ validateBeforeSave: false });
+
+    res.status(200).json({
+        success: true,
+        message: "User role updated successfully",
+        user
+    });
+});
+
+// Admin: Delete user (FR 1.4)
+const deleteUser = catchAsyncErrors(async (req, res, next) => {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+    }
+
+    if (user._id.toString() === req.user._id.toString()) {
+        return next(
+            new ErrorHandler("An administrator cannot delete their own account", 400)
+        );
+    }
+
+    await user.deleteOne();
+
+    res.status(200).json({
+        success: true,
+        message: "User deleted successfully"
+    });
+});
+
 module.exports = {
     registerUser,
     verifyEmail,
@@ -694,5 +767,9 @@ module.exports = {
     getCurrentUser,
     logoutUser,
     updateProfile,
-    uploadAvatar
+    uploadAvatar,
+    getAllUsers,
+    getSingleUser,
+    updateUserRole,
+    deleteUser
 };

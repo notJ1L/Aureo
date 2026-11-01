@@ -141,4 +141,34 @@ describe("Authentication and access control", () => {
         expect(updated.role).toBe("user");
         expect(updated.role).not.toBe(admin.role);
     });
+
+    it("prevents unauthorized access to admin users endpoint (401 without token, 403 for standard user, 200 for admin)", async () => {
+        // 1. Unauthenticated (no token) -> 401
+        const unauth = await request(app).get("/api/v1/admin/users");
+        expect(unauth.status).toBe(401);
+
+        // 2. Standard user -> 403
+        const user = await createUser();
+        const forbidden = await get("/api/v1/admin/users", user);
+        expect(forbidden.status).toBe(403);
+
+        // 3. Admin -> 200
+        const admin = await createAdmin();
+        const authorized = await get("/api/v1/admin/users", admin);
+        expect(authorized.status).toBe(200);
+        expect(authorized.body.success).toBe(true);
+        expect(Array.isArray(authorized.body.users)).toBe(true);
+    });
+
+    it("prevents unauthorized access to admin mock-emails endpoint", async () => {
+        const user = await createUser();
+        const forbidden = await get("/api/v1/admin/mock-emails", user);
+        expect(forbidden.status).toBe(403);
+
+        const admin = await createAdmin();
+        const authorized = await get("/api/v1/admin/mock-emails", admin);
+        expect(authorized.status).toBe(200);
+        expect(authorized.body.success).toBe(true);
+    });
 });
+

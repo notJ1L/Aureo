@@ -148,4 +148,18 @@ const getDashboard = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-module.exports = { getDashboard };
+// Admin: View logged mock emails
+const EmailLog = require("../models/emailLog");
+
+const getMockEmails = catchAsyncErrors(async (req, res, next) => {
+    const emails = await EmailLog.find().sort({ createdAt: -1 });
+
+    res.status(200).json({
+        success: true,
+        emails,
+        total: emails.length
+    });
+});
+
+module.exports = { getDashboard, getMockEmails };
+

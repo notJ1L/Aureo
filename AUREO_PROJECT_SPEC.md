@@ -408,9 +408,9 @@ Status as of **2026-10-22**. The last column records what is implemented. See
 | Dashboard | GET | `/admin/dashboard` | Admin | Implemented (accepts `from` and `to` date filters) |
 | Chat | POST | `/chat` | Logged in | Implemented |
 | | GET | `/chat/history` | Logged in | Implemented |
-| Users (admin) | GET | `/admin/users` | Admin | Not built |
-| | GET/PUT/DELETE | `/admin/user/:id` | Admin | Not built |
-| | GET | `/admin/mock-emails` | Admin | Not built |
+| Users (admin) | GET | `/admin/users` | Admin | Implemented |
+| | GET/PUT/DELETE | `/admin/user/:id` | Admin | Implemented |
+| | GET | `/admin/mock-emails` | Admin | Implemented |
 
 ### Recorded deviations
 
