@@ -4,6 +4,8 @@ const Service = require("../models/service");
 const ErrorHandler = require("../utils/ErrorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncErrors");
 const mockEmail = require("../utils/mockEmail");
+const { uploadFiles } = require("../utils/cloudinaryUpload");
+const { MAX_PHOTOS } = require("../utils/multer");
 
 // FR 5.3: a ticket walks through these states and every change is recorded
 // with its date and time.
@@ -61,6 +63,16 @@ const createTicket = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Service not found", 404));
     }
 
+    const files = req.files || [];
+
+    if (files.length > MAX_PHOTOS) {
+        return next(
+            new ErrorHandler(`You can upload a maximum of ${MAX_PHOTOS} photos`, 400)
+        );
+    }
+
+    const photos = files.length > 0 ? await uploadFiles(files, "aureo/tickets") : [];
+
     const ticket = await Ticket.create({
         ticketNumber: await buildTicketNumber(),
         user: req.user._id,
@@ -68,6 +80,7 @@ const createTicket = catchAsyncErrors(async (req, res, next) => {
         watchBrand: watchBrand.trim(),
         watchModel: watchModel.trim(),
         problemDescription: problemDescription.trim(),
+        photos,
         status: "Received",
         statusHistory: [{ status: "Received", changedAt: new Date() }]
     });
@@ -115,8 +128,8 @@ const getTicket = catchAsyncErrors(async (req, res, next) => {
     }
 
     const ticket = await Ticket.findById(req.params.id)
-        .populate("service", "name price")
-        .populate("user", "name email");
+        .populate("service", "name price description")
+        .populate("user", "name email contactNumber avatar");
 
     if (!ticket) {
         return next(new ErrorHandler("Ticket not found", 404));
@@ -140,8 +153,8 @@ const getTicket = catchAsyncErrors(async (req, res, next) => {
 // FR 5.3: only an admin changes the status.
 const getAdminTickets = catchAsyncErrors(async (req, res) => {
     const tickets = await Ticket.find()
-        .populate("service", "name price")
-        .populate("user", "name email")
+        .populate("service", "name price description")
+        .populate("user", "name email contactNumber avatar")
         .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -171,7 +184,9 @@ const updateTicketStatus = catchAsyncErrors(async (req, res, next) => {
         );
     }
 
-    const ticket = await Ticket.findById(req.params.id).populate("user", "name email");
+    const ticket = await Ticket.findById(req.params.id)
+        .populate("service", "name price description")
+        .populate("user", "name email contactNumber avatar");
 
     if (!ticket) {
         return next(new ErrorHandler("Ticket not found", 404));

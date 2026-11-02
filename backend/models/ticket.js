@@ -1,4 +1,21 @@
-﻿const mongoose = require("mongoose");
+const mongoose = require("mongoose");
+
+const ticketPhotoSchema = new mongoose.Schema(
+    {
+        public_id: {
+            type: String,
+            required: true
+        },
+
+        url: {
+            type: String,
+            required: true
+        }
+    },
+    {
+        _id: false
+    }
+);
 
 const statusHistorySchema = new mongoose.Schema(
     {
@@ -61,6 +78,17 @@ const ticketSchema = new mongoose.Schema(
             required: [true, "Problem description is required"],
             trim: true,
             maxlength: [2000, "Problem description cannot exceed 2000 characters"]
+        },
+
+        photos: {
+            type: [ticketPhotoSchema],
+            default: [],
+            validate: [
+                {
+                    validator: (photos) => !photos || photos.length <= 6,
+                    message: "You can upload a maximum of six photos"
+                }
+            ]
         },
 
         status: {

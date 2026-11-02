@@ -26,10 +26,12 @@ const photoUpload = multer({
 });
 
 const uploadAppraisalPhotos = photoUpload.array("photos", MAX_PHOTOS);
+const uploadTicketPhotos = photoUpload.array("photos", MAX_PHOTOS);
 
 module.exports = {
     photoUpload,
     uploadAppraisalPhotos,
+    uploadTicketPhotos,
     MAX_PHOTOS,
     MAX_FILE_SIZE,
     ALLOWED_MIME_TYPES

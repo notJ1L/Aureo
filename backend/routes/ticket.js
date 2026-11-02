@@ -14,10 +14,12 @@ const {
     requireVerified
 } = require("../middlewares/auth");
 
+const { uploadTicketPhotos } = require("../utils/multer");
+
 const router = express.Router();
 
 // FR 5.2: a verified user opens a ticket and follows their own tickets.
-router.post("/ticket/new", isAuthenticatedUser, requireVerified, createTicket);
+router.post("/ticket/new", isAuthenticatedUser, requireVerified, uploadTicketPhotos, createTicket);
 router.get("/tickets/me", isAuthenticatedUser, getMyTickets);
 router.get("/ticket/:id", isAuthenticatedUser, getTicket);
 
