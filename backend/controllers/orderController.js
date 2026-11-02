@@ -25,6 +25,133 @@ const formatCurrency = (amount) =>
         currency: "PHP"
     }).format(Number(amount) || 0);
 
+const buildCheckoutOrderEmail = (order, user) => {
+    const lines = order.orderItems.map(
+        (item) =>
+            `  - ${item.name} | ${item.quantity} x ${formatCurrency(item.price)} = ${formatCurrency(
+                item.price * item.quantity
+            )}`
+    );
+
+    const subtotal = order.orderItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+    );
+    const grandTotal = order.calculateTotal();
+    const { address, city, postalCode, country, phone } = order.shippingInfo || {};
+
+    return [
+        `Dear ${user?.name || "Collector"},`,
+        "",
+        `Thank you for choosing Aureo. Your acquisition order #${order._id} has been received and recorded.`,
+        "",
+        `Order Number: ${order._id}`,
+        `Order Status: ${order.status}`,
+        `Payment Method: ${order.paymentMethod} (${order.paymentStatus})`,
+        "",
+        "Acquired Timepieces:",
+        ...lines,
+        "",
+        `Subtotal: ${formatCurrency(subtotal)}`,
+        `Armored Insured Transit: Complimentary`,
+        `Grand Total: ${formatCurrency(grandTotal)}`,
+        "",
+        `Shipping Destination: ${address || ""}, ${city || ""} ${postalCode || ""}, ${country || ""}`.trim(),
+        phone ? `Contact Phone: ${phone}` : "",
+        "",
+        "Your official Aureo PDF receipt is attached to this email.",
+        "",
+        "Warm regards,",
+        "Aureo Horology Vault"
+    ]
+        .filter((line) => line !== undefined)
+        .join("\n");
+};
+
+const buildCheckoutOrderHtml = (order, user, titleText = "Acquisition Order Confirmed") => {
+    const subtotal = order.orderItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+    );
+    const grandTotal = order.calculateTotal();
+    const { address, city, postalCode, country, phone } = order.shippingInfo || {};
+
+    const itemRowsHtml = order.orderItems
+        .map(
+            (item) => `
+            <tr>
+                <td style="padding:12px 8px;border-bottom:1px solid #262936;color:#f5efe2;font-weight:600;">
+                    ${item.name}
+                </td>
+                <td style="padding:12px 8px;border-bottom:1px solid #262936;color:#b8b0a2;text-align:center;">
+                    ${item.quantity}
+                </td>
+                <td style="padding:12px 8px;border-bottom:1px solid #262936;color:#b8b0a2;text-align:right;">
+                    ${formatCurrency(item.price)}
+                </td>
+                <td style="padding:12px 8px;border-bottom:1px solid #262936;color:#e5c687;font-weight:600;text-align:right;">
+                    ${formatCurrency(item.price * item.quantity)}
+                </td>
+            </tr>`
+        )
+        .join("");
+
+    return `
+    <div style="background:#0d0f14;color:#f5efe2;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;padding:32px 16px;">
+        <div style="max-width:620px;margin:0 auto;background:#151821;border:1px solid rgba(201,164,92,0.38);border-top:3px solid #c9a45c;border-radius:8px;padding:32px;">
+            <div style="margin-bottom:24px;">
+                <span style="color:#c9a45c;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">AUREO HOROLOGY VAULT</span>
+                <h1 style="margin:6px 0 8px;font-size:24px;color:#f7f1e5;font-weight:600;">${titleText}</h1>
+                <p style="margin:0;color:#a9a193;font-size:14px;line-height:1.6;">
+                    Dear ${user?.name || "Collector"}, thank you for choosing Aureo. Below is the official summary of your order <strong>#${order._id}</strong>.
+                </p>
+            </div>
+
+            <div style="background:#10131b;border:1px solid #262936;border-radius:6px;padding:16px;margin-bottom:24px;font-size:13px;color:#c7bfb0;">
+                <p style="margin:0 0 6px;"><strong>Order Reference:</strong> #${order._id}</p>
+                <p style="margin:0 0 6px;"><strong>Current Status:</strong> <span style="color:#e5c687;">${order.status}</span></p>
+                <p style="margin:0 0 6px;"><strong>Payment Method:</strong> ${order.paymentMethod} (${order.paymentStatus})</p>
+                <p style="margin:0;"><strong>Delivery Destination:</strong> ${address || ""}, ${city || ""} ${postalCode || ""}, ${country || ""} ${phone ? `• ${phone}` : ""}</p>
+            </div>
+
+            <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;">
+                <thead>
+                    <tr style="border-bottom:1px solid #35394a;color:#9e9688;text-transform:uppercase;font-size:11px;letter-spacing:1px;">
+                        <th style="padding:8px;text-align:left;">Timepiece</th>
+                        <th style="padding:8px;text-align:center;">Qty</th>
+                        <th style="padding:8px;text-align:right;">Unit Price</th>
+                        <th style="padding:8px;text-align:right;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemRowsHtml}
+                </tbody>
+            </table>
+
+            <div style="border-top:1px solid #262936;padding-top:14px;font-size:14px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:#a9a193;">
+                    <span>Subtotal: </span>
+                    <strong style="color:#f5efe2;float:right;">${formatCurrency(subtotal)}</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:#a9a193;">
+                    <span>Armored Insured Courier: </span>
+                    <strong style="color:#6ee7a8;float:right;">Complimentary</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid #262936;font-size:17px;color:#e5c687;">
+                    <strong>Grand Total: </strong>
+                    <strong style="float:right;">${formatCurrency(grandTotal)}</strong>
+                </div>
+            </div>
+
+            <p style="margin:28px 0 0;padding-top:16px;border-top:1px solid #262936;font-size:12px;color:#8b8477;line-height:1.5;">
+                Your official Aureo PDF invoice/receipt is attached to this email.<br/>
+                Warm regards,<br/>
+                <strong style="color:#c9a45c;">Aureo Horology Vault</strong>
+            </p>
+        </div>
+    </div>`;
+};
+
 const buildOrderStatusEmail = (order, user) => {
     const total = order.calculateTotal();
 
@@ -171,16 +298,29 @@ const createOrder = catchAsyncErrors(async (req, res, next) => {
         ]
     });
 
-    // FR 4.5: Record mock confirmation email
-    const totalPrice = order.calculateTotal();
-    const formattedTotal = formatCurrency(totalPrice);
+    // FR 4.5: Send confirmation email with attached PDF receipt upon checkout
+    let checkoutAttachments = [];
+    try {
+        const receiptBuffer = await generateReceipt(order, req.user);
+        checkoutAttachments = [
+            {
+                filename: `aureo-receipt-${order._id}.pdf`,
+                content: receiptBuffer,
+                contentType: "application/pdf"
+            }
+        ];
+    } catch (pdfErr) {
+        console.error("Failed to generate checkout PDF attachment:", pdfErr.message);
+    }
 
     await mockEmail({
         to: req.user.email,
         subject: `Aureo Order Confirmation #${order._id}`,
-        body: `Dear ${req.user.name},\n\nThank you for choosing Aureo. Your order #${order._id} for ${order.orderItems.length} timepiece(s) totalling ${formattedTotal} has been recorded.\n\nShipping to: ${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.country}.\n\nWarm regards,\nAureo Horology Vault`,
+        body: buildCheckoutOrderEmail(order, req.user),
+        html: buildCheckoutOrderHtml(order, req.user, "Acquisition Order Confirmed"),
         type: "order",
-        relatedId: order._id.toString()
+        relatedId: order._id.toString(),
+        attachments: checkoutAttachments
     });
 
     res.status(201).json({
@@ -365,6 +505,7 @@ const updateAdminOrder = catchAsyncErrors(async (req, res, next) => {
             to: order.user.email,
             subject: `Aureo Transaction Complete - Order #${order._id}`,
             body: buildCompletedOrderEmail(order, order.user),
+            html: buildCheckoutOrderHtml(order, order.user, "Transaction Complete — Delivered"),
             type: "order",
             relatedId: order._id.toString(),
             attachments: [attachment]
@@ -374,6 +515,7 @@ const updateAdminOrder = catchAsyncErrors(async (req, res, next) => {
             to: order.user.email,
             subject: `Aureo Order #${order._id} - Status updated to ${status}`,
             body: buildOrderStatusEmail(order, order.user),
+            html: buildCheckoutOrderHtml(order, order.user, `Order Status Updated: ${status}`),
             type: "order",
             relatedId: order._id.toString()
         });

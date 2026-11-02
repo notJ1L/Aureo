@@ -1,41 +1,48 @@
-﻿const nodemailer = require("nodemailer");
+const nodemailer = require("nodemailer");
 const EmailLog = require("../models/emailLog");
 
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: process.env.SMTP_SECURE === "true",
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD
-    }
-});
+const createSmtpTransporter = () =>
+    nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT || 587),
+        secure: process.env.SMTP_SECURE === "true",
+        auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASSWORD
+        }
+    });
 
 const sendEmail = async ({
     to,
     subject,
     text,
-    type,
+    body,
+    html,
+    type = "order",
     relatedId = null,
     attachments = []
 }) => {
+    const messageText = text || body || "";
     const attachmentNames = attachments
         .map((attachment) => attachment.filename)
         .filter(Boolean);
 
+    const transporter = createSmtpTransporter();
+
     try {
         const emailInfo = await transporter.sendMail({
-            from: process.env.EMAIL_FROM,
+            from: process.env.EMAIL_FROM || process.env.SMTP_USER,
             to,
             subject,
-            text,
+            text: messageText,
+            ...(html ? { html } : {}),
             attachments
         });
 
         await EmailLog.create({
             to,
             subject,
-            body: text,
+            body: messageText,
             type,
             status: "sent",
             provider: "smtp",
@@ -50,7 +57,7 @@ const sendEmail = async ({
         await EmailLog.create({
             to,
             subject,
-            body: text,
+            body: messageText,
             type,
             status: "failed",
             provider: "smtp",

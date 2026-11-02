@@ -1,12 +1,13 @@
 const EmailLog = require("../models/emailLog");
+const sendEmail = require("./sendEmail");
 
-// FR 4.5 / FR 5.4: email notifications are mocked. Every notification is
-// printed to the console and stored in the EmailLog collection so the admin
-// can review it later.
+// Sends real SMTP email when SMTP credentials are configured (outside test runs),
+// and also logs the notification to the console + EmailLog collection.
 const mockEmail = async ({
     to,
     subject,
     body,
+    html,
     type,
     relatedId = null,
     attachments = []
@@ -18,18 +19,43 @@ const mockEmail = async ({
     console.log(
         [
             "",
-            "────────────── AUREO MOCK EMAIL ──────────────",
+            "────────────── AUREO EMAIL DISPATCH ──────────────",
             `To:       ${to}`,
             `Subject:  ${subject}`,
             `Type:     ${type}`,
             `Related:  ${relatedId || "n/a"}`,
             `Files:    ${attachmentNames.length ? attachmentNames.join(", ") : "none"}`,
-            "────────────────────────────────────────────────",
+            "──────────────────────────────────────────────────",
             body,
-            "────────────────────────────────────────────────",
+            "──────────────────────────────────────────────────",
             ""
         ].join("\n")
     );
+
+    const isSmtpConfigured = Boolean(
+        process.env.SMTP_HOST &&
+            process.env.SMTP_USER &&
+            process.env.SMTP_PASSWORD &&
+            process.env.NODE_ENV !== "test"
+    );
+
+    if (isSmtpConfigured) {
+        try {
+            return await sendEmail({
+                to,
+                subject,
+                text: body,
+                html,
+                type,
+                relatedId,
+                attachments
+            });
+        } catch (error) {
+            console.error("SMTP email delivery failed:", error.message);
+            // sendEmail already recorded the failed EmailLog entry; return gracefully
+            return null;
+        }
+    }
 
     const record = await EmailLog.create({
         to,
