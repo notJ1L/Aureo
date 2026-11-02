@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const User = require("../models/user");
 const ErrorHandler = require("../utils/ErrorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncErrors");
@@ -35,6 +36,165 @@ const getSupabaseErrorMessage = (error) => {
     }
 
     return message;
+};
+
+const buildRegistrationAcknowledgementText = (user, verificationCode = null) => {
+    const registrationDate = new Date(user.createdAt || Date.now()).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric"
+    });
+    const methodLabel =
+        user.authSource === "google" ? "Google Identity" : "Email & Password";
+
+    const lines = [
+        `Dear ${user.name},`,
+        "",
+        "Welcome to Aureo Horology Vault.",
+        `This email officially acknowledges that your email address (${user.email}) has been registered with Aureo.`,
+        "",
+        "ACCOUNT REGISTRATION SUMMARY",
+        `• Collector Name: ${user.name}`,
+        `• Registered Email: ${user.email}`,
+        "• Membership Tier: Aureo Private Collector",
+        `• Registration Method: ${methodLabel}`,
+        `• Date Registered: ${registrationDate}`
+    ];
+
+    if (verificationCode) {
+        lines.push(
+            "",
+            "EMAIL VERIFICATION CODE",
+            `Your 6-digit Aureo verification code is: ${verificationCode}`,
+            `(Valid for ${CODE_EXPIRE_MINUTES} minutes)`
+        );
+    }
+
+    lines.push(
+        "",
+        "If you did not register an Aureo account using this email address, please disregard this notice or contact our Geneva & Manila concierge.",
+        "",
+        "Warm regards,",
+        "Aureo Horology Vault • Geneva & Manila"
+    );
+
+    return lines.join("\n");
+};
+
+const buildRegistrationAcknowledgementHtml = (user, verificationCode = null) => {
+    const clientUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
+    const registrationDate = new Date(user.createdAt || Date.now()).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric"
+    });
+    const methodLabel =
+        user.authSource === "google" ? "Google Identity" : "Email & Password";
+
+    const verificationBlock = verificationCode
+        ? `
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#13161c;border:1px solid rgba(201,169,110,0.35);border-radius:10px;margin-bottom:26px;">
+                <tr>
+                    <td align="center" style="padding:22px 24px;">
+                        <div style="font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:#c9a96e;font-weight:700;margin-bottom:8px;">
+                            Security Verification Code
+                        </div>
+                        <div style="font-size:13px;color:#9da3ae;margin-bottom:14px;line-height:1.5;">
+                            Enter this 6-digit verification code on the Aureo verification screen to activate full acquisition, appraisal, and atelier privileges:
+                        </div>
+                        <div style="display:inline-block;padding:12px 28px;background-color:#0b0d10;border:1px solid #c9a96e;border-radius:8px;font-family:'Courier New',monospace;font-size:28px;font-weight:700;letter-spacing:0.32em;color:#f5f2eb;">
+                            ${verificationCode}
+                        </div>
+                        <div style="font-size:11px;color:#737984;margin-top:10px;">
+                            This code expires in ${CODE_EXPIRE_MINUTES} minutes.
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        `
+        : "";
+
+    return `
+    <div style="margin:0;padding:36px 16px;background-color:#07080a;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#f5f2eb;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;margin:0 auto;background-color:#0e1014;border:1px solid #262930;border-top:3px solid #c9a96e;border-radius:12px;overflow:hidden;">
+            <tr>
+                <td style="padding:32px 36px 24px;border-bottom:1px solid #1b1e24;background:linear-gradient(180deg,#13161c 0%,#0e1014 100%);">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            <td align="left" valign="middle">
+                                <div style="font-size:11px;letter-spacing:0.24em;text-transform:uppercase;color:#c9a96e;font-weight:700;">
+                                    AUREO HOROLOGY VAULT
+                                </div>
+                            </td>
+                            <td align="right" valign="middle">
+                                <span style="display:inline-block;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background-color:rgba(201,169,110,0.14);color:#c9a96e;border:1px solid rgba(201,169,110,0.4);">
+                                    REGISTERED
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                    <h1 style="margin:14px 0 8px;font-size:26px;font-weight:600;color:#f5f2eb;font-family:Georgia,'Times New Roman',serif;letter-spacing:0.01em;">
+                        Account Registration Acknowledged
+                    </h1>
+                    <p style="margin:0;color:#9da3ae;font-size:14px;line-height:1.6;">
+                        Dear <strong style="color:#f5f2eb;">${user.name}</strong>, welcome to Aureo. This email officially acknowledges that an Aureo Collector account has been registered using <strong style="color:#c9a96e;">${user.email}</strong>.
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
+                <td style="padding:28px 36px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#13161c;border:1px solid #22262e;border-radius:10px;margin-bottom:26px;">
+                        <tr>
+                            <td width="50%" valign="top" style="padding:16px 20px;border-bottom:1px solid #1e222a;border-right:1px solid #1e222a;">
+                                <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#737984;margin-bottom:5px;">Collector Name</div>
+                                <div style="font-size:13px;color:#f5f2eb;font-weight:600;">${user.name}</div>
+                            </td>
+                            <td width="50%" valign="top" style="padding:16px 20px;border-bottom:1px solid #1e222a;">
+                                <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#737984;margin-bottom:5px;">Registered Email</div>
+                                <div style="font-size:13px;color:#c9a96e;font-weight:600;">${user.email}</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="50%" valign="top" style="padding:16px 20px;border-right:1px solid #1e222a;">
+                                <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#737984;margin-bottom:5px;">Membership Tier</div>
+                                <div style="font-size:13px;color:#f5f2eb;font-weight:600;">Aureo Private Collector</div>
+                            </td>
+                            <td width="50%" valign="top" style="padding:16px 20px;">
+                                <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#737984;margin-bottom:5px;">Registration Date &amp; Method</div>
+                                <div style="font-size:13px;color:#f5f2eb;font-weight:600;">${registrationDate} <span style="color:#9da3ae;font-weight:400;">(${methodLabel})</span></div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    ${verificationBlock}
+
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+                        <tr>
+                            <td align="left">
+                                <a href="${clientUrl}/catalog" style="display:inline-block;padding:12px 24px;background-color:#c9a96e;color:#0a0b0d;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;text-decoration:none;border-radius:6px;">
+                                    Explore the Aureo Collection &rarr;
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #1e222a;padding-top:18px;">
+                        <tr>
+                            <td style="padding-top:16px;">
+                                <p style="margin:0 0 8px;font-size:12px;color:#9da3ae;line-height:1.6;">
+                                    <strong style="color:#f5f2eb;">Security Notice:</strong> This is an automated registration acknowledgement confirming that <span style="color:#c9a96e;">${user.email}</span> was used to create an account at Aureo Horology Vault. If you did not authorize this registration, please disregard this message or contact our support desk.
+                                </p>
+                                <p style="margin:0;font-size:12px;color:#737984;">
+                                    Warm regards, <strong style="color:#c9a96e;">Aureo Horology Vault</strong> &bull; Geneva &amp; Manila
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>`;
 };
 
 // Confirms the Supabase account so the provider reports the address as
@@ -94,27 +254,18 @@ const findSupabaseUserByEmail = async (email) => {
 };
 
 // FR 1.1 / FR 1.5: Register with Supabase email/password identity.
-// The password is created inside Supabase and is never stored in MongoDB.
-// Aureo only keeps the provider identity id and the profile.
+// Uses a Mongoose transaction for atomic user profile creation and sends a
+// luxury Registration Acknowledgement Email (with verification code) via SMTP.
 const registerUser = catchAsyncErrors(async (req, res, next) => {
     const { name, email, password, supabaseUserId } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || (!password && !supabaseUserId)) {
         return next(new ErrorHandler("Please provide all required fields", 400));
     }
 
-    if (String(password).length < 8) {
+    if (password && String(password).length < 8) {
         return next(
             new ErrorHandler("Password must be at least 8 characters long", 400)
-        );
-    }
-
-    if (!isSupabaseConfigured()) {
-        return next(
-            new ErrorHandler(
-                "Email and password registration is temporarily unavailable",
-                503
-            )
         );
     }
 
@@ -126,88 +277,104 @@ const registerUser = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Email is already registered", 400));
     }
 
-    let providerUserId = supabaseUserId;
+    let providerUserId = supabaseUserId || null;
     let providerUser = null;
+    let authSource = "supabase";
 
-    // When the client already created the Supabase identity we only link it.
-    // Otherwise the backend creates it through the Supabase Admin API. An
-    // identity that already exists in Supabase is linked instead of rejected,
-    // the duplicate check above is what protects the Aureo profile.
-    if (!providerUserId) {
-        const admin = getSupabaseAdmin();
+    if (!providerUserId && isSupabaseConfigured() && password) {
+        try {
+            const admin = getSupabaseAdmin();
 
-        const { data, error } = await admin.auth.admin.createUser({
-            email: normalizedEmail,
-            password,
-            email_confirm: false,
-            user_metadata: { name: String(name).trim() }
-        });
+            const { data, error } = await admin.auth.admin.createUser({
+                email: normalizedEmail,
+                password,
+                email_confirm: false,
+                user_metadata: { name: String(name).trim() }
+            });
 
-        if (error) {
-            const existingProviderUser = await findSupabaseUserByEmail(
-                normalizedEmail
-            );
+            if (error) {
+                const existingProviderUser = await findSupabaseUserByEmail(
+                    normalizedEmail
+                );
 
-            if (!existingProviderUser) {
-                return next(new ErrorHandler(getSupabaseErrorMessage(error), 400));
+                if (existingProviderUser) {
+                    providerUser = existingProviderUser;
+                    providerUserId = providerUser.id;
+                } else {
+                    // Fall back to local password storage if Supabase is rate-limited
+                    authSource = "local";
+                }
+            } else if (data?.user) {
+                providerUser = data.user;
+                providerUserId = providerUser.id;
             }
-
-            providerUser = existingProviderUser;
-        } else {
-            providerUser = data.user;
+        } catch {
+            authSource = "local";
         }
-
-        providerUserId = providerUser.id;
+    } else if (providerUserId && isSupabaseConfigured()) {
+        try {
+            providerUser = await fetchSupabaseUser(supabaseUserId);
+        } catch {
+            providerUser = null;
+        }
     } else {
-        providerUser = await fetchSupabaseUser(supabaseUserId);
+        authSource = "local";
     }
 
-    // Fallback verification code. Supabase sends its own verification message,
-    // this guarantees the user always receives a usable code.
     const verificationCode = generateVerificationCode();
 
-    const user = await User.create({
-        name: String(name).trim(),
-        email: normalizedEmail,
-        supabaseUserId: providerUserId,
-        authSource: "supabase",
-        isVerified: false,
-        verificationCodeHash: hashVerificationCode(verificationCode),
-        verificationCodeExpiresAt: new Date(
-            Date.now() + CODE_EXPIRE_MINUTES * 60 * 1000
-        )
-    });
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    let user;
+    try {
+        const userPayload = {
+            name: String(name).trim(),
+            email: normalizedEmail,
+            supabaseUserId: providerUserId,
+            authSource: providerUserId ? "supabase" : authSource,
+            isVerified: false,
+            verificationCodeHash: hashVerificationCode(verificationCode),
+            verificationCodeExpiresAt: new Date(
+                Date.now() + CODE_EXPIRE_MINUTES * 60 * 1000
+            )
+        };
+
+        if (!providerUserId && password) {
+            userPayload.password = password;
+        }
+
+        const [createdUser] = await User.create([userPayload], { session });
+        user = createdUser;
+
+        await session.commitTransaction();
+    } catch (txError) {
+        await session.abortTransaction();
+        return next(txError);
+    } finally {
+        session.endSession();
+    }
 
     await sendEmail({
         to: user.email,
-        subject: "Your Aureo verification code",
-        text: [
-            `Hello ${user.name},`,
-            "",
-            `Your Aureo verification code is: ${verificationCode}`,
-            "",
-            `This code expires in ${CODE_EXPIRE_MINUTES} minutes.`,
-            "",
-            "If you did not create an Aureo account, you can ignore this email."
-        ].join("\n"),
+        subject: "Welcome to Aureo Horology Vault — Registration Confirmed",
+        text: buildRegistrationAcknowledgementText(user, verificationCode),
+        html: buildRegistrationAcknowledgementHtml(user, verificationCode),
         type: "verification",
         relatedId: user._id.toString()
     }).catch((error) => {
         // A missing SMTP provider must not block the registration itself.
-        console.error("Verification email could not be sent:", error.message);
+        console.error("Registration acknowledgement email could not be sent:", error.message);
     });
 
     res.status(201).json({
         success: true,
-        message: "Registration successful. Check your email for your verification code.",
+        message: "Registration successful. An acknowledgement email with your verification code has been sent.",
         email: user.email
     });
 });
 
 // FR 1.5: Sync the Supabase verification state into the Aureo profile.
-// The code is validated by Supabase (primary channel) or by the Aureo
-// fallback code. Either way the Supabase account ends up confirmed and the
-// backend re-reads the provider state before it flips the Aureo flag.
 const verifyEmail = catchAsyncErrors(async (req, res, next) => {
     const { email, code, accessToken } = req.body;
 
@@ -234,9 +401,6 @@ const verifyEmail = catchAsyncErrors(async (req, res, next) => {
         }
 
         providerUser = data.user;
-
-        // A session only exists once the address was confirmed, so the
-        // provider already accepted the code.
         codeAccepted = Boolean(providerUser.email_confirmed_at);
     } else {
         if (!/^\d{6}$/.test(String(code || ""))) {
@@ -303,33 +467,45 @@ const verifyEmail = catchAsyncErrors(async (req, res, next) => {
             (await confirmSupabaseAccount(providerUser.id)) || providerUser;
     }
 
-    // FR 1.5: the backend syncs the provider verification state.
-    const user = await User.findOne({
-        $or: [
-            { email: normalizeEmail(providerUser?.email || email) },
-            ...(providerUser?.id ? [{ supabaseUserId: providerUser.id }] : [])
-        ]
-    });
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (!user) {
-        return next(
-            new ErrorHandler("No Aureo account exists for this email address", 404)
-        );
+    try {
+        // FR 1.5: the backend syncs the provider verification state.
+        const user = await User.findOne({
+            $or: [
+                { email: normalizeEmail(providerUser?.email || email) },
+                ...(providerUser?.id ? [{ supabaseUserId: providerUser.id }] : [])
+            ]
+        }).session(session);
+
+        if (!user) {
+            await session.abortTransaction();
+            return next(
+                new ErrorHandler("No Aureo account exists for this email address", 404)
+            );
+        }
+
+        if (providerUser?.id && !user.supabaseUserId) {
+            user.supabaseUserId = providerUser.id;
+        }
+
+        if (user.authSource === "local" && user.supabaseUserId) {
+            user.authSource = "supabase";
+        }
+
+        user.isVerified = true;
+        user.verificationCodeHash = null;
+        user.verificationCodeExpiresAt = null;
+
+        await user.save({ session });
+        await session.commitTransaction();
+    } catch (txError) {
+        await session.abortTransaction();
+        return next(txError);
+    } finally {
+        session.endSession();
     }
-
-    if (providerUser?.id && !user.supabaseUserId) {
-        user.supabaseUserId = providerUser.id;
-    }
-
-    if (user.authSource === "local") {
-        user.authSource = "supabase";
-    }
-
-    user.isVerified = true;
-    user.verificationCodeHash = null;
-    user.verificationCodeExpiresAt = null;
-
-    await user.save();
 
     res.status(200).json({
         success: true,
@@ -578,47 +754,85 @@ const googleLogin = catchAsyncErrors(async (req, res, next) => {
 
     const normalizedEmail = normalizeEmail(email);
 
-    let user = await User.findOne({
-        $or: [{ email: normalizedEmail }, { googleId: uid }]
-    }).select("+googleId");
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (user) {
-        // FR 1.4 / Phase 3.8: never silently rebind a provider identity that
-        // already belongs to a different profile.
-        if (user.googleId && user.googleId !== uid) {
-            return next(
-                new ErrorHandler(
-                    "This Google account is already linked to a different Aureo profile",
-                    409
-                )
+    let user;
+    let isNewRegistration = false;
+    try {
+        user = await User.findOne({
+            $or: [{ email: normalizedEmail }, { googleId: uid }]
+        })
+            .select("+googleId")
+            .session(session);
+
+        if (user) {
+            // FR 1.4 / Phase 3.8: never silently rebind a provider identity that
+            // already belongs to a different profile.
+            if (user.googleId && user.googleId !== uid) {
+                await session.abortTransaction();
+                return next(
+                    new ErrorHandler(
+                        "This Google account is already linked to a different Aureo profile",
+                        409
+                    )
+                );
+            }
+
+            if (!user.googleId) {
+                user.googleId = uid;
+                await user.save({ session, validateBeforeSave: false });
+            }
+        } else {
+            const conflictingEmail = await User.findOne({ email: normalizedEmail }).session(session);
+
+            if (conflictingEmail) {
+                await session.abortTransaction();
+                return next(
+                    new ErrorHandler(
+                        "This email is already registered with another sign-in method",
+                        409
+                    )
+                );
+            }
+
+            const [createdUser] = await User.create(
+                [
+                    {
+                        name: name || "Aureo User",
+                        email: normalizedEmail,
+                        authSource: "google",
+                        isVerified: true,
+                        googleId: uid,
+                        avatar: picture
+                            ? { public_id: "", url: picture }
+                            : { public_id: "", url: "" }
+                    }
+                ],
+                { session }
             );
+            user = createdUser;
+            isNewRegistration = true;
         }
 
-        if (!user.googleId) {
-            user.googleId = uid;
-            await user.save({ validateBeforeSave: false });
-        }
-    } else {
-        const conflictingEmail = await User.findOne({ email: normalizedEmail });
+        await session.commitTransaction();
+    } catch (txError) {
+        await session.abortTransaction();
+        return next(txError);
+    } finally {
+        session.endSession();
+    }
 
-        if (conflictingEmail) {
-            return next(
-                new ErrorHandler(
-                    "This email is already registered with another sign-in method",
-                    409
-                )
-            );
-        }
-
-        user = await User.create({
-            name: name || "Aureo User",
-            email: normalizedEmail,
-            authSource: "google",
-            isVerified: true,
-            googleId: uid,
-            avatar: picture
-                ? { public_id: "", url: picture }
-                : { public_id: "", url: "" }
+    if (isNewRegistration && user) {
+        await sendEmail({
+            to: user.email,
+            subject: "Welcome to Aureo Horology Vault — Registration Confirmed",
+            text: buildRegistrationAcknowledgementText(user, null),
+            html: buildRegistrationAcknowledgementHtml(user, null),
+            type: "registration",
+            relatedId: user._id.toString()
+        }).catch((error) => {
+            console.error("Google registration acknowledgement email could not be sent:", error.message);
         });
     }
 

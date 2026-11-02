@@ -420,7 +420,7 @@ const buildPdfAttachment = async (order, user) => {
     }
 };
 
-// FR 4.1 & FR 4.2 & FR 4.3: Create new order
+// FR 4.1 & FR 4.2 & FR 4.3: Create new order using a MongoDB ACID Transaction
 const createOrder = catchAsyncErrors(async (req, res, next) => {
     const { orderItems, shippingInfo, paymentMethod, cardNumber } = req.body;
 
@@ -440,7 +440,12 @@ const createOrder = catchAsyncErrors(async (req, res, next) => {
     if (normalizedMethod === "Dummy Credit Card") {
         const cleanCard = String(cardNumber || "").replace(/\s+/g, "");
         if (cleanCard === "4000000000000002") {
-            return next(new ErrorHandler("Transaction declined: Test card number 4000 0000 0000 0002 was declined by the issuer.", 400));
+            return next(
+                new ErrorHandler(
+                    "Transaction declined: Test card number 4000 0000 0000 0002 was declined by the issuer.",
+                    400
+                )
+            );
         }
         paymentStatus = "Paid";
         orderInitialStatus = "Paid";
@@ -449,70 +454,108 @@ const createOrder = catchAsyncErrors(async (req, res, next) => {
         orderInitialStatus = "Paid";
     }
 
-    // Server-side price recalculation & stock validation
-    const verifiedOrderItems = [];
-    const reducedProductUpdates = [];
+    // Begin MongoDB multi-document transaction for stock deduction + order creation
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    for (const item of orderItems) {
-        if (!mongoose.Types.ObjectId.isValid(item.product)) {
-            return next(new ErrorHandler(`Invalid product ID: ${item.product}`, 400));
+    let order;
+    try {
+        const verifiedOrderItems = [];
+
+        for (const item of orderItems) {
+            if (!mongoose.Types.ObjectId.isValid(item.product)) {
+                await session.abortTransaction();
+                return next(new ErrorHandler(`Invalid product ID: ${item.product}`, 400));
+            }
+
+            const product = await Product.findById(item.product).session(session);
+            if (!product || !product.isActive) {
+                await session.abortTransaction();
+                return next(
+                    new ErrorHandler(`Timepiece "${item.name || item.product}" is unavailable`, 404)
+                );
+            }
+
+            const quantity = Math.max(Number(item.quantity) || 1, 1);
+
+            if (product.condition === "second-hand" && quantity > 1) {
+                await session.abortTransaction();
+                return next(
+                    new ErrorHandler(
+                        `Second-hand piece "${product.name}" is a unique piece (max 1)`,
+                        400
+                    )
+                );
+            }
+
+            if (product.stock < quantity) {
+                await session.abortTransaction();
+                return next(
+                    new ErrorHandler(
+                        `Insufficient stock for "${product.name}". Only ${product.stock} available.`,
+                        400
+                    )
+                );
+            }
+
+            // Atomic stock decrement within the active transaction session
+            const updatedProduct = await Product.findOneAndUpdate(
+                { _id: product._id, stock: { $gte: quantity } },
+                { $inc: { stock: -quantity } },
+                { new: true, session }
+            );
+
+            if (!updatedProduct) {
+                await session.abortTransaction();
+                return next(
+                    new ErrorHandler(
+                        `Acquisition conflict: "${product.name}" was just reserved by another collector.`,
+                        409
+                    )
+                );
+            }
+
+            verifiedOrderItems.push({
+                product: product._id,
+                name: product.name,
+                price: product.price, // Server verified price
+                quantity,
+                image: product.images?.[0]?.url || item.image || ""
+            });
         }
 
-        const product = await Product.findById(item.product);
-        if (!product || !product.isActive) {
-            return next(new ErrorHandler(`Timepiece "${item.name || item.product}" is unavailable`, 404));
-        }
-
-        const quantity = Math.max(Number(item.quantity) || 1, 1);
-
-        if (product.condition === "second-hand" && quantity > 1) {
-            return next(new ErrorHandler(`Second-hand piece "${product.name}" is a unique piece (max 1)`, 400));
-        }
-
-        if (product.stock < quantity) {
-            return next(new ErrorHandler(`Insufficient stock for "${product.name}". Only ${product.stock} available.`, 400));
-        }
-
-        // Attempt atomic stock decrement
-        const updatedProduct = await Product.findOneAndUpdate(
-            { _id: product._id, stock: { $gte: quantity } },
-            { $inc: { stock: -quantity } },
-            { new: true }
+        const createdOrders = await Order.create(
+            [
+                {
+                    user: req.user._id,
+                    orderItems: verifiedOrderItems,
+                    shippingInfo,
+                    paymentMethod: normalizedMethod,
+                    paymentStatus,
+                    status: orderInitialStatus,
+                    statusHistory: [
+                        {
+                            status: orderInitialStatus,
+                            changedAt: new Date()
+                        }
+                    ]
+                }
+            ],
+            { session }
         );
 
-        if (!updatedProduct) {
-            // Rollback any earlier reductions
-            for (const prev of reducedProductUpdates) {
-                await Product.findByIdAndUpdate(prev.id, { $inc: { stock: prev.qty } });
-            }
-            return next(new ErrorHandler(`Acquisition conflict: "${product.name}" was just reserved by another collector.`, 409));
+        order = createdOrders[0];
+
+        // Commit transaction once all stock updates and order creation succeed
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
         }
-
-        reducedProductUpdates.push({ id: product._id, qty: quantity });
-
-        verifiedOrderItems.push({
-            product: product._id,
-            name: product.name,
-            price: product.price, // Server verified price
-            quantity: quantity,
-            image: product.images?.[0]?.url || item.image || ""
-        });
+        throw txError;
+    } finally {
+        session.endSession();
     }
-
-    const order = await Order.create({
-        user: req.user._id,
-        orderItems: verifiedOrderItems,
-        shippingInfo,
-        paymentMethod: normalizedMethod,
-        paymentStatus,
-        status: orderInitialStatus,
-        statusHistory: [
-            {
-                status: orderInitialStatus,
-                changedAt: new Date()
-            }
-        ]
-    });
 
     // FR 4.5: Send confirmation email with attached PDF receipt upon checkout
     const checkoutAttachments = await buildPdfAttachment(order, req.user);
@@ -568,40 +611,64 @@ const getSingleOrder = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// User: Cancel order (Pending orders only, restores stock)
+// User: Cancel order (Pending orders only, restores stock inside a transaction)
 const cancelOrder = catchAsyncErrors(async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         return next(new ErrorHandler("Invalid order ID", 400));
     }
 
-    const order = await Order.findById(req.params.id);
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (!order) {
-        return next(new ErrorHandler("Order not found", 404));
-    }
+    let order;
+    try {
+        order = await Order.findById(req.params.id).session(session);
 
-    if (order.user.toString() !== req.user._id.toString()) {
-        return next(new ErrorHandler("You can only cancel your own orders", 403));
-    }
+        if (!order) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Order not found", 404));
+        }
 
-    if (order.status !== "Pending") {
-        return next(new ErrorHandler(`Order cannot be cancelled because its current status is "${order.status}". Only Pending orders may be cancelled.`, 400));
-    }
+        if (order.user.toString() !== req.user._id.toString()) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("You can only cancel your own orders", 403));
+        }
 
-    // Atomically restore stock
-    for (const item of order.orderItems) {
-        await Product.findByIdAndUpdate(item.product, {
-            $inc: { stock: item.quantity }
+        if (order.status !== "Pending") {
+            await session.abortTransaction();
+            return next(
+                new ErrorHandler(
+                    `Order cannot be cancelled because its current status is "${order.status}". Only Pending orders may be cancelled.`,
+                    400
+                )
+            );
+        }
+
+        // Restore stock for each timepiece within the transaction
+        for (const item of order.orderItems) {
+            await Product.findByIdAndUpdate(
+                item.product,
+                { $inc: { stock: item.quantity } },
+                { session }
+            );
+        }
+
+        order.status = "Cancelled";
+        order.statusHistory.push({
+            status: "Cancelled",
+            changedAt: new Date()
         });
+
+        await order.save({ session });
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
     }
-
-    order.status = "Cancelled";
-    order.statusHistory.push({
-        status: "Cancelled",
-        changedAt: new Date()
-    });
-
-    await order.save();
 
     res.status(200).json({
         success: true,
@@ -624,23 +691,10 @@ const getAdminOrders = catchAsyncErrors(async (req, res) => {
     });
 });
 
-// Admin: Update order status
+// Admin: Update order status (with transaction for status + stock restoration)
 const updateAdminOrder = catchAsyncErrors(async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         return next(new ErrorHandler("Invalid order ID", 400));
-    }
-
-    const order = await Order.findById(req.params.id).populate(
-        "user",
-        "name email"
-    );
-
-    if (!order) {
-        return next(new ErrorHandler("Order not found", 404));
-    }
-
-    if (order.status === "Completed") {
-        return next(new ErrorHandler("Completed orders cannot be modified.", 400));
     }
 
     const { status } = req.body;
@@ -658,40 +712,71 @@ const updateAdminOrder = catchAsyncErrors(async (req, res, next) => {
         );
     }
 
-    // FR 4.2 / assumption 9: the status flow can only move forward.
-    const allowedNextStatuses = ORDER_STATUS_FLOW[order.status] || [];
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (!allowedNextStatuses.includes(status)) {
-        return next(
-            new ErrorHandler(
-                `Order cannot move from "${order.status}" to "${status}". Allowed next status: ${
-                    allowedNextStatuses.length ? allowedNextStatuses.join(", ") : "none"
-                }.`,
-                400
-            )
-        );
-    }
+    let order;
+    try {
+        order = await Order.findById(req.params.id)
+            .populate("user", "name email")
+            .session(session);
 
-    // If cancelled by admin, restore stock
-    if (status === "Cancelled" && order.status !== "Cancelled") {
-        for (const item of order.orderItems) {
-            await Product.findByIdAndUpdate(item.product, {
-                $inc: { stock: item.quantity }
-            });
+        if (!order) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Order not found", 404));
         }
+
+        if (order.status === "Completed") {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Completed orders cannot be modified.", 400));
+        }
+
+        // FR 4.2 / assumption 9: the status flow can only move forward.
+        const allowedNextStatuses = ORDER_STATUS_FLOW[order.status] || [];
+
+        if (!allowedNextStatuses.includes(status)) {
+            await session.abortTransaction();
+            return next(
+                new ErrorHandler(
+                    `Order cannot move from "${order.status}" to "${status}". Allowed next status: ${
+                        allowedNextStatuses.length ? allowedNextStatuses.join(", ") : "none"
+                    }.`,
+                    400
+                )
+            );
+        }
+
+        // If cancelled by admin, restore stock within the transaction
+        if (status === "Cancelled" && order.status !== "Cancelled") {
+            for (const item of order.orderItems) {
+                await Product.findByIdAndUpdate(
+                    item.product,
+                    { $inc: { stock: item.quantity } },
+                    { session }
+                );
+            }
+        }
+
+        order.status = status;
+        if (status === "Paid") {
+            order.paymentStatus = "Paid";
+        }
+
+        order.statusHistory.push({
+            status,
+            changedAt: new Date()
+        });
+
+        await order.save({ session });
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
     }
-
-    order.status = status;
-    if (status === "Paid") {
-        order.paymentStatus = "Paid";
-    }
-
-    order.statusHistory.push({
-        status,
-        changedAt: new Date()
-    });
-
-    await order.save();
 
     // Generate PDF receipt attachment for every status notification
     const attachments = await buildPdfAttachment(order, order.user);
@@ -726,30 +811,48 @@ const updateAdminOrder = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Admin: Delete order (soft delete: marks Cancelled and restores stock)
+// Admin: Delete order (soft delete: marks Cancelled and restores stock inside a transaction)
 const deleteAdminOrder = catchAsyncErrors(async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         return next(new ErrorHandler("Invalid order ID", 400));
     }
 
-    const order = await Order.findById(req.params.id);
-    if (!order) {
-        return next(new ErrorHandler("Order not found", 404));
-    }
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    // Soft delete: set status to Cancelled and restore inventory if not already cancelled
-    if (order.status !== "Cancelled") {
-        for (const item of order.orderItems) {
-            await Product.findByIdAndUpdate(item.product, {
-                $inc: { stock: item.quantity }
-            });
+    let order;
+    try {
+        order = await Order.findById(req.params.id).session(session);
+        if (!order) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Order not found", 404));
         }
-        order.status = "Cancelled";
-        order.statusHistory.push({
-            status: "Cancelled",
-            changedAt: new Date()
-        });
-        await order.save();
+
+        // Soft delete: set status to Cancelled and restore inventory if not already cancelled
+        if (order.status !== "Cancelled") {
+            for (const item of order.orderItems) {
+                await Product.findByIdAndUpdate(
+                    item.product,
+                    { $inc: { stock: item.quantity } },
+                    { session }
+                );
+            }
+            order.status = "Cancelled";
+            order.statusHistory.push({
+                status: "Cancelled",
+                changedAt: new Date()
+            });
+            await order.save({ session });
+        }
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
     }
 
     res.status(200).json({

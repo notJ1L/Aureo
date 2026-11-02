@@ -8,18 +8,27 @@ const ErrorHandler = require("../utils/ErrorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncErrors");
 const { cleanText } = require("../utils/filterBadWords");
 
-// Helper to update product ratings (active reviews only)
-const updateProductRatingStats = async (productId) => {
-    const reviews = await Review.find({ product: productId, isActive: true });
+// Helper to update product ratings (active reviews only), optionally inside a transaction session
+const updateProductRatingStats = async (productId, session = null) => {
+    const query = Review.find({ product: productId, isActive: true });
+    if (session) {
+        query.session(session);
+    }
+    const reviews = await query;
     const numOfReviews = reviews.length;
-    const ratings = numOfReviews > 0
-        ? Number((reviews.reduce((acc, r) => acc + r.rating, 0) / numOfReviews).toFixed(1))
-        : 0;
+    const ratings =
+        numOfReviews > 0
+            ? Number((reviews.reduce((acc, r) => acc + r.rating, 0) / numOfReviews).toFixed(1))
+            : 0;
 
-    await Product.findByIdAndUpdate(productId, {
-        ratings,
-        numOfReviews
-    });
+    await Product.findByIdAndUpdate(
+        productId,
+        {
+            ratings,
+            numOfReviews
+        },
+        session ? { session } : {}
+    );
 };
 
 // Public: Get all active reviews for a product (plus review eligibility if signed in)
@@ -36,7 +45,8 @@ const getProductReviews = catchAsyncErrors(async (req, res, next) => {
 
     let canReview = false;
     let purchaseStatus = null;
-    let ineligibleReason = "Only collectors who have purchased and received this timepiece can leave a review.";
+    let ineligibleReason =
+        "Only collectors who have purchased and received this timepiece can leave a review.";
 
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -82,7 +92,7 @@ const getProductReviews = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Verified purchaser: Create or update review for product
+// Verified purchaser: Create or update review for product (using a MongoDB ACID transaction)
 const createOrUpdateReview = catchAsyncErrors(async (req, res, next) => {
     const { id } = req.params;
     const { rating, comment } = req.body;
@@ -138,29 +148,50 @@ const createOrUpdateReview = catchAsyncErrors(async (req, res, next) => {
     // Unit 1: mask profanity before the review is stored.
     const safeComment = cleanText(comment.trim());
 
-    // Check if review already exists. A soft deleted review is reused so the
-    // unique (user, product) index is never violated by a second posting.
-    let review = await Review.findOne({
-        user: req.user._id,
-        product: id
-    });
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (review) {
-        review.rating = Number(rating);
-        review.comment = safeComment;
-        review.isActive = true;
-        await review.save();
-    } else {
-        review = await Review.create({
+    let review;
+    try {
+        // Check if review already exists. A soft deleted review is reused so the
+        // unique (user, product) index is never violated by a second posting.
+        review = await Review.findOne({
             user: req.user._id,
-            product: id,
-            rating: Number(rating),
-            comment: safeComment
-        });
-    }
+            product: id
+        }).session(session);
 
-    // Recalculate average rating & review count
-    await updateProductRatingStats(id);
+        if (review) {
+            review.rating = Number(rating);
+            review.comment = safeComment;
+            review.isActive = true;
+            await review.save({ session });
+        } else {
+            const created = await Review.create(
+                [
+                    {
+                        user: req.user._id,
+                        product: id,
+                        rating: Number(rating),
+                        comment: safeComment
+                    }
+                ],
+                { session }
+            );
+            review = created[0];
+        }
+
+        // Recalculate average rating & review count inside the same transaction
+        await updateProductRatingStats(id, session);
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
+    }
 
     res.status(200).json({
         success: true,
@@ -169,7 +200,7 @@ const createOrUpdateReview = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Owner only: update an existing review. FR 6.1 / MP3.
+// Owner only: update an existing review inside a MongoDB transaction. FR 6.1 / MP3.
 const updateReview = catchAsyncErrors(async (req, res, next) => {
     const { id } = req.params;
     const { rating, comment } = req.body;
@@ -178,43 +209,61 @@ const updateReview = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Invalid review ID", 400));
     }
 
-    const review = await Review.findById(id);
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (!review || !review.isActive) {
-        return next(new ErrorHandler("Review not found", 404));
-    }
+    let review;
+    try {
+        review = await Review.findById(id).session(session);
 
-    const isOwner = review.user.toString() === req.user._id.toString();
+        if (!review || !review.isActive) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Review not found", 404));
+        }
 
-    if (!isOwner) {
-        return next(
-            new ErrorHandler("You are not authorized to edit this review", 403)
-        );
-    }
+        const isOwner = review.user.toString() === req.user._id.toString();
 
-    if (rating !== undefined) {
-        const parsedRating = Number(rating);
-
-        if (!parsedRating || parsedRating < 1 || parsedRating > 5) {
+        if (!isOwner) {
+            await session.abortTransaction();
             return next(
-                new ErrorHandler("Rating must be a whole number between 1 and 5", 400)
+                new ErrorHandler("You are not authorized to edit this review", 403)
             );
         }
 
-        review.rating = parsedRating;
-    }
+        if (rating !== undefined) {
+            const parsedRating = Number(rating);
 
-    if (comment !== undefined) {
-        if (!comment || !comment.trim()) {
-            return next(new ErrorHandler("Review comment cannot be empty", 400));
+            if (!parsedRating || parsedRating < 1 || parsedRating > 5) {
+                await session.abortTransaction();
+                return next(
+                    new ErrorHandler("Rating must be a whole number between 1 and 5", 400)
+                );
+            }
+
+            review.rating = parsedRating;
         }
 
-        review.comment = cleanText(comment.trim());
+        if (comment !== undefined) {
+            if (!comment || !comment.trim()) {
+                await session.abortTransaction();
+                return next(new ErrorHandler("Review comment cannot be empty", 400));
+            }
+
+            review.comment = cleanText(comment.trim());
+        }
+
+        await review.save({ session });
+        await updateProductRatingStats(review.product, session);
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
     }
-
-    await review.save();
-
-    await updateProductRatingStats(review.product);
 
     res.status(200).json({
         success: true,
@@ -223,7 +272,7 @@ const updateReview = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Delete review: Owner or Admin
+// Delete review: Owner or Admin (soft delete + rating recalculation inside a transaction)
 const deleteReview = catchAsyncErrors(async (req, res, next) => {
     const { id } = req.params;
 
@@ -231,26 +280,42 @@ const deleteReview = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Invalid review ID", 400));
     }
 
-    const review = await Review.findById(id);
-    if (!review) {
-        return next(new ErrorHandler("Review not found", 404));
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const review = await Review.findById(id).session(session);
+        if (!review) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Review not found", 404));
+        }
+
+        const isOwner = review.user.toString() === req.user._id.toString();
+        const isAdmin = req.user.role === "admin";
+
+        if (!isOwner && !isAdmin) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("You are not authorized to delete this review", 403));
+        }
+
+        const productId = review.product;
+
+        // Soft delete: set isActive to false
+        review.isActive = false;
+        await review.save({ session });
+
+        // Recalculate product ratings inside the transaction
+        await updateProductRatingStats(productId, session);
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
     }
-
-    const isOwner = review.user.toString() === req.user._id.toString();
-    const isAdmin = req.user.role === "admin";
-
-    if (!isOwner && !isAdmin) {
-        return next(new ErrorHandler("You are not authorized to delete this review", 403));
-    }
-
-    const productId = review.product;
-    
-    // Soft delete: set isActive to false
-    review.isActive = false;
-    await review.save();
-
-    // Recalculate
-    await updateProductRatingStats(productId);
 
     res.status(200).json({
         success: true,

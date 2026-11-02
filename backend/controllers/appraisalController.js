@@ -216,59 +216,84 @@ const adminReviewAppraisal = catchAsyncErrors(async (req, res, next) => {
 });
 
 // FR 3.3: an accepted appraisal becomes a second-hand product with a stock of
-// exactly one. The conversion is idempotent.
+// exactly one. The conversion is idempotent and runs inside a MongoDB transaction.
 const convertAppraisal = catchAsyncErrors(async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         return next(new ErrorHandler("Invalid appraisal ID", 400));
     }
 
-    const appraisal = await Appraisal.findById(req.params.id);
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (!appraisal) {
-        return next(new ErrorHandler("Appraisal not found", 404));
-    }
+    let appraisal;
+    let product;
+    try {
+        appraisal = await Appraisal.findById(req.params.id).session(session);
 
-    if (appraisal.convertedProduct) {
-        return next(
-            new ErrorHandler(
-                "This appraisal was already converted into a listing.",
-                409
-            )
+        if (!appraisal) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Appraisal not found", 404));
+        }
+
+        if (appraisal.convertedProduct) {
+            await session.abortTransaction();
+            return next(
+                new ErrorHandler(
+                    "This appraisal was already converted into a listing.",
+                    409
+                )
+            );
+        }
+
+        if (appraisal.status !== "Accepted") {
+            await session.abortTransaction();
+            return next(
+                new ErrorHandler(
+                    "Only an accepted appraisal can be converted into a listing.",
+                    400
+                )
+            );
+        }
+
+        const createdProducts = await Product.create(
+            [
+                {
+                    name: `${appraisal.brand} ${appraisal.model}`,
+                    brand: appraisal.brand,
+                    category: "pre-owned",
+                    movement: appraisal.movement,
+                    caseSize: appraisal.caseSize,
+                    condition: "second-hand",
+                    price: appraisal.offerPrice ?? appraisal.askingPrice,
+                    description: [
+                        `Pre-owned ${appraisal.brand} ${appraisal.model} from ${appraisal.year}.`,
+                        appraisal.hasBox ? "Original box included." : "",
+                        appraisal.hasPapers ? "Original papers included." : ""
+                    ]
+                        .filter(Boolean)
+                        .join(" "),
+                    images: appraisal.photos,
+                    // FR 2.2: a second-hand watch is a unique piece.
+                    stock: 1,
+                    isActive: true
+                }
+            ],
+            { session }
         );
+
+        product = createdProducts[0];
+        appraisal.convertedProduct = product._id;
+        await appraisal.save({ session });
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
     }
-
-    if (appraisal.status !== "Accepted") {
-        return next(
-            new ErrorHandler(
-                "Only an accepted appraisal can be converted into a listing.",
-                400
-            )
-        );
-    }
-
-    const product = await Product.create({
-        name: `${appraisal.brand} ${appraisal.model}`,
-        brand: appraisal.brand,
-        category: "pre-owned",
-        movement: appraisal.movement,
-        caseSize: appraisal.caseSize,
-        condition: "second-hand",
-        price: appraisal.offerPrice ?? appraisal.askingPrice,
-        description: [
-            `Pre-owned ${appraisal.brand} ${appraisal.model} from ${appraisal.year}.`,
-            appraisal.hasBox ? "Original box included." : "",
-            appraisal.hasPapers ? "Original papers included." : ""
-        ]
-            .filter(Boolean)
-            .join(" "),
-        images: appraisal.photos,
-        // FR 2.2: a second-hand watch is a unique piece.
-        stock: 1,
-        isActive: true
-    });
-
-    appraisal.convertedProduct = product._id;
-    await appraisal.save();
 
     res.status(201).json({
         success: true,

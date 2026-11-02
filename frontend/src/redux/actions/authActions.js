@@ -28,36 +28,48 @@ const translateSupabaseError = (error) => {
 };
 
 // FR 1.1: Register the Supabase identity first, then link it to the Aureo
-// profile. The password never reaches the Aureo backend.
+// profile and dispatch the Aureo Registration Acknowledgement Email via SMTP.
 export const registerUser = ({ name, email, password }) => async (dispatch) => {
     dispatch({ type: AUTH_REGISTER_REQUEST });
     try {
-        const supabase = getSupabase();
+        let supabaseUserId = null;
 
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: { name }
+        try {
+            const supabase = getSupabase();
+
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: { name }
+                }
+            });
+
+            if (error) {
+                const isRecoverableOnBackend =
+                    error?.code === "email_exists" ||
+                    error?.code === "over_email_send_rate_limit" ||
+                    /already|registered|exists|rate limit/i.test(error?.message || "");
+
+                if (!isRecoverableOnBackend) {
+                    throw new Error(translateSupabaseError(error));
+                }
+            } else {
+                supabaseUserId = data?.user?.id || null;
             }
-        });
-
-        if (error) {
-            // An identity that already exists in Supabase is not a hard
-            // failure here, the backend links it to the Aureo profile.
-            const isAlreadyRegistered =
-                error?.code === "email_exists" ||
-                /already|registered|exists/i.test(error?.message || "");
-
-            if (!isAlreadyRegistered) {
-                throw new Error(translateSupabaseError(error));
+        } catch (supaErr) {
+            const isRecoverable =
+                /already|registered|exists|rate limit|fetch|network/i.test(supaErr?.message || "");
+            if (!isRecoverable) {
+                throw supaErr;
             }
         }
 
         const { data: response } = await api.post("/register", {
             name,
             email,
-            supabaseUserId: data?.user?.id
+            password,
+            supabaseUserId
         });
 
         dispatch({ type: AUTH_REGISTER_SUCCESS, payload: response.email });

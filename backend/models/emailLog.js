@@ -1,4 +1,4 @@
-﻿const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 
 const emailLogSchema = new mongoose.Schema(
     {
@@ -22,7 +22,7 @@ const emailLogSchema = new mongoose.Schema(
 
         type: {
             type: String,
-            enum: ["verification", "order", "ticket"],
+            enum: ["verification", "registration", "order", "ticket"],
             required: true
         },
 

@@ -46,7 +46,7 @@ function RegisterPage() {
         setHandledEmail(registeredEmail);
         setStage("verify");
         setVerifyValue("email", registeredEmail, { shouldValidate: false });
-        setInfoMsg(`Verification code sent to ${registeredEmail}. Please check your inbox.`);
+        setInfoMsg(`An Aureo registration acknowledgement and 6-digit verification code has been sent to ${registeredEmail}. Please check your inbox.`);
     }
 
     useEffect(() => {
@@ -177,7 +177,7 @@ function RegisterPage() {
                             <p className="eyebrow">VERIFY EMAIL</p>
                             <h1>Confirm your code</h1>
                             <p className="auth-description">
-                                Enter the 6-digit confirmation code sent to your email to activate your account.
+                                Enter the 6-digit confirmation code sent in your Aureo registration acknowledgement email to activate your account.
                             </p>
 
                             {infoMsg && (
