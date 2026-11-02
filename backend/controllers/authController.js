@@ -876,6 +876,30 @@ const deleteUser = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
+// Admin: Permanently delete a deactivated user.
+const permanentlyDeleteUser = catchAsyncErrors(async (req, res, next) => {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+    }
+
+    if (user._id.toString() === req.user._id.toString()) {
+        return next(new ErrorHandler("An administrator cannot delete their own account", 400));
+    }
+
+    if (user.isActive !== false) {
+        return next(new ErrorHandler("Only deactivated users can be permanently deleted", 400));
+    }
+
+    await User.deleteOne({ _id: user._id });
+
+    res.status(200).json({
+        success: true,
+        message: "User permanently deleted"
+    });
+});
+
 module.exports = {
     registerUser,
     verifyEmail,
@@ -891,5 +915,6 @@ module.exports = {
     updateUserByAdmin,
     updateUserRole,
     bulkDeleteUsers,
-    deleteUser
+    deleteUser,
+    permanentlyDeleteUser
 };

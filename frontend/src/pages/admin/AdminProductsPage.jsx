@@ -8,7 +8,6 @@ import {
     getAdminProducts,
     createProduct,
     updateProduct,
-    deleteProduct,
     bulkDeleteProducts,
     bulkUpdateProductStatus
 } from "../../redux/actions/productActions";
@@ -20,6 +19,7 @@ import {
     PRODUCT_BULK_STATUS_RESET
 } from "../../redux/constants/productConstants";
 import { confirmAction } from "../../utils/sweetAlert";
+import api from "../../services/api";
 import { ValidatedField } from "../../components/ui/ValidatedField";
 import { StatusBadge, AureoCheckbox, AureoSelect } from "../../components/ui";
 import { productSchema } from "../../utils/validationSchemas";
@@ -49,6 +49,23 @@ const EMPTY_PRODUCT = {
     price: 0,
     stock: 5,
     description: ""
+};
+
+const PRODUCT_ACTION_STYLE = {
+    height: "32px",
+    padding: "4px 12px",
+    border: "1px solid var(--gold)",
+    borderRadius: "4px",
+    background: "transparent",
+    color: "var(--gold)",
+    fontSize: "0.8rem",
+    whiteSpace: "nowrap"
+};
+
+const PRODUCT_DANGER_ACTION_STYLE = {
+    ...PRODUCT_ACTION_STYLE,
+    borderColor: "#e53935",
+    color: "#e53935"
 };
 
 function AdminProductsPage() {
@@ -330,7 +347,13 @@ function AdminProductsPage() {
         });
 
         if (confirmed) {
-            dispatch(deleteProduct(prod._id));
+            try {
+                await api.delete(`/admin/product/${prod._id}/hard`);
+                toast.success("Timepiece removed permanently");
+                dispatch(getAdminProducts());
+            } catch (requestError) {
+                toast.error(requestError.response?.data?.message || "Failed to permanently delete timepiece");
+            }
         }
     };
 
@@ -771,6 +794,7 @@ function AdminProductsPage() {
                                                             type="button"
                                                             className="admin-btn edit-btn"
                                                             onClick={() => handleOpenEdit(prod)}
+                                                            style={PRODUCT_ACTION_STYLE}
                                                         >
                                                             Edit
                                                         </button>
@@ -779,6 +803,7 @@ function AdminProductsPage() {
                                                             className="admin-btn del-btn"
                                                             onClick={() => handleToggleActive(prod)}
                                                             title="Archive / Deactivate this timepiece"
+                                                            style={PRODUCT_DANGER_ACTION_STYLE}
                                                         >
                                                             Deactivate
                                                         </button>
@@ -790,6 +815,7 @@ function AdminProductsPage() {
                                                             className="admin-btn restore-btn"
                                                             onClick={() => handleToggleActive(prod)}
                                                             title="Restore to active catalog"
+                                                            style={PRODUCT_ACTION_STYLE}
                                                         >
                                                             Restore
                                                         </button>
@@ -797,6 +823,7 @@ function AdminProductsPage() {
                                                             type="button"
                                                             className="admin-btn edit-btn"
                                                             onClick={() => handleOpenEdit(prod)}
+                                                            style={PRODUCT_ACTION_STYLE}
                                                         >
                                                             Edit
                                                         </button>
@@ -805,6 +832,13 @@ function AdminProductsPage() {
                                                             className="admin-btn del-btn"
                                                             onClick={() => handlePermanentDelete(prod)}
                                                             title="Permanently remove from database"
+                                                            style={{
+                                                                ...PRODUCT_ACTION_STYLE,
+                                                                border: "1px solid #e53935",
+                                                                background: "#e53935",
+                                                                color: "#fff",
+                                                                whiteSpace: "nowrap"
+                                                            }}
                                                         >
                                                             Delete
                                                         </button>

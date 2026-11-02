@@ -15,7 +15,8 @@ const {
     updateUserByAdmin,
     updateUserRole,
     bulkDeleteUsers,
-    deleteUser
+    deleteUser,
+    permanentlyDeleteUser
 } = require("../controllers/authController");
 
 const {
@@ -51,5 +52,12 @@ router
     .get(isAuthenticatedUser, authorizeRoles("admin"), getSingleUser)
     .put(isAuthenticatedUser, authorizeRoles("admin"), updateUserByAdmin)
     .delete(isAuthenticatedUser, authorizeRoles("admin"), deleteUser);
+
+router.delete(
+    "/admin/user/:id/hard",
+    isAuthenticatedUser,
+    authorizeRoles("admin"),
+    permanentlyDeleteUser
+);
 
 module.exports = router;

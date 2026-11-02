@@ -7,6 +7,7 @@ const {
     createProduct,
     updateProduct,
     deleteProduct,
+    permanentlyDeleteProduct,
     bulkDeleteProducts,
     bulkUpdateProductStatus,
     getWishlist,
@@ -31,6 +32,7 @@ router.delete("/wishlist/:productId", isAuthenticatedUser, removeFromWishlist);
 router.get("/admin/products", isAuthenticatedUser, authorizeRoles("admin"), getAdminProducts);
 router.post("/admin/product/new", isAuthenticatedUser, authorizeRoles("admin"), createProduct);
 router.put("/admin/product/:id", isAuthenticatedUser, authorizeRoles("admin"), updateProduct);
+router.delete("/admin/product/:id/hard", isAuthenticatedUser, authorizeRoles("admin"), permanentlyDeleteProduct);
 router.delete("/admin/product/:id", isAuthenticatedUser, authorizeRoles("admin"), deleteProduct);
 router.post("/admin/products/bulk-delete", isAuthenticatedUser, authorizeRoles("admin"), bulkDeleteProducts);
 router.post("/admin/products/bulk-status", isAuthenticatedUser, authorizeRoles("admin"), bulkUpdateProductStatus);

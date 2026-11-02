@@ -19,6 +19,7 @@ import {
 } from "../../redux/constants/userConstants";
 import { adminUserSchema } from "../../utils/validationSchemas";
 import { confirmAction } from "../../utils/sweetAlert";
+import api from "../../services/api";
 import AdminHeader from "../../components/layout/AdminHeader";
 import { AureoCheckbox, AureoSelect } from "../../components/ui";
 import {
@@ -36,6 +37,23 @@ const EMPTY_FORM = {
     address: "",
     isVerified: true,
     password: ""
+};
+
+const USER_ACTION_STYLE = {
+    height: "32px",
+    padding: "4px 12px",
+    border: "1px solid var(--gold)",
+    borderRadius: "4px",
+    background: "transparent",
+    color: "var(--gold)",
+    fontSize: "0.8rem",
+    whiteSpace: "nowrap"
+};
+
+const USER_DANGER_ACTION_STYLE = {
+    ...USER_ACTION_STYLE,
+    borderColor: "#e53935",
+    color: "#e53935"
 };
 
 export default function AdminUsersPage() {
@@ -269,6 +287,25 @@ export default function AdminUsersPage() {
             if (confirmed) {
                 dispatch(updateUser(targetUser._id, { isActive: true }));
             }
+        }
+    };
+
+    const handlePermanentDelete = async (targetUser) => {
+        const confirmed = await confirmAction({
+            title: "Permanently Delete?",
+            message: "This will permanently delete this user. This cannot be undone.",
+            confirmText: "Delete Permanently",
+            danger: true
+        });
+
+        if (!confirmed) return;
+
+        try {
+            await api.delete(`/admin/user/${targetUser._id}/hard`);
+            toast.success("User deleted permanently");
+            dispatch(getAdminUsers());
+        } catch (requestError) {
+            toast.error(requestError.response?.data?.message || "Failed to permanently delete user");
         }
     };
 
@@ -762,6 +799,7 @@ export default function AdminUsersPage() {
                                                         className="admin-btn edit-btn"
                                                         onClick={() => handleOpenEdit(targetUser)}
                                                         title="Edit User Details"
+                                                        style={USER_ACTION_STYLE}
                                                     >
                                                         Edit
                                                     </button>
@@ -771,18 +809,37 @@ export default function AdminUsersPage() {
                                                         onClick={() => handleToggleRole(targetUser)}
                                                         disabled={isSelf}
                                                         title={isAdmin ? "Demote to Client" : "Promote to Admin"}
+                                                        style={USER_ACTION_STYLE}
                                                     >
                                                         {isAdmin ? "Demote" : "Promote"}
                                                     </button>
                                                     {targetUser.isActive === false ? (
-                                                        <button
-                                                            type="button"
-                                                            className="admin-btn restore-btn"
-                                                            onClick={() => handleToggleActive(targetUser)}
-                                                            title="Restore this user account"
-                                                        >
-                                                            Restore
-                                                        </button>
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                className="admin-btn"
+                                                                onClick={() => handlePermanentDelete(targetUser)}
+                                                                title="Permanently delete this user"
+                                                                style={{
+                                                                    ...USER_ACTION_STYLE,
+                                                                    border: "1px solid #e53935",
+                                                                    background: "#e53935",
+                                                                    color: "#fff",
+                                                                    whiteSpace: "nowrap"
+                                                                }}
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="admin-btn restore-btn"
+                                                                onClick={() => handleToggleActive(targetUser)}
+                                                                title="Restore this user account"
+                                                                style={USER_ACTION_STYLE}
+                                                            >
+                                                                Reactivate
+                                                            </button>
+                                                        </>
                                                     ) : (
                                                         <button
                                                             type="button"
@@ -790,6 +847,7 @@ export default function AdminUsersPage() {
                                                             onClick={() => handleToggleActive(targetUser)}
                                                             disabled={isSelf}
                                                             title={isSelf ? "You cannot deactivate your own account" : "Deactivate (Soft Delete) User"}
+                                                            style={USER_DANGER_ACTION_STYLE}
                                                         >
                                                             Deactivate
                                                         </button>

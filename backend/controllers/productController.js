@@ -217,6 +217,38 @@ const deleteProduct = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
+// Admin: Permanently delete an archived product.
+const permanentlyDeleteProduct = catchAsyncErrors(async (req, res, next) => {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        return next(new ErrorHandler("Invalid product ID", 400));
+    }
+
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+        return next(new ErrorHandler("Product not found", 404));
+    }
+
+    if (product.isActive !== false) {
+        return next(new ErrorHandler("Only archived products can be permanently deleted", 400));
+    }
+
+    const imageIds = (product.images || []).map((image) => image.public_id).filter(Boolean);
+    if (imageIds.length > 0) {
+        await Promise.all(imageIds.map((publicId) => cloudinary.uploader.destroy(publicId)));
+    }
+
+    await User.updateMany(
+        { wishlist: req.params.id },
+        { $pull: { wishlist: req.params.id } }
+    );
+    await Product.deleteOne({ _id: product._id });
+
+    res.status(200).json({
+        success: true,
+        message: "Product permanently deleted"
+    });
+});
+
 // Admin: Bulk delete products (Strictly soft delete - no hard delete)
 const bulkDeleteProducts = catchAsyncErrors(async (req, res, next) => {
     const { ids } = req.body;
@@ -359,6 +391,7 @@ module.exports = {
     createProduct,
     updateProduct,
     deleteProduct,
+    permanentlyDeleteProduct,
     bulkDeleteProducts,
     bulkUpdateProductStatus,
     getWishlist,
