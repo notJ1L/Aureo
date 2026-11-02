@@ -144,7 +144,7 @@ function CheckoutPage() {
 
                 {!user?.isVerified && (
                     <div className="auth-error" style={{ marginBottom: "1.5rem" }}>
-                        ⚠ <strong>Account Not Verified:</strong> Per Aureo security protocol, you must verify your email before placing an acquisition order. Check your inbox or profile page.
+                        <strong>Account Not Verified:</strong> Per Aureo security protocol, you must verify your email before placing an acquisition order. Check your inbox or profile page.
                     </div>
                 )}
 
@@ -269,7 +269,7 @@ function CheckoutPage() {
                                         />
                                         <div className="payment-pill__content">
                                             <strong className="payment-pill__title">
-                                                💳 Credit / Private Client Card (Sandbox)
+                                                Credit / Private Client Card (Sandbox)
                                             </strong>
                                             <span className="payment-pill__desc">
                                                 Instant escrow authorization with 256-bit encryption.
@@ -291,7 +291,7 @@ function CheckoutPage() {
                                         />
                                         <div className="payment-pill__content">
                                             <strong className="payment-pill__title">
-                                                💵 Wire Settlement / Armored Cash on Delivery
+                                                Wire Settlement / Armored Cash on Delivery
                                             </strong>
                                             <span className="payment-pill__desc">
                                                 Settle via direct bank wire or upon armored courier handover.

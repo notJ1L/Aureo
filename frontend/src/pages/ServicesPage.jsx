@@ -245,7 +245,7 @@ function ServicesPage() {
                         </div>
                     ) : !user?.isVerified ? (
                         <div className="auth-error" style={{ textAlign: "center", padding: "1.5rem" }}>
-                            ⚠ <strong>Verification Required:</strong> Please verify your email before opening a support ticket.
+                            <strong>Verification Required:</strong> Please verify your email before opening a support ticket.
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit(onSubmit)} className="admin-form sell-card">

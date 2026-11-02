@@ -107,7 +107,7 @@ function AdminOrderDetailPage() {
                                 disabled={downloadingPdf}
                                 style={{ minHeight: "40px", padding: "0 1rem", fontSize: "0.8rem" }}
                             >
-                                {downloadingPdf ? "Generating PDF..." : "📄 Download PDF Receipt"}
+                                {downloadingPdf ? "Generating PDF..." : "Download PDF Receipt"}
                             </button>
                         )}
                     </div>

@@ -130,7 +130,7 @@ function ProfilePage() {
                         <div className="profile-badges">
                             <span className="badge role-badge">{user?.role?.toUpperCase()}</span>
                             <span className={`badge ${user?.isVerified ? "verified-badge" : "unverified-badge"}`}>
-                                {user?.isVerified ? "✓ Verified" : "⚠ Unverified"}
+                                {user?.isVerified ? "✓ Verified" : "Unverified"}
                             </span>
                         </div>
                     </div>
