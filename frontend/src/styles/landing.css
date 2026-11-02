@@ -762,3 +762,231 @@
         border-top: 0;
     }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Light mode                                                                 */
+/* -------------------------------------------------------------------------- */
+
+:root[data-theme="light"] .storefront-luxury {
+    background: var(--bg-page);
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .home-top-marquee {
+    background: var(--bg-elevated);
+    border-bottom-color: var(--border);
+    color: var(--text-secondary);
+}
+
+:root[data-theme="light"] .home-top-marquee__inner svg {
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .home-kicker {
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .home-title {
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .home-lead {
+    color: var(--text-secondary);
+}
+
+:root[data-theme="light"] .home-metrics {
+    background: var(--bg-elevated);
+    border-top-color: var(--border);
+    border-bottom-color: var(--border);
+}
+
+:root[data-theme="light"] .home-metric-card {
+    border-left-color: var(--border);
+}
+
+:root[data-theme="light"] .home-metric-card__num {
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .home-metric-card__label {
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .home-metric-card__sub {
+    color: var(--text-muted);
+}
+
+:root[data-theme="light"] .home-dept-card {
+    background: var(--bg-card);
+    border-color: var(--border);
+}
+
+:root[data-theme="light"] .home-dept-card:hover {
+    border-color: var(--gold-35);
+}
+
+:root[data-theme="light"] .home-collection {
+    background: var(--bg-elevated);
+    border-top-color: var(--border);
+}
+
+:root[data-theme="light"] .home-tabs {
+    border-bottom-color: var(--border);
+}
+
+:root[data-theme="light"] .home-tab {
+    border-color: var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+}
+
+:root[data-theme="light"] .home-tab:hover {
+    border-color: var(--gold-35);
+    color: var(--text-primary);
+    background: var(--gold-08);
+}
+
+:root[data-theme="light"] .home-message {
+    color: var(--text-muted);
+}
+
+:root[data-theme="light"] .home-selector-section {
+    background: radial-gradient(ellipse at 50% 50%, var(--gold-06) 0%, transparent 70%), var(--bg-page);
+    border-top-color: var(--border);
+    border-bottom-color: var(--border);
+}
+
+:root[data-theme="light"] .home-selector-box {
+    background: var(--bg-card);
+    border-color: var(--gold-35);
+}
+
+:root[data-theme="light"] .home-selector-title {
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .home-selector-text {
+    color: var(--text-secondary);
+}
+
+:root[data-theme="light"] .home-selector-label {
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .selector-pill {
+    border-color: var(--border);
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+}
+
+:root[data-theme="light"] .selector-pill:hover {
+    border-color: var(--gold-55);
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .selector-pill.is-active {
+    border-color: var(--gold);
+    background: var(--gold-18);
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .home-atelier__media {
+    border-color: var(--border);
+}
+
+:root[data-theme="light"] .home-atelier__seal {
+    background: var(--bg-card);
+    border-color: var(--gold-35);
+}
+
+:root[data-theme="light"] .seal-tag {
+    color: var(--success);
+}
+
+:root[data-theme="light"] .seal-title {
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .seal-desc {
+    color: var(--text-muted);
+}
+
+:root[data-theme="light"] .home-pillar__icon {
+    border-color: var(--gold-30);
+    background: var(--gold-08);
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .home-pillar__title {
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .home-pillar__desc {
+    color: var(--text-muted);
+}
+
+:root[data-theme="light"] .home-testimonials {
+    background: var(--bg-elevated);
+    border-top-color: var(--border);
+}
+
+:root[data-theme="light"] .home-testimonial-card {
+    background: var(--bg-card);
+    border-color: var(--border);
+}
+
+:root[data-theme="light"] .home-testimonial-card:hover {
+    border-color: var(--gold-35);
+}
+
+:root[data-theme="light"] .home-testimonial__stars {
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .home-testimonial__quote {
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .home-testimonial__author {
+    border-top-color: var(--border);
+}
+
+:root[data-theme="light"] .home-testimonial__author strong {
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .home-testimonial__author span {
+    color: var(--text-muted);
+}
+
+:root[data-theme="light"] .home-services-strip {
+    background: var(--bg-elevated);
+    border-top-color: var(--border);
+    border-bottom-color: var(--border);
+}
+
+:root[data-theme="light"] .home-service-item {
+    border-color: var(--border);
+}
+
+:root[data-theme="light"] .home-service-item:hover {
+    background: var(--gold-06);
+}
+
+:root[data-theme="light"] .home-service-item__icon {
+    border-color: var(--gold-35);
+    background: var(--gold-08);
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .home-service-item:hover .home-service-item__icon {
+    background: var(--gold-18);
+}
+
+:root[data-theme="light"] .home-service-item__title {
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .home-service-item__desc {
+    color: var(--text-muted);
+}

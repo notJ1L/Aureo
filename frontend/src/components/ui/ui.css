@@ -530,3 +530,14 @@ input.MuiSelect-nativeInput {
     fill: #0b0c10;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Light mode                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/* The close glyph is a dark Bootstrap icon that is inverted so it reads on
+ * the dark modal. On the light modal the glyph must stay dark, so the
+ * invert is removed. */
+:root[data-theme="light"] .aureo-modal .btn-close {
+    filter: none;
+}
+

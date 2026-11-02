@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useCartCount } from "../../hooks/useCartCount";
-import { IconBag, IconHeart, IconMenu } from "./icons";
+import { useTheme } from "../ui/AureoProvider";
+import { IconBag, IconHeart, IconMenu, IconMoon, IconSun } from "./icons";
 import "./site.css";
 
 const NAV_ITEMS = [
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
 export function SiteHeader({ variant = "solid" }) {
     const { isAuthenticated, user } = useSelector((state) => state.auth);
     const cartCount = useCartCount();
+    const { theme, toggleTheme } = useTheme();
 
     const [scrolled, setScrolled] = useState(() => window.scrollY > 24);
     const [menuOpen, setMenuOpen] = useState(false);
@@ -86,6 +88,16 @@ export function SiteHeader({ variant = "solid" }) {
                 </nav>
 
                 <div className="site-actions">
+                    <button
+                        type="button"
+                        className="site-icon-btn site-theme-toggle"
+                        aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                        title={theme === "dark" ? "Light mode" : "Dark mode"}
+                        onClick={toggleTheme}
+                    >
+                        {theme === "dark" ? <IconSun /> : <IconMoon />}
+                    </button>
+
                     <Link to="/wishlist" className="site-icon-btn" aria-label="Wishlist" id="header-wishlist">
                         <IconHeart />
                     </Link>

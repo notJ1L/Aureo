@@ -22,6 +22,45 @@
     --font-body: "DM Sans", system-ui, sans-serif;
     --ease-lux: cubic-bezier(0.22, 1, 0.36, 1);
     --shadow-lux: 0 24px 60px -30px rgba(0, 0, 0, 0.7);
+
+    /* Header surfaces, so the header follows the theme without hardcoded ink. */
+    --header-bg: rgba(11, 11, 12, 0.92);
+    --header-bg-solid: rgba(11, 11, 12, 0.98);
+    --header-veil: linear-gradient(180deg, rgba(11, 11, 12, 0.7), transparent);
+    --hover-tint: rgba(255, 255, 255, 0.07);
+}
+
+/* Light storefront palette. Only the token values change; the dark theme
+ * keeps the `:root` defaults above untouched. */
+:root[data-theme="light"] {
+    --ink: #f5f0e8;
+    --ink-2: #fffdf7;
+    --ink-3: #ffffff;
+    --line: rgba(26, 26, 26, 0.1);
+    --line-strong: rgba(26, 26, 26, 0.2);
+    --ivory: #1a1a1a;
+    --ivory-2: #333333;
+    --ink-on-ivory: #ffffff;
+    --muted: #6f6a61;
+    --gold-light: #8b6d12;
+    --gold-bright: #8b6d12;
+    --gold-grad: linear-gradient(#8b6d12, #8b6d12);
+    --gold-grad-soft: linear-gradient(rgba(139, 109, 18, 0.1), rgba(139, 109, 18, 0.02));
+    --shadow-lux: 0 24px 60px -30px rgba(26, 26, 26, 0.25);
+    --header-bg: rgba(255, 253, 247, 0.92);
+    --header-bg-solid: rgba(255, 253, 247, 0.98);
+    --header-veil: linear-gradient(180deg, rgba(245, 240, 232, 0.92), transparent);
+    --hover-tint: rgba(26, 26, 26, 0.06);
+}
+
+/* Keep the light storefront header in normal flow so the hero photography
+ * starts below the navigation instead of sitting underneath it. */
+:root[data-theme="light"] .site-header--overlay {
+    position: sticky;
+    top: 0;
+    border-bottom-color: var(--line);
+    background: var(--header-bg-solid);
+    backdrop-filter: blur(14px);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -125,6 +164,29 @@
     color: #ecd6a6;
 }
 
+/* In light mode a ghost button carries dark ink; the gold fill of the primary
+ * button already reads on both palettes, so only the outline buttons change. */
+:root[data-theme="light"] .btn-ghost {
+    color: var(--ivory);
+    background: rgba(139, 109, 18, 0.06);
+}
+
+:root[data-theme="light"] .btn-ghost:hover {
+    color: var(--ivory);
+    background: rgba(139, 109, 18, 0.14);
+}
+
+:root[data-theme="light"] .btn-ink {
+    border-color: var(--line-strong);
+    background: #ffffff;
+    color: var(--ivory);
+}
+
+:root[data-theme="light"] .btn-ink:hover {
+    background: #f3efe6;
+    color: var(--gold-bright);
+}
+
 .btn-gold svg,
 .btn-ghost svg,
 .btn-ink svg {
@@ -153,21 +215,21 @@
     top: 0;
     left: 0;
     border-bottom: 1px solid transparent;
-    background: linear-gradient(180deg, rgba(11, 11, 12, 0.7), transparent);
+    background: var(--header-veil);
 }
 
 .site-header--solid {
     position: sticky;
     top: 0;
     border-bottom: 1px solid var(--line);
-    background: rgba(11, 11, 12, 0.92);
+    background: var(--header-bg);
     backdrop-filter: blur(14px);
 }
 
 .site-header--overlay.is-scrolled,
 .site-header--overlay.is-open {
     border-bottom-color: var(--line);
-    background: rgba(11, 11, 12, 0.92);
+    background: var(--header-bg);
     backdrop-filter: blur(14px);
 }
 
@@ -254,7 +316,7 @@
 .site-icon-btn:hover,
 .site-bag:hover,
 .site-burger:hover {
-    background: rgba(255, 255, 255, 0.07);
+    background: var(--hover-tint);
     color: var(--ivory);
 }
 
@@ -339,7 +401,7 @@
         gap: 0;
         padding: 0.5rem 16px 1rem;
         border-bottom: 1px solid var(--line);
-        background: rgba(11, 11, 12, 0.98);
+        background: var(--header-bg-solid);
         opacity: 0;
         pointer-events: none;
         transform: translateY(-6px);

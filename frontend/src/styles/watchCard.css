@@ -323,3 +323,53 @@
         animation: none;
     }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Light mode                                                                 */
+/* -------------------------------------------------------------------------- */
+
+:root[data-theme="light"] .watch-card {
+    background: var(--bg-card);
+    border-color: var(--border);
+}
+
+:root[data-theme="light"] .watch-card__media {
+    background: var(--bg-elevated);
+}
+
+:root[data-theme="light"] .watch-card__brand {
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .watch-card__spec-pill {
+    color: var(--text-muted);
+    background: var(--bg-elevated);
+}
+
+:root[data-theme="light"] .watch-card__name {
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .watch-card:hover .watch-card__name {
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .watch-card__meta-row {
+    border-top: 1px solid var(--border);
+}
+
+:root[data-theme="light"] .watch-card__price {
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .watch-card__rating {
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .watch-card__rating-score {
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .watch-card__rating-count {
+    color: var(--text-muted);
+}

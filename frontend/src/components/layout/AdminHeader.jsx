@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { useTheme } from "../ui/AureoProvider";
 import {
     IconBox,
     IconChat,
@@ -10,7 +11,9 @@ import {
     IconStore,
     IconTool,
     IconUser,
-    IconMenu
+    IconMenu,
+    IconMoon,
+    IconSun
 } from "./icons";
 import "../../styles/admin.css";
 
@@ -26,6 +29,7 @@ const ADMIN_LINKS = [
 
 export function AdminHeader() {
     const { user } = useSelector((state) => state.auth);
+    const { theme, toggleTheme } = useTheme();
     const [menuOpen, setMenuOpen] = useState(false);
 
     const closeMenu = () => setMenuOpen(false);
@@ -60,6 +64,16 @@ export function AdminHeader() {
                 </nav>
 
                 <div className="admin-vault-actions">
+                    <button
+                        type="button"
+                        className="admin-theme-toggle"
+                        aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                        title={theme === "dark" ? "Light mode" : "Dark mode"}
+                        onClick={toggleTheme}
+                    >
+                        {theme === "dark" ? <IconSun /> : <IconMoon />}
+                    </button>
+
                     <Link to="/" className="admin-quick-btn" title="View Public Storefront" onClick={closeMenu}>
                         <IconStore /> <span>Storefront</span>
                     </Link>

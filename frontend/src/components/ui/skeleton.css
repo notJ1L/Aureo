@@ -189,3 +189,30 @@
         animation: none;
     }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Light mode                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/* The skeleton surface and its breathing pulse were hardcoded to obsidian
+ * shades. On the pale page the block becomes a light well, and the pulse is
+ * switched off so the dark `sk-breathe` keyframe colours never apply; the
+ * gold shimmer sweep on `::after` still runs. */
+:root[data-theme="light"] .sk {
+    background: var(--bg-elevated);
+    animation: none;
+}
+
+/* The dial was drawn in translucent white, which vanishes on a light
+ * skeleton. It is re-inked with the text and border tones instead. */
+:root[data-theme="light"] .sk-dial {
+    stroke: var(--text-muted);
+}
+
+:root[data-theme="light"] .sk-dial__ring {
+    stroke: var(--border);
+}
+
+:root[data-theme="light"] .sk-dial__pin {
+    fill: var(--text-muted);
+}

@@ -386,3 +386,11 @@
         font-size: 2.3rem;
     }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Light mode                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/* The homepage hero deliberately keeps its dark photographic stage in light
+ * mode: the image, the dark veil over it, and the light headline/card/control
+ * text that sits on it are all left untouched on purpose. No overrides here. */

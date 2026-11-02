@@ -778,3 +778,116 @@
 .pdp-cart-banner__link-checkout:hover {
     filter: brightness(1.08);
 }
+
+/* -------------------------------------------------------------------------- */
+/* Light mode                                                                 */
+/* -------------------------------------------------------------------------- */
+
+:root[data-theme="light"] .pdp-frame {
+    background: var(--bg-elevated);
+}
+
+:root[data-theme="light"] .pdp-thumb {
+    background: var(--bg-elevated);
+}
+
+:root[data-theme="light"] .pdp-badge {
+    background: var(--bg-elevated);
+}
+
+:root[data-theme="light"] .pdp-wish.is-active {
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+:root[data-theme="light"] .pdp-assurance-matrix {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+:root[data-theme="light"] .pdp-assurance-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+}
+
+:root[data-theme="light"] .pdp-assurance-dot {
+    background: var(--gold);
+}
+
+:root[data-theme="light"] .pdp-assurance-item strong {
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .pdp-assurance-item span {
+    color: var(--text-muted);
+}
+
+:root[data-theme="light"] .pdp-qty-stepper {
+    border-color: var(--border);
+    background: var(--bg-elevated);
+}
+
+:root[data-theme="light"] .pdp-qty-stepper button:hover:not(:disabled) {
+    background: var(--gold-16);
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .pdp-in-bag-pill {
+    background: var(--gold-12);
+    border-color: var(--gold-35);
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .pdp-btn-cart {
+    border-color: var(--gold-55);
+    background: var(--gold-08);
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .pdp-btn-cart:hover:not(:disabled) {
+    background: var(--gold-18);
+    border-color: var(--gold);
+    color: var(--gold-hover);
+}
+
+:root[data-theme="light"] .pdp-btn-cart.is-added {
+    background: var(--success-15);
+    border-color: var(--success-40);
+    color: var(--success);
+}
+
+:root[data-theme="light"] .pdp-cart-banner {
+    background: var(--bg-elevated);
+    border-color: var(--gold-35);
+}
+
+:root[data-theme="light"] .pdp-cart-banner__badge {
+    background: var(--gold-20);
+    border-color: var(--gold-55);
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .pdp-cart-banner__title {
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .pdp-cart-banner__sub {
+    color: var(--text-muted);
+}
+
+:root[data-theme="light"] .pdp-cart-banner__actions {
+    border-top: 1px solid var(--border);
+}
+
+:root[data-theme="light"] .pdp-cart-banner__link-bag {
+    border-color: var(--border);
+}
+
+:root[data-theme="light"] .pdp-cart-banner__link-bag:hover {
+    background: var(--gold-06);
+}
+
+:root[data-theme="light"] .pdp-cart-banner__link-checkout {
+    border-color: var(--gold);
+    background: var(--gold);
+}

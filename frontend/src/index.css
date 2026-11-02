@@ -14,6 +14,8 @@
     --danger: #e5484d;
     --success: #3fb97f;
     --info: #6aa9ff;
+    /* Text/icon colour that sits on a solid `--gold` fill. */
+    --on-gold: #0b0c10;
 
     /* Derived tints. These keep the palette consistent: every translucent
      * fill in the application comes from one of the four colours above. */
@@ -68,6 +70,14 @@
 
     /* The gold focus ring, used by every interactive element. */
     --focus-ring: 0 0 0 3px rgba(201, 164, 92, 0.3);
+    --chart-grid: rgba(244, 239, 230, 0.06);
+    --chart-axis: #7d786e;
+    --chart-label: #b8b2a6;
+    --chart-line: #e2bb76;
+    --chart-highlight: #f6e3b0;
+    --chart-panel: rgba(14, 16, 22, 0.75);
+    --chart-tooltip-bg: rgba(13, 15, 20, 0.94);
+    --chart-tooltip-text: #f5f0e6;
 
     font-family: "DM Sans", sans-serif;
     color: var(--text-primary);
@@ -75,6 +85,94 @@
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+}
+
+/* Light mode. The dark palette above stays the default; this block only
+ * re-points the same tokens at a light luxury palette, so every rule that
+ * already reads from a token flips automatically. The `:root[data-theme]`
+ * form outranks the plain `:root` block regardless of source order. */
+:root[data-theme="light"] {
+    --bg-page: #f5f0e8;
+    --bg-card: #ffffff;
+    --bg-elevated: #fffdf7;
+    --border: rgba(139, 109, 18, 0.22);
+    --gold: #8b6d12;
+    --gold-hover: #a5871c;
+    --text-primary: #1a1a1a;
+    --text-secondary: #4a4a4a;
+    --text-muted: #7a756c;
+    --danger: #c0392b;
+    --success: #1f8a54;
+    --info: #2563eb;
+    /* The light gold is dark, so the fill needs light ink to stay legible. */
+    --on-gold: #ffffff;
+
+    /* Derived tints, re-based on the light gold so translucent fills keep
+     * working on a pale background. */
+    --gold-06: rgba(139, 109, 18, 0.06);
+    --gold-07: rgba(139, 109, 18, 0.07);
+    --gold-08: rgba(139, 109, 18, 0.08);
+    --gold-10: rgba(139, 109, 18, 0.1);
+    --gold-12: rgba(139, 109, 18, 0.12);
+    --gold-14: rgba(139, 109, 18, 0.14);
+    --gold-16: rgba(139, 109, 18, 0.16);
+    --gold-18: rgba(139, 109, 18, 0.18);
+    --gold-20: rgba(139, 109, 18, 0.2);
+    --gold-30: rgba(139, 109, 18, 0.3);
+    --gold-35: rgba(139, 109, 18, 0.35);
+    --gold-55: rgba(139, 109, 18, 0.55);
+    --danger-10: rgba(192, 57, 43, 0.1);
+    --danger-12: rgba(192, 57, 43, 0.12);
+    --danger-15: rgba(192, 57, 43, 0.15);
+    --danger-20: rgba(192, 57, 43, 0.2);
+    --danger-30: rgba(192, 57, 43, 0.3);
+    --danger-35: rgba(192, 57, 43, 0.35);
+    --success-08: rgba(31, 138, 84, 0.08);
+    --success-10: rgba(31, 138, 84, 0.1);
+    --success-15: rgba(31, 138, 84, 0.15);
+    --success-30: rgba(31, 138, 84, 0.3);
+    --success-35: rgba(31, 138, 84, 0.35);
+    --success-40: rgba(31, 138, 84, 0.4);
+    --info-55: rgba(37, 99, 235, 0.55);
+    --muted-50: rgba(122, 117, 108, 0.5);
+
+    /* A deeper red, so error text stays readable on the pale page. */
+    --danger-text: #b3261e;
+
+    /* The gold shades used by the CSS watch fallback and the 3D materials. */
+    --gold-highlight: #b8912a;
+    --gold-deep: #6b5410;
+    --gold-deepest: #4a3a0b;
+    --dial-face: #f0e9da;
+    --elevated-55: rgba(255, 253, 247, 0.55);
+
+    /* Scrims wash toward the light page; the overlays stay dark because they
+     * sit over photography. */
+    --scrim-35: rgba(245, 240, 232, 0.35);
+    --scrim-70: rgba(245, 240, 232, 0.7);
+    --text-25: rgba(26, 26, 26, 0.25);
+
+    /* The gold focus ring. */
+    --focus-ring: 0 0 0 3px rgba(139, 109, 18, 0.3);
+    --chart-grid: rgba(26, 26, 26, 0.12);
+    --chart-axis: #6f6a61;
+    --chart-label: #4a4a4a;
+    --chart-line: #8b6d12;
+    --chart-highlight: #b8912a;
+    --chart-panel: rgba(255, 255, 255, 0.82);
+    --chart-tooltip-bg: rgba(255, 253, 247, 0.98);
+    --chart-tooltip-text: #1a1a1a;
+}
+
+/* A soft crossfade when the palette changes, so the toggle does not snap. */
+html {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+*,
+*::before,
+*::after {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 * {

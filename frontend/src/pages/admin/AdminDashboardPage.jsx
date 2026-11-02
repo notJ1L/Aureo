@@ -35,10 +35,10 @@ const formatPrice = (price) =>
 const CHART_COLORS = ["#e2bb76", "#d9b36c", "#c9a45c", "#a8874a", "#f6e3b0"];
 
 const customTooltipStyle = {
-    background: "rgba(13, 15, 20, 0.94)",
+    background: "var(--chart-tooltip-bg)",
     border: "1px solid rgba(226, 187, 118, 0.35)",
     borderRadius: "10px",
-    color: "#f5f0e6",
+    color: "var(--chart-tooltip-text)",
     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.8)",
     padding: "0.8rem 1.2rem",
     fontSize: "0.82rem"
@@ -172,10 +172,10 @@ function AdminDashboardPage() {
                                                 <stop offset="100%" stopColor="#a37b3a" stopOpacity={0.6} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid stroke="rgba(244, 239, 230, 0.06)" vertical={false} />
-                                        <XAxis dataKey="month" stroke="#7d786e" fontSize={11} tickLine={false} />
+                                        <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
+                                        <XAxis dataKey="month" stroke="var(--chart-axis)" fontSize={11} tickLine={false} />
                                         <YAxis
-                                            stroke="#7d786e"
+                                        stroke="var(--chart-axis)"
                                             fontSize={11}
                                             tickLine={false}
                                             tickFormatter={(val) => `₱${(val / 1000).toFixed(0)}k`}
@@ -184,15 +184,15 @@ function AdminDashboardPage() {
                                             contentStyle={customTooltipStyle}
                                             formatter={(value) => [formatPrice(value), "Settled Sales"]}
                                         />
-                                        <Legend wrapperStyle={{ color: "#b8b2a6", fontSize: 12 }} />
+                                        <Legend wrapperStyle={{ color: "var(--chart-label)", fontSize: 12 }} />
                                         <Bar dataKey="total" name="Sales Revenue" fill="url(#goldBarGrad)" radius={[6, 6, 0, 0]} />
                                     </BarChart>
                                 ) : (
                                     <LineChart data={monthlySales}>
-                                        <CartesianGrid stroke="rgba(244, 239, 230, 0.06)" vertical={false} />
-                                        <XAxis dataKey="month" stroke="#7d786e" fontSize={11} tickLine={false} />
+                                        <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
+                                        <XAxis dataKey="month" stroke="var(--chart-axis)" fontSize={11} tickLine={false} />
                                         <YAxis
-                                            stroke="#7d786e"
+                                            stroke="var(--chart-axis)"
                                             fontSize={11}
                                             tickLine={false}
                                             tickFormatter={(val) => `₱${(val / 1000).toFixed(0)}k`}
@@ -201,14 +201,14 @@ function AdminDashboardPage() {
                                             contentStyle={customTooltipStyle}
                                             formatter={(value) => [formatPrice(value), "Settled Sales"]}
                                         />
-                                        <Legend wrapperStyle={{ color: "#b8b2a6", fontSize: 12 }} />
+                                        <Legend wrapperStyle={{ color: "var(--chart-label)", fontSize: 12 }} />
                                         <Line
                                             type="monotone"
                                             dataKey="total"
                                             name="Sales Revenue"
-                                            stroke="#e2bb76"
+                                            stroke="var(--chart-line)"
                                             strokeWidth={3}
-                                            dot={{ fill: "#f6e3b0", r: 5, strokeWidth: 2, stroke: "#12151a" }}
+                                            dot={{ fill: "var(--chart-highlight)", r: 5, strokeWidth: 2, stroke: "var(--bg-page)" }}
                                             activeDot={{ r: 7, fill: "#fff" }}
                                         />
                                     </LineChart>
@@ -227,9 +227,9 @@ function AdminDashboardPage() {
 
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={orderBars}>
-                                <CartesianGrid stroke="rgba(244, 239, 230, 0.06)" vertical={false} />
-                                <XAxis dataKey="status" stroke="#7d786e" fontSize={11} tickLine={false} />
-                                <YAxis stroke="#7d786e" fontSize={11} allowDecimals={false} tickLine={false} />
+                                <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
+                                <XAxis dataKey="status" stroke="var(--chart-axis)" fontSize={11} tickLine={false} />
+                                <YAxis stroke="var(--chart-axis)" fontSize={11} allowDecimals={false} tickLine={false} />
                                 <Tooltip contentStyle={customTooltipStyle} />
                                 <Bar dataKey="count" name="Order Volume" radius={[6, 6, 0, 0]}>
                                     {orderBars.map((entry, index) => (

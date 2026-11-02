@@ -325,3 +325,15 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Light mode                                                                 */
+/* -------------------------------------------------------------------------- */
+
+:root[data-theme="light"] .cat-field input::placeholder {
+    color: var(--text-muted);
+}
+
+:root[data-theme="light"] .cat-chip {
+    background: var(--bg-elevated);
+}

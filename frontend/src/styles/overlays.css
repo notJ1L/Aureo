@@ -72,13 +72,13 @@
 
 .Toastify__toast {
     position: relative !important;
-    background: rgba(14, 16, 22, 0.95) !important;
+    background: var(--bg-card) !important;
     backdrop-filter: blur(20px) saturate(180%) !important;
     -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-    border: 1px solid rgba(226, 187, 118, 0.28) !important;
+    border: 1px solid var(--border) !important;
     border-radius: 12px !important;
-    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(226, 187, 118, 0.1) !important;
-    color: var(--ivory, #f4efe6) !important;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.28), 0 0 24px var(--gold-10) !important;
+    color: var(--text-primary) !important;
     font-family: var(--font-body, "Inter", sans-serif) !important;
     padding: 1rem 1.25rem !important;
     min-height: 56px !important;
@@ -112,7 +112,7 @@
 .Toastify__toast-body {
     display: flex !important;
     align-items: center !important;
-    color: var(--ivory, #f4efe6) !important;
+    color: var(--text-primary) !important;
     font-size: 0.88rem !important;
     font-weight: 500 !important;
     letter-spacing: 0.01em !important;
@@ -122,7 +122,7 @@
 }
 
 .Toastify__toast-title {
-    color: var(--gold-light, #e2bb76) !important;
+    color: var(--gold) !important;
     font-weight: 700 !important;
     font-size: 0.9rem !important;
     margin-bottom: 0.2rem !important;
@@ -154,7 +154,7 @@
 }
 
 .Toastify__close-button {
-    color: var(--text-muted, #8a8a8a) !important;
+    color: var(--text-muted) !important;
     opacity: 0.55 !important;
     align-self: center !important;
     padding: 4px !important;

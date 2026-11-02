@@ -3948,7 +3948,7 @@ a {
     gap: 12px !important;
 }
 
-/* One shell for every notification: dark panel, gold hairline, soft glow. */
+/* One shell for every notification, using the active theme tokens. */
 .Toastify__toast.aureo-notification {
     --toastify-toast-duration: 3000ms;
     width: auto !important;
@@ -3957,11 +3957,11 @@ a {
     min-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
-    background: #1a1a1a !important;
-    border: 1px solid rgba(212, 175, 55, 0.3) !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
     border-radius: 10px !important;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55), 0 0 20px rgba(212, 175, 55, 0.06) !important;
-    color: #ffffff !important;
+    color: var(--text-primary) !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
 }
@@ -4022,11 +4022,11 @@ a {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    color: #d4af37;
+    color: var(--gold);
 }
 
 .aureo-notification__message {
-    color: #ffffff;
+    color: var(--text-primary) !important;
     font-size: 0.9rem;
     font-weight: 500;
     letter-spacing: 0.01em;
@@ -5053,4 +5053,567 @@ a {
     .checkout-section-box {
         padding: 1.35rem;
     }
+}
+
+
+/* ==========================================================================
+   Light mode
+   Every rule below is scoped to `:root[data-theme="light"]`, so the dark
+   theme above is left byte-for-byte untouched. These are the panels that
+   carried their own hardcoded dark surfaces instead of reading from a token.
+   ========================================================================== */
+
+/* --- Admin status tabs + action chips ------------------------------------ */
+
+:root[data-theme="light"] .restore-btn {
+    background: var(--gold-12);
+    border-color: var(--gold-35);
+}
+
+:root[data-theme="light"] .admin-status-tabs {
+    background: var(--bg-elevated);
+}
+
+:root[data-theme="light"] .admin-tab-btn:hover {
+    background: var(--gold-08);
+}
+
+:root[data-theme="light"] .admin-tab-btn.is-active {
+    background: var(--gold-14);
+    border-color: var(--gold-35);
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .admin-tab-count {
+    background: var(--gold-10);
+}
+
+:root[data-theme="light"] .admin-tab-btn.is-active .admin-tab-count {
+    background: var(--gold);
+    color: var(--on-gold);
+}
+
+/* Solid gold fills need light ink once the gold itself goes dark. */
+:root[data-theme="light"] .avatar-upload-btn:hover,
+:root[data-theme="light"] .admin-btn:hover:not(:disabled),
+:root[data-theme="light"] .admin-btn.edit-btn:hover:not(:disabled),
+:root[data-theme="light"] .admin-btn.restore-btn:hover:not(:disabled) {
+    color: var(--on-gold);
+}
+
+/* --- Product photos manager --------------------------------------------- */
+
+:root[data-theme="light"] .product-photos-manager {
+    background: var(--bg-elevated);
+}
+
+:root[data-theme="light"] .product-photo-card {
+    background: var(--bg-card);
+}
+
+:root[data-theme="light"] .product-photo-card:hover {
+    border-color: var(--gold-55);
+    box-shadow: 0 4px 12px rgba(26, 26, 26, 0.12);
+}
+
+:root[data-theme="light"] .product-photo-card.is-cover {
+    box-shadow: 0 0 0 1px var(--gold-35);
+}
+
+:root[data-theme="light"] .product-photo-preview {
+    background: var(--bg-elevated);
+}
+
+:root[data-theme="light"] .product-photo-cover-tag {
+    color: var(--on-gold);
+}
+
+:root[data-theme="light"] .product-photo-controls {
+    background: var(--bg-elevated);
+    border-top-color: var(--border);
+}
+
+:root[data-theme="light"] .photo-action-btn {
+    border-color: var(--border);
+}
+
+:root[data-theme="light"] .photo-action-btn:hover:not(:disabled) {
+    background: var(--gold-10);
+}
+
+:root[data-theme="light"] .photo-cover-btn {
+    border-color: var(--gold-30);
+}
+
+:root[data-theme="light"] .photo-cover-btn:hover {
+    background: var(--gold-12) !important;
+}
+
+:root[data-theme="light"] .product-photo-add-card {
+    border-color: var(--gold-35);
+    background: var(--gold-06);
+}
+
+:root[data-theme="light"] .product-photo-add-card:hover {
+    background: var(--gold-10);
+}
+
+:root[data-theme="light"] .upload-zone:hover {
+    background: var(--gold-06);
+}
+
+:root[data-theme="light"] .upload-zone.is-dragging {
+    background: var(--gold-12);
+}
+
+/* --- Appraisal gallery + inspection modal -------------------------------- */
+
+:root[data-theme="light"] .appraisal-photo-overlay-hint {
+    /* Sits on top of photography, so it keeps the dark pill and a gold that
+     * still reads against it. */
+    color: var(--gold-highlight);
+}
+
+:root[data-theme="light"] .appraisal-expand-btn {
+    background: var(--gold-10);
+    border-color: var(--gold-30);
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .appraisal-expand-btn:hover {
+    background: var(--gold-20);
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .appraisal-spec-section {
+    border-bottom-color: var(--border);
+}
+
+:root[data-theme="light"] .appraisal-spec-row {
+    border-bottom-color: var(--border);
+}
+
+:root[data-theme="light"] .appraisal-modal-actions {
+    background: var(--gold-06);
+    border-color: var(--gold-20);
+}
+
+/* --- Service cards ------------------------------------------------------- */
+
+:root[data-theme="light"] .service-card h3 {
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .service-card p {
+    color: var(--text-secondary);
+}
+
+/* --- Ticket cards + progress stepper ------------------------------------ */
+
+:root[data-theme="light"] .ticket-card--expandable:hover {
+    border-color: var(--gold-35);
+    box-shadow: 0 12px 32px rgba(26, 26, 26, 0.12);
+}
+
+:root[data-theme="light"] .ticket-mini-bar {
+    background: var(--border);
+}
+
+:root[data-theme="light"] .ticket-mini-step.is-done .ticket-mini-bar {
+    background: var(--gold-55);
+}
+
+:root[data-theme="light"] .ticket-mini-step.is-active .ticket-mini-label {
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .ticket-mini-step.is-completed-final .ticket-mini-bar {
+    background: var(--success);
+}
+
+:root[data-theme="light"] .ticket-mini-step.is-completed-final .ticket-mini-label {
+    color: var(--success);
+}
+
+:root[data-theme="light"] .ticket-step {
+    border-color: var(--border);
+    background: var(--bg-card);
+}
+
+:root[data-theme="light"] .ticket-step.is-done {
+    border-color: var(--gold-30);
+    background: var(--gold-06);
+}
+
+:root[data-theme="light"] .ticket-step.is-current {
+    background: var(--gold-12);
+}
+
+:root[data-theme="light"] .ticket-step.is-completed-final {
+    border-color: var(--success-35);
+    background: var(--success-10);
+}
+
+:root[data-theme="light"] .ticket-step-indicator {
+    background: var(--bg-elevated);
+}
+
+:root[data-theme="light"] .ticket-step.is-done .ticket-step-indicator {
+    background: var(--gold-20);
+}
+
+:root[data-theme="light"] .ticket-step.is-current .ticket-step-indicator {
+    color: var(--on-gold);
+}
+
+:root[data-theme="light"] .ticket-step.is-completed-final .ticket-step-indicator {
+    background: var(--success);
+    border-color: var(--success);
+}
+
+:root[data-theme="light"] .ticket-no-photos-box {
+    border-color: var(--gold-30);
+    background: var(--bg-elevated);
+}
+
+/* --- Shopping bag -------------------------------------------------------- */
+
+:root[data-theme="light"] .cart-header {
+    border-bottom-color: var(--border);
+}
+
+:root[data-theme="light"] .cart-count-pill {
+    background: var(--gold-12);
+    border-color: var(--gold-35);
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .cart-clear-btn {
+    border-color: var(--danger-35);
+    background: var(--danger-10);
+    color: var(--danger-text);
+}
+
+:root[data-theme="light"] .cart-clear-btn:hover {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #ffffff;
+}
+
+:root[data-theme="light"] .cart-empty-vault {
+    background: var(--bg-card);
+    border-color: var(--gold-30);
+    box-shadow: 0 24px 64px rgba(26, 26, 26, 0.12);
+}
+
+:root[data-theme="light"] .cart-empty-vault__icon {
+    background: var(--gold-12);
+    border-color: var(--gold-35);
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .cart-item-card {
+    background: var(--bg-card);
+    border-color: var(--border);
+    box-shadow: 0 12px 32px rgba(26, 26, 26, 0.1);
+}
+
+:root[data-theme="light"] .cart-item-card:hover {
+    border-color: var(--gold-35);
+    box-shadow: 0 16px 40px rgba(26, 26, 26, 0.14);
+}
+
+:root[data-theme="light"] .cart-thumb-frame {
+    background: var(--bg-elevated);
+    border-color: var(--border);
+}
+
+:root[data-theme="light"] .cart-item-brand {
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .cart-condition-pill--new {
+    background: var(--gold-12);
+    border-color: var(--gold-35);
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .cart-condition-pill--preowned {
+    background: var(--bg-elevated);
+    border-color: var(--border);
+    color: var(--text-secondary);
+}
+
+:root[data-theme="light"] .cart-item-title a {
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .cart-item-title a:hover {
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .cart-unit-price,
+:root[data-theme="light"] .cart-stock-note,
+:root[data-theme="light"] .cart-item-total__label {
+    color: var(--text-muted);
+}
+
+:root[data-theme="light"] .cart-item-total__amount {
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .cart-item-perks {
+    color: var(--text-secondary);
+}
+
+:root[data-theme="light"] .cart-item-perks svg {
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .cart-item-footer {
+    border-top-color: var(--border);
+}
+
+:root[data-theme="light"] .cart-qty-stepper {
+    border-color: var(--border);
+    background: var(--bg-elevated);
+}
+
+:root[data-theme="light"] .cart-qty-stepper button,
+:root[data-theme="light"] .cart-qty-stepper span {
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .cart-qty-stepper button:hover:not(:disabled) {
+    background: var(--gold-12);
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .single-unit-indicator {
+    background: var(--gold-10);
+    border-color: var(--gold-30);
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .cart-action-btn--wishlist {
+    background: var(--bg-elevated);
+    border-color: var(--border);
+    color: var(--text-secondary);
+}
+
+:root[data-theme="light"] .cart-action-btn--wishlist:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: var(--gold-10);
+}
+
+:root[data-theme="light"] .cart-action-btn--remove {
+    border-color: var(--danger-35);
+    background: var(--danger-10);
+    color: var(--danger-text);
+}
+
+:root[data-theme="light"] .cart-action-btn--remove:hover {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #ffffff;
+}
+
+:root[data-theme="light"] .cart-summary-box {
+    background: var(--bg-card);
+    border-color: var(--gold-30);
+    border-top-color: var(--gold);
+    box-shadow: 0 20px 50px rgba(26, 26, 26, 0.12);
+}
+
+:root[data-theme="light"] .cart-summary-kicker {
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .cart-summary-box h3,
+:root[data-theme="light"] .cart-summary-box .summary-row strong,
+:root[data-theme="light"] .summary-total__label {
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .cart-summary-box .summary-row {
+    color: var(--text-secondary);
+}
+
+:root[data-theme="light"] .summary-complimentary {
+    background: var(--success-10);
+    border-color: var(--success-35);
+    color: var(--success);
+}
+
+:root[data-theme="light"] .summary-divider {
+    border-top-color: var(--border);
+}
+
+:root[data-theme="light"] .summary-total__tax {
+    color: var(--text-muted);
+}
+
+:root[data-theme="light"] .summary-total__value {
+    color: var(--gold) !important;
+}
+
+:root[data-theme="light"] .cart-continue-btn {
+    border-color: var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+}
+
+:root[data-theme="light"] .cart-continue-btn:hover {
+    border-color: var(--gold);
+    background: var(--gold-08);
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .cart-trust-list {
+    border-top-color: var(--border);
+}
+
+:root[data-theme="light"] .cart-trust-item {
+    color: var(--text-muted);
+}
+
+:root[data-theme="light"] .cart-trust-item svg {
+    color: var(--gold);
+}
+
+/* --- Checkout ------------------------------------------------------------ */
+
+:root[data-theme="light"] .checkout-header {
+    border-bottom-color: var(--border);
+}
+
+:root[data-theme="light"] .checkout-section-box {
+    background: var(--bg-card);
+    border-color: var(--border);
+    box-shadow: 0 14px 36px rgba(26, 26, 26, 0.08);
+}
+
+:root[data-theme="light"] .checkout-section-head {
+    border-bottom-color: var(--border);
+}
+
+:root[data-theme="light"] .checkout-step-badge {
+    background: var(--gold-12);
+    border-color: var(--gold-35);
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .checkout-section-head h3,
+:root[data-theme="light"] .payment-pill__title,
+:root[data-theme="light"] .checkout-page .checkout-mini-info strong,
+:root[data-theme="light"] .checkout-page .checkout-mini-price {
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .checkout-section-sub,
+:root[data-theme="light"] .payment-pill__desc,
+:root[data-theme="light"] .checkout-mini-meta {
+    color: var(--text-muted);
+}
+
+:root[data-theme="light"] .checkout-field label {
+    color: var(--text-secondary);
+}
+
+:root[data-theme="light"] .checkout-field input {
+    border-color: var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .checkout-field input::placeholder {
+    color: var(--text-muted);
+}
+
+:root[data-theme="light"] .checkout-field input:focus {
+    border-color: var(--gold);
+    background: var(--bg-elevated);
+    box-shadow: var(--focus-ring);
+}
+
+:root[data-theme="light"] .checkout-field input[aria-invalid="true"] {
+    border-color: var(--danger);
+}
+
+:root[data-theme="light"] .checkout-field .field-error {
+    color: var(--danger-text);
+}
+
+:root[data-theme="light"] .checkout-page .payment-pill {
+    border-color: var(--border);
+    background: var(--bg-elevated);
+}
+
+:root[data-theme="light"] .checkout-page .payment-pill:hover {
+    border-color: var(--gold-35);
+    background: var(--gold-06);
+}
+
+:root[data-theme="light"] .checkout-page .payment-pill.active {
+    border-color: var(--gold);
+    background: var(--gold-10);
+    box-shadow: 0 0 0 1px var(--gold-30);
+}
+
+:root[data-theme="light"] .checkout-page .payment-pill input[type="radio"] {
+    accent-color: var(--gold);
+}
+
+:root[data-theme="light"] .checkout-card-sandbox {
+    background: var(--bg-elevated);
+    border-color: var(--gold-30);
+}
+
+:root[data-theme="light"] .checkout-card-sandbox__bar {
+    border-bottom-color: var(--border);
+}
+
+:root[data-theme="light"] .checkout-card-sandbox__label {
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .sandbox-preset-btn {
+    border-color: var(--gold-35);
+    background: var(--gold-08);
+    color: var(--gold);
+}
+
+:root[data-theme="light"] .sandbox-preset-btn:hover,
+:root[data-theme="light"] .sandbox-preset-btn.is-selected {
+    background: var(--gold-20);
+    border-color: var(--gold);
+    color: var(--text-primary);
+}
+
+:root[data-theme="light"] .sandbox-preset-btn--danger {
+    border-color: var(--danger-35);
+    background: var(--danger-10);
+    color: var(--danger-text);
+}
+
+:root[data-theme="light"] .sandbox-preset-btn--danger:hover,
+:root[data-theme="light"] .sandbox-preset-btn--danger.is-selected {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #ffffff;
+}
+
+:root[data-theme="light"] .checkout-page .checkout-mini-item {
+    background: var(--bg-elevated);
+    border-color: var(--border);
+}
+
+:root[data-theme="light"] .checkout-page .checkout-mini-thumb {
+    background: var(--bg-card);
+    border-color: var(--border);
+}
+
+:root[data-theme="light"] .checkout-mini-brand {
+    color: var(--gold);
 }

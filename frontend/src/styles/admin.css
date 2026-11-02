@@ -5,7 +5,7 @@
 
 .admin-vault-page {
     min-height: 100vh;
-    background: #08090c;
+    background: var(--bg-page);
     color: var(--text-primary);
     padding-bottom: 5rem;
 }
@@ -19,7 +19,7 @@
     top: 0;
     z-index: 90;
     width: 100%;
-    background: rgba(10, 12, 16, 0.88);
+    background: var(--header-bg);
     backdrop-filter: blur(20px) saturate(160%);
     border-bottom: 1px solid rgba(226, 187, 118, 0.2);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
@@ -187,7 +187,7 @@
 .admin-select-input {
     padding: 0.55rem 0.9rem;
     border-radius: 8px;
-    background: rgba(18, 20, 26, 0.85);
+    background: var(--bg-card);
     border: 1px solid rgba(226, 187, 118, 0.22);
     color: var(--text-primary);
     font-size: 0.76rem;
@@ -224,7 +224,7 @@
     position: relative;
     padding: 1.8rem;
     border-radius: 14px;
-    background: rgba(14, 16, 22, 0.75);
+    background: var(--chart-panel);
     border: 1px solid rgba(226, 187, 118, 0.18);
     backdrop-filter: blur(16px);
     overflow: hidden;
@@ -302,7 +302,7 @@
 .vault-chart-panel {
     padding: 2.2rem;
     border-radius: 14px;
-    background: rgba(14, 16, 22, 0.75);
+    background: var(--chart-panel);
     border: 1px solid var(--line);
     backdrop-filter: blur(16px);
 }
@@ -337,7 +337,7 @@
 .vault-inventory-panel {
     padding: 2.2rem;
     border-radius: 14px;
-    background: rgba(14, 16, 22, 0.75);
+    background: var(--chart-panel);
     border: 1px solid var(--line);
     backdrop-filter: blur(16px);
 }
@@ -359,7 +359,7 @@
 .vault-inventory-box {
     padding: 1.4rem;
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--gold-06);
     border: 1px solid var(--line);
     display: flex;
     flex-direction: column;
@@ -449,8 +449,28 @@
 }
 
 .admin-burger:hover {
-    background: rgba(255, 255, 255, 0.07);
+    background: var(--hover-tint, rgba(255, 255, 255, 0.07));
     color: var(--ivory);
+}
+
+/* The theme toggle lives beside the storefront link and the profile pill. */
+.admin-theme-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 200ms ease;
+}
+
+.admin-theme-toggle:hover {
+    background: var(--hover-tint, rgba(255, 255, 255, 0.07));
+    border-color: var(--gold-bright);
+    color: var(--gold-light);
 }
 
 @media (max-width: 992px) {
@@ -499,5 +519,62 @@
     .admin-nav-item {
         padding: 0.8rem 1rem !important;
         font-size: 0.85rem !important;
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Light mode                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/* Light-mode adjustments for the remaining controls and interactive states. */
+:root[data-theme="light"] .admin-vault-page {
+    background: var(--bg-page);
+}
+
+:root[data-theme="light"] .admin-vault-header {
+    background: rgba(255, 253, 247, 0.92);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 10px 30px rgba(26, 26, 26, 0.08);
+}
+
+:root[data-theme="light"] .admin-nav-item:hover {
+    background: rgba(26, 26, 26, 0.04);
+    border-color: var(--line);
+}
+
+:root[data-theme="light"] .admin-nav-item.is-active {
+    background: rgba(139, 109, 18, 0.12);
+    border-color: rgba(139, 109, 18, 0.35);
+    box-shadow: 0 0 14px rgba(139, 109, 18, 0.1);
+}
+
+:root[data-theme="light"] .admin-quick-btn,
+:root[data-theme="light"] .admin-user-pill {
+    background: rgba(26, 26, 26, 0.03);
+}
+
+/* The badge sits on a solid gold fill, which is dark in light mode. */
+:root[data-theme="light"] .admin-vault-badge {
+    color: var(--on-gold);
+}
+
+:root[data-theme="light"] .admin-user-avatar--initials {
+    color: var(--on-gold);
+}
+
+:root[data-theme="light"] .vault-inventory-box {
+    background: var(--bg-card);
+}
+
+:root[data-theme="light"] .admin-date-input,
+:root[data-theme="light"] .admin-select-input {
+    color-scheme: light;
+}
+
+@media (max-width: 992px) {
+    :root[data-theme="light"] .admin-vault-nav {
+        background: rgba(255, 253, 247, 0.98);
+        border-bottom: 1px solid var(--line);
+        box-shadow: 0 16px 32px rgba(26, 26, 26, 0.12);
     }
 }
