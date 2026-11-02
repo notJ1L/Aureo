@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useCartCount } from "../../hooks/useCartCount";
 import { useTheme } from "../ui/AureoProvider";
-import { IconBag, IconHeart, IconMenu, IconMoon, IconSun } from "./icons";
+import api from "../../services/api";
+import { IconBag, IconHeart, IconMenu, IconMoon, IconSearch, IconSun } from "./icons";
 import "./site.css";
 
 const NAV_ITEMS = [
@@ -23,9 +24,16 @@ export function SiteHeader({ variant = "solid" }) {
     const { isAuthenticated, user } = useSelector((state) => state.auth);
     const cartCount = useCartCount();
     const { theme, toggleTheme } = useTheme();
+    const navigate = useNavigate();
 
     const [scrolled, setScrolled] = useState(() => window.scrollY > 24);
     const [menuOpen, setMenuOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [suggestions, setSuggestions] = useState([]);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const searchRef = useRef(null);
+    const searchInputRef = useRef(null);
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 24);
@@ -34,6 +42,75 @@ export function SiteHeader({ variant = "solid" }) {
     }, []);
 
     const closeMenu = () => setMenuOpen(false);
+
+    useEffect(() => {
+        if (searchOpen) {
+            searchInputRef.current?.focus();
+        }
+    }, [searchOpen]);
+
+    useEffect(() => {
+        const handleOutsideSearchClick = (event) => {
+            if (!searchRef.current?.contains(event.target)) {
+                setSearchOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleOutsideSearchClick);
+        return () => document.removeEventListener("mousedown", handleOutsideSearchClick);
+    }, []);
+
+    useEffect(() => {
+        const query = searchQuery.trim();
+        if (!searchOpen || query.length < 2) {
+            setSuggestions([]);
+            setSearchLoading(false);
+            return undefined;
+        }
+
+        let cancelled = false;
+        setSearchLoading(true);
+        const timer = window.setTimeout(async () => {
+            try {
+                const { data } = await api.get("/products", {
+                    params: { keyword: query, limit: 5 }
+                });
+                if (!cancelled) {
+                    setSuggestions(data.products || []);
+                }
+            } catch {
+                if (!cancelled) {
+                    setSuggestions([]);
+                }
+            } finally {
+                if (!cancelled) {
+                    setSearchLoading(false);
+                }
+            }
+        }, 300);
+
+        return () => {
+            cancelled = true;
+            window.clearTimeout(timer);
+        };
+    }, [searchOpen, searchQuery]);
+
+    const handleSearchKeyDown = (event) => {
+        if (event.key === "Escape") {
+            setSearchOpen(false);
+            return;
+        }
+
+        if (event.key === "Enter" && searchQuery.trim()) {
+            navigate(`/catalog?keyword=${encodeURIComponent(searchQuery.trim())}`);
+            setSearchOpen(false);
+        }
+    };
+
+    const handleSuggestionClick = (product) => {
+        navigate(`/product/${product._id}`);
+        setSearchOpen(false);
+    };
     const firstName = user?.name ? user.name.split(" ")[0] : "Account";
     const initials = user?.name
         ? user.name
@@ -88,6 +165,111 @@ export function SiteHeader({ variant = "solid" }) {
                 </nav>
 
                 <div className="site-actions">
+                    <div
+                        ref={searchRef}
+                        style={{
+                            position: "relative",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.35rem"
+                        }}
+                    >
+                        <button
+                            type="button"
+                            className="site-icon-btn"
+                            aria-label={searchOpen ? "Close search" : "Search watches"}
+                            aria-expanded={searchOpen}
+                            onClick={() => setSearchOpen((open) => !open)}
+                        >
+                            <IconSearch />
+                        </button>
+                        <input
+                            ref={searchInputRef}
+                            type="search"
+                            value={searchQuery}
+                            onChange={(event) => setSearchQuery(event.target.value)}
+                            onKeyDown={handleSearchKeyDown}
+                            placeholder="Search watches..."
+                            autoComplete="off"
+                            autoCorrect="off"
+                            spellCheck={false}
+                            aria-label="Search watches"
+                            style={{
+                                width: searchOpen ? "220px" : "0",
+                                maxWidth: "min(220px, 42vw)",
+                                opacity: searchOpen ? 1 : 0,
+                                padding: searchOpen ? "0.45rem 0.2rem" : 0,
+                                border: 0,
+                                borderBottom: searchOpen ? "1px solid var(--gold)" : "1px solid transparent",
+                                outline: "none",
+                                color: "var(--text-primary, var(--text))",
+                                background: "transparent",
+                                transition: "width 0.3s ease, opacity 0.3s ease, padding 0.3s ease",
+                                pointerEvents: searchOpen ? "auto" : "none"
+                            }}
+                        />
+                        {searchOpen && searchQuery.trim().length >= 2 && (
+                            <div
+                                role="listbox"
+                                style={{
+                                    position: "absolute",
+                                    top: "calc(100% + 0.5rem)",
+                                    right: 0,
+                                    width: "min(280px, calc(100vw - 32px))",
+                                    maxWidth: "280px",
+                                    overflow: "hidden",
+                                    background: "var(--bg-card)",
+                                    border: "1px solid var(--border)",
+                                    borderRadius: "8px",
+                                    boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
+                                    zIndex: 1000
+                                }}
+                            >
+                                {searchLoading ? (
+                                    <div style={{ padding: "10px 14px", color: "var(--text-muted)" }}>
+                                        Searching...
+                                    </div>
+                                ) : suggestions.length > 0 ? (
+                                    suggestions.map((product) => (
+                                        <button
+                                            key={product._id}
+                                            type="button"
+                                            role="option"
+                                            onMouseDown={(event) => event.preventDefault()}
+                                            onClick={() => handleSuggestionClick(product)}
+                                            style={{
+                                                display: "block",
+                                                width: "100%",
+                                                padding: "10px 14px",
+                                                border: 0,
+                                                borderBottom: "1px solid var(--border)",
+                                                textAlign: "left",
+                                                color: "var(--text-primary, var(--text))",
+                                                background: "transparent",
+                                                cursor: "pointer"
+                                            }}
+                                            onMouseEnter={(event) => {
+                                                event.currentTarget.style.background = "rgba(212,175,55,0.08)";
+                                            }}
+                                            onMouseLeave={(event) => {
+                                                event.currentTarget.style.background = "transparent";
+                                            }}
+                                        >
+                                            <span style={{ display: "block", fontSize: "0.9rem" }}>{product.name}</span>
+                                            <span style={{ display: "block", marginTop: "0.2rem", color: "var(--gold)", fontSize: "0.75rem", textTransform: "uppercase" }}>
+                                                {product.brand}
+                                            </span>
+                                        </button>
+                                    ))
+                                ) : (
+                                    <div style={{ padding: "10px 14px", color: "var(--text-muted)" }}>
+                                        No watches found
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
                     <button
                         type="button"
                         className="site-icon-btn site-theme-toggle"
