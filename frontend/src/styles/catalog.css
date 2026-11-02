@@ -109,8 +109,8 @@
     pointer-events: none;
 }
 
-.cat-search input {
-    padding-left: 2.2rem;
+.cat-search #cat-search {
+    padding-left: 36px !important;
 }
 
 .cat-range {
