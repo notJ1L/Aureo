@@ -6,6 +6,7 @@ import { addToCart } from "../redux/actions/cartActions";
 import { showNotification } from "../utils/notification";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
+import { IconBag, IconTrash } from "../components/layout/icons";
 import "../styles/aureo.css";
 
 function WishlistPage() {
@@ -130,38 +131,49 @@ function WishlistPage() {
                                     </h3>
                                     <p className="product-price">{formatPrice(watch.price)}</p>
 
-                                    <div className="wishlist-card-actions" style={{ display: "flex", gap: "0.5rem", marginTop: "1rem", flexWrap: "wrap" }}>
+                                    <div className="wishlist-card-actions">
                                         {!isSold ? (
                                             <>
                                                 <button
                                                     type="button"
-                                                    className="outline-button"
-                                                    style={{ flex: 1 }}
+                                                    className="wishlist-action-btn wishlist-action-btn--cart"
+                                                    title="Add to Cart"
+                                                    aria-label="Add to Cart"
+                                                    style={{ flex: "0 0 40px", width: "40px", height: "40px", padding: 0 }}
                                                     onClick={() => handleAddWatchToCart(watch)}
                                                 >
-                                                    Add to Cart
+                                                    <IconBag width={18} height={18} />
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    className="gold-button"
-                                                    style={{ flex: 1 }}
+                                                    className="wishlist-action-btn wishlist-action-btn--buy"
                                                     onClick={() => handleBuyWatchNow(watch)}
                                                 >
                                                     Buy Now
                                                 </button>
                                             </>
                                         ) : (
-                                            <Link to={`/product/${watch._id}`} className="outline-button" style={{ textAlign: "center", flex: 1 }}>
+                                            <Link to={`/product/${watch._id}`} className="wishlist-action-btn wishlist-action-btn--details">
                                                 View Details
                                             </Link>
                                         )}
                                         <button
                                             type="button"
-                                            className="outline-button"
+                                            className="wishlist-action-btn wishlist-action-btn--remove"
                                             onClick={() => handleRemove(watch)}
-                                            title="Remove from wishlist"
+                                            title="Remove"
+                                            aria-label="Remove"
+                                            style={{ flex: "0 0 40px", width: "40px", height: "40px", padding: 0 }}
+                                            onMouseEnter={(event) => {
+                                                event.currentTarget.style.background = "#e53935";
+                                                event.currentTarget.style.color = "#ffffff";
+                                            }}
+                                            onMouseLeave={(event) => {
+                                                event.currentTarget.style.background = "transparent";
+                                                event.currentTarget.style.color = "#e53935";
+                                            }}
                                         >
-                                            Remove
+                                            <IconTrash width={18} height={18} />
                                         </button>
                                     </div>
                                 </div>

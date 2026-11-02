@@ -26,6 +26,12 @@ export const IconBag = (props) => (
     </svg>
 );
 
+export const IconTrash = (props) => (
+    <svg {...base} {...props}>
+        <path d="M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3" />
+    </svg>
+);
+
 export const IconUser = (props) => (
     <svg {...base} {...props}>
         <circle cx="12" cy="8" r="4" />

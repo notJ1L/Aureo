@@ -1424,9 +1424,61 @@ a {
 
 .wishlist-card-actions {
     margin-top: auto;
-    display: grid;
-    gap: 0.5rem;
     padding-top: 1rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    min-width: 0;
+}
+
+.wishlist-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 40px;
+    padding: 8px 14px;
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+    background: transparent;
+    color: var(--gold);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.2;
+    text-align: center;
+    white-space: nowrap;
+    transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+
+.wishlist-action-btn:hover {
+    background: var(--gold-10);
+    color: var(--gold-hover);
+}
+
+.wishlist-action-btn--buy {
+    background: var(--gold);
+    color: var(--text-inverse, var(--on-gold));
+    font-weight: 600;
+}
+
+.wishlist-action-btn--buy:hover {
+    background: var(--gold-hover);
+    color: var(--text-inverse, var(--on-gold));
+}
+
+.wishlist-action-btn--remove {
+    border-color: #e53935;
+    color: #e53935;
+}
+
+.wishlist-action-btn--remove:hover {
+    border-color: #e53935;
+    background: rgba(229, 57, 53, 0.1);
+    color: #e53935;
 }
 
 /* ==========================================================================
