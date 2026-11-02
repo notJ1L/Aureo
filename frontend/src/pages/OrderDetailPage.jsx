@@ -150,7 +150,7 @@ function OrderDetailPage() {
                                             <h4>{item.name}</h4>
                                             <p className="item-price-qty">{formatPrice(item.price)} × {item.quantity}</p>
                                             <Link to={`/product/${item.product}`} className="review-product-link" style={{ color: "var(--gold)" }}>
-                                                ★ View Timepiece / Leave Review
+                                                {order.status === "Completed" ? "★ View Timepiece / Leave Review" : "View Timepiece"}
                                             </Link>
                                         </div>
                                         <strong className="order-detail-item-total">

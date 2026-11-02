@@ -9,6 +9,9 @@ function ProductReviews({ productId, onReviewAdded }) {
 
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [canReview, setCanReview] = useState(false);
+    const [purchaseStatus, setPurchaseStatus] = useState(null);
+    const [ineligibleReason, setIneligibleReason] = useState("");
     const [rating, setRating] = useState(5);
     const [comment, setComment] = useState("");
     const [submitting, setSubmitting] = useState(false);
@@ -20,6 +23,9 @@ function ProductReviews({ productId, onReviewAdded }) {
         try {
             const { data } = await api.get(`/product/${productId}/reviews`);
             setReviews(data.reviews || []);
+            setCanReview(Boolean(data.canReview));
+            setPurchaseStatus(data.purchaseStatus || null);
+            setIneligibleReason(data.ineligibleReason || "");
         } catch (err) {
             console.error("Failed to fetch reviews", err);
         } finally {
@@ -35,6 +41,9 @@ function ProductReviews({ productId, onReviewAdded }) {
             .then(({ data }) => {
                 if (active) {
                     setReviews(data.reviews || []);
+                    setCanReview(Boolean(data.canReview));
+                    setPurchaseStatus(data.purchaseStatus || null);
+                    setIneligibleReason(data.ineligibleReason || "");
                 }
             })
             .catch((err) => {
@@ -49,7 +58,7 @@ function ProductReviews({ productId, onReviewAdded }) {
         return () => {
             active = false;
         };
-    }, [productId]);
+    }, [productId, isAuthenticated, user?._id]);
 
     const resetForm = () => {
         setRating(5);
@@ -137,11 +146,16 @@ function ProductReviews({ productId, onReviewAdded }) {
             </div>
 
             {/* Submission Form */}
-            {isAuthenticated ? (
+            {!isAuthenticated ? (
+                <div className="review-login-prompt">
+                    <a href="/login">Sign in</a>
+                    <span> to leave a review.</span>
+                </div>
+            ) : canReview || editingReview ? (
                 <div className="review-form-card">
                     <h3>Write a review</h3>
                     <p className="review-disclaimer">
-                        Only customers who purchased this watch can leave a review.
+                        Verified Collector — your order for this timepiece has been delivered.
                     </p>
 
                     {errorMsg && <div className="auth-error">{errorMsg}</div>}
@@ -191,12 +205,15 @@ function ProductReviews({ productId, onReviewAdded }) {
                         </button>
                     </form>
                 </div>
-            ) : (
+            ) : !loading ? (
                 <div className="review-login-prompt">
-                    <a href="/login">Sign in</a>
-                    <span> to leave a review.</span>
+                    <span>
+                        {purchaseStatus && ["Pending", "Paid", "Shipped"].includes(purchaseStatus)
+                            ? `Your order for this timepiece is currently "${purchaseStatus}". You can write a review once it has been delivered (Completed).`
+                            : ineligibleReason || "Only verified collectors who have purchased and received this timepiece can leave a review."}
+                    </span>
                 </div>
-            )}
+            ) : null}
 
             {/* Reviews List */}
             {loading ? (

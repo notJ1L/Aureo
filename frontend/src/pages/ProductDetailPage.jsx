@@ -6,8 +6,9 @@ import { addToCart } from "../redux/actions/cartActions";
 import ProductReviews from "../components/ProductReviews";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
-import { IconHeart, IconStar } from "../components/layout/icons";
+import { IconBag, IconHeart, IconStar } from "../components/layout/icons";
 import { toast } from "react-toastify";
+import { showCartAddedToast } from "../utils/cartToast";
 import { ProductDetailSkeleton } from "../components/ui/Skeleton";
 import "../styles/productDetail.css";
 
@@ -22,9 +23,15 @@ function ProductDetailPage() {
     const cartItems = useSelector((state) => state.cart?.cartItems) || [];
 
     const [selectedImage, setSelectedImage] = useState(0);
-    const [addedNotice, setAddedNotice] = useState("");
+    const [selectedQty, setSelectedQty] = useState(1);
+    const [justAdded, setJustAdded] = useState(false);
+    const [addedBanner, setAddedBanner] = useState(null);
 
     useEffect(() => {
+        setSelectedImage(0);
+        setSelectedQty(1);
+        setJustAdded(false);
+        setAddedBanner(null);
         dispatch(getProductDetails(id));
         if (isAuthenticated) {
             dispatch(getWishlist());
@@ -53,25 +60,75 @@ function ProductDetailPage() {
         }
     };
 
+    const existingCartItem = product
+        ? cartItems.find((item) => item.product === product._id)
+        : null;
+    const totalBagCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
     const handleAddToCart = () => {
         if (!product || product.stock <= 0) return;
 
-        const existingItem = cartItems.find((item) => item.product === product._id);
+        const currentQty = existingCartItem ? existingCartItem.quantity : 0;
+        const isPreOwned = product.condition === "second-hand";
 
-        if (existingItem) {
-            if (product.condition === "second-hand" || existingItem.quantity >= product.stock) {
-                toast.info(
-                    `Cannot add more. Maximum available stock reached (${product.stock}).`
-                );
-                return;
-            }
-            dispatch(addToCart(product, existingItem.quantity + 1));
-        } else {
-            dispatch(addToCart(product, 1));
+        if (isPreOwned && currentQty >= 1) {
+            toast.info("This 1-of-1 pre-owned timepiece is already in your shopping bag.");
+            return;
         }
 
-        setAddedNotice(`${product.name} added to your bag.`);
-        setTimeout(() => setAddedNotice(""), 3500);
+        const newQty = Math.min(product.stock, currentQty + selectedQty);
+        if (currentQty >= product.stock) {
+            toast.info(
+                `Maximum available stock (${product.stock}) is already in your shopping bag.`
+            );
+            return;
+        }
+
+        dispatch(addToCart(product, newQty));
+
+        setJustAdded(true);
+        setAddedBanner({
+            name: product.name,
+            brand: product.brand,
+            price: product.price,
+            image: product.images?.[0]?.url,
+            qtyInBag: newQty
+        });
+
+        showCartAddedToast({
+            product,
+            quantityInBag: newQty,
+            onViewBag: () => navigate("/cart"),
+            onCheckout: () => {
+                if (!isAuthenticated) {
+                    navigate("/login", { state: { from: { pathname: "/checkout" } } });
+                } else {
+                    navigate("/checkout");
+                }
+            }
+        });
+
+        setTimeout(() => setJustAdded(false), 2400);
+    };
+
+    const handleBuyNow = () => {
+        if (!product || product.stock <= 0) return;
+
+        const currentQty = existingCartItem ? existingCartItem.quantity : 0;
+        const isPreOwned = product.condition === "second-hand";
+        const targetQty = isPreOwned
+            ? 1
+            : Math.min(product.stock, Math.max(currentQty, selectedQty));
+
+        dispatch(addToCart(product, targetQty));
+
+        if (!isAuthenticated) {
+            toast.info("Please sign in to complete your immediate checkout.");
+            navigate("/login", { state: { from: { pathname: "/checkout" } } });
+            return;
+        }
+
+        navigate("/checkout");
     };
 
     if (loading) {
@@ -103,14 +160,17 @@ function ProductDetailPage() {
     const isSold = product.stock === 0;
     const isSecondHand = product.condition === "second-hand";
     const images = product.images || [];
+    const maxSelectableQty = isSecondHand
+        ? 1
+        : Math.max(1, product.stock - (existingCartItem?.quantity || 0));
 
     const availability = isSold
-        ? "Sold"
+        ? "Sold Out"
         : isSecondHand
-        ? "One piece available"
+        ? "1-of-1 Archival Piece"
         : product.stock <= 3
-        ? `Only ${product.stock} left`
-        : "In stock";
+        ? `Only ${product.stock} left in vault`
+        : `In Stock (${product.stock} available)`;
 
     return (
         <main className="pdp-page page-enter">
@@ -176,14 +236,70 @@ function ProductDetailPage() {
                             </span>
                         </div>
 
+                        {/* Quantity Picker for multi-unit new watches */}
+                        {!isSold && !isSecondHand && product.stock > 1 && (
+                            <div className="pdp-qty-row">
+                                <span className="pdp-qty-label">Quantity</span>
+                                <div className="pdp-qty-stepper">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedQty((q) => Math.max(1, q - 1))}
+                                        disabled={selectedQty <= 1}
+                                        aria-label="Decrease quantity"
+                                    >
+                                        −
+                                    </button>
+                                    <span>{selectedQty}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedQty((q) => Math.min(maxSelectableQty, q + 1))}
+                                        disabled={selectedQty >= maxSelectableQty}
+                                        aria-label="Increase quantity"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                                {existingCartItem && (
+                                    <span className="pdp-in-bag-pill">
+                                        {existingCartItem.quantity} currently in your bag
+                                    </span>
+                                )}
+                            </div>
+                        )}
+
+                        {!isSold && isSecondHand && existingCartItem && (
+                            <div className="pdp-qty-row">
+                                <span className="pdp-in-bag-pill">
+                                    ✓ Reserved in your shopping bag (1 of 1)
+                                </span>
+                            </div>
+                        )}
+
+                        {/* Dual Action Buttons: Add to Cart + Buy Now + Wishlist */}
                         <div className="pdp-actions">
                             <button
                                 type="button"
-                                className="btn-gold pdp-add"
+                                className={`pdp-btn-cart ${justAdded ? "is-added" : ""}`}
                                 onClick={handleAddToCart}
                                 disabled={isSold}
                             >
-                                {isSold ? "Piece Archived" : "Acquire Timepiece"}
+                                <IconBag width={17} height={17} />
+                                <span>
+                                    {isSold
+                                        ? "Unavailable"
+                                        : justAdded
+                                        ? "✓ Added to Cart"
+                                        : "Add to Cart"}
+                                </span>
+                            </button>
+
+                            <button
+                                type="button"
+                                className="btn-gold pdp-btn-buy"
+                                onClick={handleBuyNow}
+                                disabled={isSold}
+                            >
+                                {isSold ? "Piece Archived" : "Buy Now"}
                             </button>
 
                             <button
@@ -192,15 +308,58 @@ function ProductDetailPage() {
                                 onClick={handleWishlistToggle}
                                 aria-label={isWishlisted ? "Remove from wishlist" : "Save to wishlist"}
                                 aria-pressed={!!isWishlisted}
+                                title={isWishlisted ? "Remove from wishlist" : "Save to wishlist"}
                             >
                                 <IconHeart width={18} height={18} fill={isWishlisted ? "currentColor" : "none"} />
                             </button>
                         </div>
 
-                        {addedNotice && (
-                            <p className="pdp-notice" role="status">
-                                {addedNotice} <Link to="/cart">View bag</Link>
-                            </p>
+                        {/* Rich Inline Confirmation Banner when Added to Cart */}
+                        {addedBanner && (
+                            <div className="pdp-cart-banner" role="status" aria-live="polite">
+                                <div className="pdp-cart-banner__top">
+                                    <div className="pdp-cart-banner__left">
+                                        <span className="pdp-cart-banner__badge">✓</span>
+                                        <div>
+                                            <strong className="pdp-cart-banner__title">
+                                                Added to Your Shopping Bag
+                                            </strong>
+                                            <span className="pdp-cart-banner__sub">
+                                                {addedBanner.name} &bull; {addedBanner.qtyInBag}{" "}
+                                                {addedBanner.qtyInBag === 1 ? "piece" : "pieces"} in bag (
+                                                {formatPrice(addedBanner.price * addedBanner.qtyInBag)})
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="pdp-cart-banner__close"
+                                        onClick={() => setAddedBanner(null)}
+                                        aria-label="Dismiss notification"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+
+                                <div className="pdp-cart-banner__actions">
+                                    <Link to="/cart" className="pdp-cart-banner__link-bag">
+                                        View Bag ({totalBagCount})
+                                    </Link>
+                                    <button
+                                        type="button"
+                                        className="pdp-cart-banner__link-checkout"
+                                        onClick={() => {
+                                            if (!isAuthenticated) {
+                                                navigate("/login", { state: { from: { pathname: "/checkout" } } });
+                                            } else {
+                                                navigate("/checkout");
+                                            }
+                                        }}
+                                    >
+                                        Checkout Now →
+                                    </button>
+                                </div>
+                            </div>
                         )}
 
                         <div className="pdp-assurance-matrix">

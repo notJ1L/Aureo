@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
 const Review = require("../models/review");
 const Product = require("../models/product");
 const Order = require("../models/order");
+const User = require("../models/user");
 const ErrorHandler = require("../utils/ErrorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncErrors");
 const { cleanText } = require("../utils/filterBadWords");
@@ -20,7 +22,7 @@ const updateProductRatingStats = async (productId) => {
     });
 };
 
-// Public: Get all active reviews for a product
+// Public: Get all active reviews for a product (plus review eligibility if signed in)
 const getProductReviews = catchAsyncErrors(async (req, res, next) => {
     const { id } = req.params;
 
@@ -32,10 +34,51 @@ const getProductReviews = catchAsyncErrors(async (req, res, next) => {
         .populate("user", "name avatar")
         .sort({ createdAt: -1 });
 
+    let canReview = false;
+    let purchaseStatus = null;
+    let ineligibleReason = "Only collectors who have purchased and received this timepiece can leave a review.";
+
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.split(" ")[1];
+        if (token) {
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                const user = await User.findById(decoded.id);
+                if (user) {
+                    const userOrders = await Order.find({
+                        user: user._id,
+                        "orderItems.product": id
+                    }).sort({ createdAt: -1 });
+
+                    const deliveredOrder = userOrders.find((o) => o.status === "Completed");
+                    const inProgressOrder = userOrders.find((o) =>
+                        ["Pending", "Paid", "Shipped"].includes(o.status)
+                    );
+
+                    if (deliveredOrder) {
+                        canReview = true;
+                        purchaseStatus = "Completed";
+                        ineligibleReason = null;
+                    } else if (inProgressOrder) {
+                        canReview = false;
+                        purchaseStatus = inProgressOrder.status;
+                        ineligibleReason = `Your order for this timepiece is currently "${inProgressOrder.status}". You will be able to leave a review once it has been delivered (Completed).`;
+                    }
+                }
+            } catch (err) {
+                // Ignore invalid/expired token on public endpoint
+            }
+        }
+    }
+
     res.status(200).json({
         success: true,
         count: reviews.length,
-        reviews
+        reviews,
+        canReview,
+        purchaseStatus,
+        ineligibleReason
     });
 });
 
@@ -53,27 +96,34 @@ const createOrUpdateReview = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Product not found", 404));
     }
 
-    // FR 6.1: only brand new watches can be reviewed. A second-hand piece is
-    // a unique item and is never reviewable.
-    if (product.condition !== "new") {
-        return next(
-            new ErrorHandler(
-                "Only brand new watches can be reviewed. Second-hand pieces cannot be reviewed.",
-                400
-            )
-        );
-    }
-
-    // Verify user has purchased this product (status Paid, Shipped, or Completed)
-    const hasPurchased = await Order.findOne({
+    // Verify user has purchased this product AND it has been delivered (Completed)
+    const deliveredOrder = await Order.findOne({
         user: req.user._id,
         "orderItems.product": id,
-        status: { $in: ["Paid", "Shipped", "Completed"] }
+        status: "Completed"
     });
 
-    if (!hasPurchased && req.user.role !== "admin") {
+    if (!deliveredOrder) {
+        const undeliveredOrder = await Order.findOne({
+            user: req.user._id,
+            "orderItems.product": id,
+            status: { $in: ["Pending", "Paid", "Shipped"] }
+        }).sort({ createdAt: -1 });
+
+        if (undeliveredOrder) {
+            return next(
+                new ErrorHandler(
+                    `You cannot review this timepiece yet because your order has not been delivered (current status: ${undeliveredOrder.status}).`,
+                    403
+                )
+            );
+        }
+
         return next(
-            new ErrorHandler("Only verified purchasers of this timepiece may leave a review.", 403)
+            new ErrorHandler(
+                "Only verified collectors who have purchased and received this timepiece may leave a review.",
+                403
+            )
         );
     }
 

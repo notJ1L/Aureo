@@ -1,15 +1,20 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
 import { getWishlist, removeFromWishlist } from "../redux/actions/productActions";
+import { addToCart } from "../redux/actions/cartActions";
+import { showCartAddedToast } from "../utils/cartToast";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
 import "../styles/aureo.css";
 
 function WishlistPage() {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { wishlist, loading, error } = useSelector((state) => state.wishlist);
     const { isAuthenticated } = useSelector((state) => state.auth);
+    const cartItems = useSelector((state) => state.cart?.cartItems) || [];
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -27,6 +32,38 @@ function WishlistPage() {
 
     const handleRemove = (productId) => {
         dispatch(removeFromWishlist(productId));
+    };
+
+    const handleAddWatchToCart = (watch) => {
+        if (!watch || watch.stock <= 0) return;
+        const existing = cartItems.find((item) => item.product === watch._id);
+        const currentQty = existing ? existing.quantity : 0;
+
+        if (watch.condition === "second-hand" && currentQty >= 1) {
+            toast.info("This 1-of-1 pre-owned timepiece is already in your shopping bag.");
+            return;
+        }
+        if (currentQty >= watch.stock) {
+            toast.info(`Maximum available stock (${watch.stock}) is already in your shopping bag.`);
+            return;
+        }
+
+        const newQty = currentQty + 1;
+        dispatch(addToCart(watch, newQty));
+        showCartAddedToast({
+            product: watch,
+            quantityInBag: newQty,
+            onViewBag: () => navigate("/cart"),
+            onCheckout: () => navigate("/checkout")
+        });
+    };
+
+    const handleBuyWatchNow = (watch) => {
+        if (!watch || watch.stock <= 0) return;
+        const existing = cartItems.find((item) => item.product === watch._id);
+        const targetQty = existing ? existing.quantity : 1;
+        dispatch(addToCart(watch, targetQty));
+        navigate("/checkout");
     };
 
     return (
@@ -68,28 +105,54 @@ function WishlistPage() {
 
                         return (
                             <article className={`wishlist-card ${isSold ? "sold-card" : ""}`} key={watch._id}>
-                                <div className="wishlist-img-wrap">
+                                <Link to={`/product/${watch._id}`} className="wishlist-img-wrap" style={{ display: "block" }}>
                                     {watch.images?.[0]?.url ? (
                                         <img src={watch.images[0].url} alt={watch.name} />
                                     ) : (
                                         <div className="product-placeholder">No photo</div>
                                     )}
                                     {isSold && <span className="badge sold-badge">SOLD OUT</span>}
-                                </div>
+                                </Link>
 
                                 <div className="wishlist-details">
                                     <span className="product-brand">{watch.brand}</span>
-                                    <h3>{watch.name}</h3>
+                                    <h3>
+                                        <Link to={`/product/${watch._id}`} style={{ color: "inherit", textDecoration: "none" }}>
+                                            {watch.name}
+                                        </Link>
+                                    </h3>
                                     <p className="product-price">{formatPrice(watch.price)}</p>
 
-                                    <div className="wishlist-card-actions" style={{ display: "flex", gap: "0.6rem", marginTop: "1rem" }}>
-                                        <Link to={`/product/${watch._id}`} className="gold-button" style={{ textAlign: "center", flex: 1 }}>
-                                            {isSold ? "View Details" : "Acquire Piece"}
-                                        </Link>
+                                    <div className="wishlist-card-actions" style={{ display: "flex", gap: "0.5rem", marginTop: "1rem", flexWrap: "wrap" }}>
+                                        {!isSold ? (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    className="outline-button"
+                                                    style={{ flex: 1 }}
+                                                    onClick={() => handleAddWatchToCart(watch)}
+                                                >
+                                                    Add to Cart
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="gold-button"
+                                                    style={{ flex: 1 }}
+                                                    onClick={() => handleBuyWatchNow(watch)}
+                                                >
+                                                    Buy Now
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <Link to={`/product/${watch._id}`} className="outline-button" style={{ textAlign: "center", flex: 1 }}>
+                                                View Details
+                                            </Link>
+                                        )}
                                         <button
                                             type="button"
                                             className="outline-button"
                                             onClick={() => handleRemove(watch._id)}
+                                            title="Remove from wishlist"
                                         >
                                             Remove
                                         </button>
