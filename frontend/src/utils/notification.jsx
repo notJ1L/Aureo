@@ -11,7 +11,7 @@ import { IconBag, IconHeart, IconCheck, IconInfo, IconAlert } from "../component
 // How long every notification stays visible before it begins to fade out.
 // This single value drives the storefront notifications here AND the global
 // ToastContainer default in main.jsx, so all notifications share one duration.
-export const AUTO_CLOSE_MS = 10000;
+export const AUTO_CLOSE_MS = 3000;
 
 const ICONS = {
     cart: IconBag,
@@ -43,9 +43,11 @@ function AureoNotification({ type, message }) {
 export function showNotification({ type = "info", message }) {
     const content = <AureoNotification type={type} message={message} />;
 
-    // Position and timing are controlled globally by the ToastContainer in
-    // main.jsx, so the only thing set per toast is the shared shell class.
+    // Position is controlled globally by the ToastContainer in main.jsx. The
+    // duration is passed per toast as well (react-toastify v11 recommends the
+    // override sit alongside the container default).
     toast(content, {
-        className: "aureo-notification"
+        className: "aureo-notification",
+        autoClose: AUTO_CLOSE_MS
     });
 }

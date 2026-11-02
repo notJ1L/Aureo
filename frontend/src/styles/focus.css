@@ -95,4 +95,13 @@ textarea:disabled:focus-visible {
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
     }
+
+    /* Toastify has no JavaScript timer: a toast closes when its progress bar's
+     * animation finishes. The bar sets that duration inline (from `autoClose`),
+     * so the `*` rule above would collapse the timer to ~0ms and dismiss every
+     * notification a moment after it appears. The real duration is restored
+     * here; it is the same value passed to Toastify through `autoClose`. */
+    .Toastify__progress-bar--animated {
+        animation-duration: var(--toastify-toast-duration, 3000ms) !important;
+    }
 }

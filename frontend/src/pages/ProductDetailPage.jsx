@@ -7,7 +7,7 @@ import ProductReviews from "../components/ProductReviews";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
 import { IconBag, IconHeart, IconStar } from "../components/layout/icons";
-import { showNotification } from "../utils/notification";
+import { showNotification, AUTO_CLOSE_MS } from "../utils/notification";
 import { ProductDetailSkeleton } from "../components/ui/Skeleton";
 import "../styles/productDetail.css";
 
@@ -111,7 +111,9 @@ function ProductDetailPage() {
             message: `${product.name} added to your shopping bag.`
         });
 
-        setTimeout(() => setJustAdded(false), 2400);
+        // Only resets the button's "✓ Added to Cart" feedback. The toast above
+        // is owned by Toastify; this is kept in step with it purely for timing.
+        setTimeout(() => setJustAdded(false), AUTO_CLOSE_MS);
     };
 
     const handleBuyNow = () => {

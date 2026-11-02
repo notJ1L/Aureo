@@ -3931,6 +3931,11 @@ a {
    Aureo Notification (shared by the cart and the wishlist)
    ========================================================================== */
 
+/* Global dismiss duration for Toastify, kept in step with AUTO_CLOSE_MS. */
+:root {
+    --toastify-toast-duration: 3000ms;
+}
+
 /* The bottom-right toast stack is reserved for the Aureo notifications. */
 .Toastify__toast-container.Toastify__toast-container--bottom-right {
     z-index: 9999 !important;
@@ -3945,6 +3950,7 @@ a {
 
 /* One shell for every notification: dark panel, gold hairline, soft glow. */
 .Toastify__toast.aureo-notification {
+    --toastify-toast-duration: 3000ms;
     width: auto !important;
     min-width: 280px !important;
     max-width: min(420px, calc(100vw - 56px)) !important;
