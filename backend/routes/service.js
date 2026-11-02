@@ -2,6 +2,7 @@ const express = require("express");
 
 const {
     getServices,
+    getAdminServices,
     getService,
     createService,
     updateService,
@@ -21,6 +22,7 @@ router.get("/services", getServices);
 router.get("/service/:id", getService);
 
 // Only an admin manages the services.
+router.get("/admin/services", isAuthenticatedUser, authorizeRoles("admin"), getAdminServices);
 router.post("/admin/service/new", isAuthenticatedUser, authorizeRoles("admin"), createService);
 router.put("/admin/service/:id", isAuthenticatedUser, authorizeRoles("admin"), updateService);
 router.delete("/admin/service/:id", isAuthenticatedUser, authorizeRoles("admin"), deleteService);

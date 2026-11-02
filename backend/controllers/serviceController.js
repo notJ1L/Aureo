@@ -6,8 +6,17 @@ const catchAsyncErrors = require("../utils/catchAsyncErrors");
 
 // FR 5.1: Storefront visitors see active services; admins see all in directory
 const getServices = catchAsyncErrors(async (req, res) => {
-    const filter = req.baseUrl?.includes("/admin") ? {} : { isActive: { $ne: false } };
-    const services = await Service.find(filter).sort({ createdAt: -1 });
+    const services = await Service.find({ isActive: { $ne: false } }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+        success: true,
+        count: services.length,
+        services
+    });
+});
+
+const getAdminServices = catchAsyncErrors(async (req, res) => {
+    const services = await Service.find({}).sort({ createdAt: -1 });
 
     res.status(200).json({
         success: true,
@@ -174,6 +183,7 @@ const bulkDeleteServices = catchAsyncErrors(async (req, res, next) => {
 
 module.exports = {
     getServices,
+    getAdminServices,
     getService,
     createService,
     updateService,

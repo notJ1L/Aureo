@@ -32,7 +32,7 @@ export const getServices = () => async (dispatch) => {
 export const getAdminServices = () => async (dispatch) => {
     dispatch({ type: ADMIN_SERVICE_LIST_REQUEST });
     try {
-        const { data } = await api.get("/services");
+        const { data } = await api.get("/admin/services");
         dispatch({ type: ADMIN_SERVICE_LIST_SUCCESS, payload: data.services });
     } catch (err) {
         dispatch({
