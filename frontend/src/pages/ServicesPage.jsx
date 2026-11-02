@@ -3,10 +3,10 @@ import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { toast } from "react-toastify";
 import { getServices, getMyTickets, createTicket } from "../redux/actions/serviceActions";
 import { TICKET_CREATE_RESET } from "../redux/constants/serviceConstants";
 import { ticketSchema } from "../utils/validationSchemas";
+import { showNotification } from "../utils/notification";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
 import { AureoSelect } from "../components/ui";
@@ -74,7 +74,10 @@ function ServicesPage() {
 
     useEffect(() => {
         if (success) {
-            toast.success("Your support ticket has been opened.");
+            showNotification({
+                type: "success",
+                message: "Your support ticket has been opened successfully."
+            });
             dispatch({ type: TICKET_CREATE_RESET });
             reset({ service: "", watchBrand: "", watchModel: "", problemDescription: "" });
             setSelectedServiceId("");
@@ -99,13 +102,19 @@ function ServicesPage() {
 
         const combined = [...files, ...incoming];
         if (combined.length > MAX_PHOTOS) {
-            toast.error(`You can attach a maximum of ${MAX_PHOTOS} photos.`);
+            showNotification({
+                type: "error",
+                message: `You can attach a maximum of ${MAX_PHOTOS} photos.`
+            });
             return;
         }
 
         for (const file of incoming) {
             if (file.size > MAX_FILE_SIZE) {
-                toast.error(`File "${file.name}" exceeds the 5MB limit.`);
+                showNotification({
+                    type: "error",
+                    message: `File "${file.name}" exceeds the 5MB limit.`
+                });
                 return;
             }
         }

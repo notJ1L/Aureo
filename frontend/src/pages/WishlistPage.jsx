@@ -1,10 +1,9 @@
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "react-toastify";
 import { getWishlist, removeFromWishlist } from "../redux/actions/productActions";
 import { addToCart } from "../redux/actions/cartActions";
-import { showCartAddedToast } from "../utils/cartToast";
+import { showNotification } from "../utils/notification";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
 import "../styles/aureo.css";
@@ -30,8 +29,12 @@ function WishlistPage() {
         }).format(price || 0);
     };
 
-    const handleRemove = (productId) => {
-        dispatch(removeFromWishlist(productId));
+    const handleRemove = (watch) => {
+        dispatch(removeFromWishlist(watch._id));
+        showNotification({
+            type: "wishlist",
+            message: `${watch.name} removed from your wishlist.`
+        });
     };
 
     const handleAddWatchToCart = (watch) => {
@@ -40,21 +43,25 @@ function WishlistPage() {
         const currentQty = existing ? existing.quantity : 0;
 
         if (watch.condition === "second-hand" && currentQty >= 1) {
-            toast.info("This 1-of-1 pre-owned timepiece is already in your shopping bag.");
+            showNotification({
+                type: "error",
+                message: "This 1-of-1 pre-owned timepiece is already in your shopping bag."
+            });
             return;
         }
         if (currentQty >= watch.stock) {
-            toast.info(`Maximum available stock (${watch.stock}) is already in your shopping bag.`);
+            showNotification({
+                type: "error",
+                message: `Maximum available stock (${watch.stock}) is already in your shopping bag.`
+            });
             return;
         }
 
         const newQty = currentQty + 1;
         dispatch(addToCart(watch, newQty));
-        showCartAddedToast({
-            product: watch,
-            quantityInBag: newQty,
-            onViewBag: () => navigate("/cart"),
-            onCheckout: () => navigate("/checkout")
+        showNotification({
+            type: "cart",
+            message: `${watch.name} added to your shopping bag.`
         });
     };
 
@@ -151,7 +158,7 @@ function WishlistPage() {
                                         <button
                                             type="button"
                                             className="outline-button"
-                                            onClick={() => handleRemove(watch._id)}
+                                            onClick={() => handleRemove(watch)}
                                             title="Remove from wishlist"
                                         >
                                             Remove

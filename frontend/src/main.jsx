@@ -6,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import store from "./redux/store";
 import { loadUser } from "./redux/actions/authActions";
 import { AureoProvider } from "./components/ui/AureoProvider";
+import { AUTO_CLOSE_MS } from "./utils/notification";
 import "./index.css";
 import App from "./App.jsx";
 // Loaded last so the focus ring, the state styles, and the layout
@@ -25,7 +26,7 @@ createRoot(document.getElementById("root")).render(
                 <App />
                 <ToastContainer
                     position="top-right"
-                    autoClose={3200}
+                    autoClose={AUTO_CLOSE_MS}
                     theme="dark"
                     pauseOnFocusLoss
                     draggable

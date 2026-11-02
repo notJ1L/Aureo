@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "react-toastify";
 import { getProducts, addToWishlist, removeFromWishlist, getWishlist } from "../redux/actions/productActions";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
@@ -9,6 +8,7 @@ import WatchCard from "../components/WatchCard";
 import { IconSearch } from "../components/layout/icons";
 import { WatchCardSkeleton } from "../components/ui/Skeleton";
 import { AureoSelect } from "../components/ui";
+import { showNotification } from "../utils/notification";
 import "../styles/watchCard.css";
 import "../styles/catalog.css";
 
@@ -156,17 +156,28 @@ function CatalogPage() {
     const isWishlisted = (productId) =>
         wishlist?.some((item) => (item._id || item) === productId);
 
-    const handleWishlistToggle = (e, productId) => {
+    const handleWishlistToggle = (e, watch) => {
         e.preventDefault();
         e.stopPropagation();
         if (!isAuthenticated) {
-            toast.info("Please sign in to save watches to your wishlist.");
+            showNotification({
+                type: "info",
+                message: "Please sign in to save watches to your wishlist."
+            });
             return;
         }
-        if (isWishlisted(productId)) {
-            dispatch(removeFromWishlist(productId));
+        if (isWishlisted(watch._id)) {
+            dispatch(removeFromWishlist(watch._id));
+            showNotification({
+                type: "wishlist",
+                message: `${watch.name} removed from your wishlist.`
+            });
         } else {
-            dispatch(addToWishlist(productId));
+            dispatch(addToWishlist(watch._id));
+            showNotification({
+                type: "wishlist",
+                message: `${watch.name} saved to your wishlist.`
+            });
         }
     };
 
@@ -364,7 +375,7 @@ function CatalogPage() {
                                     index={i}
                                     wishlist={{
                                         active: isWishlisted(watch._id),
-                                        onToggle: (e) => handleWishlistToggle(e, watch._id)
+                                        onToggle: (e) => handleWishlistToggle(e, watch)
                                     }}
                                 />
                             ))}

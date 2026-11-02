@@ -3,13 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { toast } from "react-toastify";
 import {
     createAppraisal,
     clearAppraisalErrors
 } from "../redux/actions/appraisalActions";
 import { APPRAISAL_CREATE_RESET } from "../redux/constants/appraisalConstants";
 import { appraisalSchema } from "../utils/validationSchemas";
+import { showNotification } from "../utils/notification";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
 import { AureoSelect, AureoCheckbox } from "../components/ui";
@@ -60,7 +60,10 @@ function SellWatchPage() {
 
     useEffect(() => {
         if (success) {
-            toast.success("Appraisal submitted. We will contact you with an offer.");
+            showNotification({
+                type: "success",
+                message: "Appraisal submitted. We will contact you with an offer."
+            });
             dispatch({ type: APPRAISAL_CREATE_RESET });
             navigate("/appraisals");
         }
@@ -79,13 +82,19 @@ function SellWatchPage() {
         }
 
         if (selected.length > MAX_PHOTOS) {
-            toast.error(`You can upload a maximum of ${MAX_PHOTOS} photos.`);
+            showNotification({
+                type: "error",
+                message: `You can upload a maximum of ${MAX_PHOTOS} photos.`
+            });
             return;
         }
 
         for (const file of selected) {
             if (file.size > MAX_FILE_SIZE) {
-                toast.error(`File "${file.name}" exceeds the 5MB limit.`);
+                showNotification({
+                    type: "error",
+                    message: `File "${file.name}" exceeds the 5MB limit.`
+                });
                 return;
             }
         }
@@ -118,7 +127,10 @@ function SellWatchPage() {
 
     const onSubmit = (values) => {
         if (files.length === 0) {
-            toast.error("Please add at least one photo of the watch.");
+            showNotification({
+                type: "error",
+                message: "Please add at least one photo of the watch."
+            });
             return;
         }
 

@@ -7,8 +7,7 @@ import ProductReviews from "../components/ProductReviews";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
 import { IconBag, IconHeart, IconStar } from "../components/layout/icons";
-import { toast } from "react-toastify";
-import { showCartAddedToast } from "../utils/cartToast";
+import { showNotification } from "../utils/notification";
 import { ProductDetailSkeleton } from "../components/ui/Skeleton";
 import "../styles/productDetail.css";
 
@@ -55,8 +54,16 @@ function ProductDetailPage() {
         }
         if (isWishlisted) {
             dispatch(removeFromWishlist(id));
+            showNotification({
+                type: "wishlist",
+                message: `${product?.name || "This timepiece"} removed from your wishlist.`
+            });
         } else {
             dispatch(addToWishlist(id));
+            showNotification({
+                type: "wishlist",
+                message: `${product?.name || "This timepiece"} saved to your wishlist.`
+            });
         }
     };
 
@@ -72,15 +79,19 @@ function ProductDetailPage() {
         const isPreOwned = product.condition === "second-hand";
 
         if (isPreOwned && currentQty >= 1) {
-            toast.info("This 1-of-1 pre-owned timepiece is already in your shopping bag.");
+            showNotification({
+                type: "error",
+                message: "This 1-of-1 pre-owned timepiece is already in your shopping bag."
+            });
             return;
         }
 
         const newQty = Math.min(product.stock, currentQty + selectedQty);
         if (currentQty >= product.stock) {
-            toast.info(
-                `Maximum available stock (${product.stock}) is already in your shopping bag.`
-            );
+            showNotification({
+                type: "error",
+                message: `Maximum available stock (${product.stock}) is already in your shopping bag.`
+            });
             return;
         }
 
@@ -95,17 +106,9 @@ function ProductDetailPage() {
             qtyInBag: newQty
         });
 
-        showCartAddedToast({
-            product,
-            quantityInBag: newQty,
-            onViewBag: () => navigate("/cart"),
-            onCheckout: () => {
-                if (!isAuthenticated) {
-                    navigate("/login", { state: { from: { pathname: "/checkout" } } });
-                } else {
-                    navigate("/checkout");
-                }
-            }
+        showNotification({
+            type: "cart",
+            message: `${product.name} added to your shopping bag.`
         });
 
         setTimeout(() => setJustAdded(false), 2400);
@@ -123,7 +126,10 @@ function ProductDetailPage() {
         dispatch(addToCart(product, targetQty));
 
         if (!isAuthenticated) {
-            toast.info("Please sign in to complete your immediate checkout.");
+            showNotification({
+                type: "info",
+                message: "Please sign in to complete your immediate checkout."
+            });
             navigate("/login", { state: { from: { pathname: "/checkout" } } });
             return;
         }

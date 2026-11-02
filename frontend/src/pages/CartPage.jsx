@@ -1,9 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "react-toastify";
 import { updateCartQuantity, removeFromCart, clearCart } from "../redux/actions/cartActions";
 import { addToWishlist } from "../redux/actions/productActions";
 import { confirmAction } from "../utils/sweetAlert";
+import { showNotification } from "../utils/notification";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
 import {
@@ -26,11 +26,17 @@ function CartPage() {
     const handleQuantityChange = (productId, newQty, condition, stock) => {
         if (newQty < 1) return;
         if (condition === "second-hand" && newQty > 1) {
-            toast.error("This certified pre-owned timepiece is a unique archival piece (maximum 1).");
+            showNotification({
+                type: "error",
+                message: "This certified pre-owned timepiece is a unique archival piece (maximum 1)."
+            });
             return;
         }
         if (newQty > stock) {
-            toast.error(`Maximum stock available in vault is ${stock}.`);
+            showNotification({
+                type: "error",
+                message: `Maximum stock available in vault is ${stock}.`
+            });
             return;
         }
 
@@ -39,17 +45,27 @@ function CartPage() {
 
     const handleRemoveItem = (item) => {
         dispatch(removeFromCart(item.product));
-        toast.info(`${item.name} removed from your shopping bag.`);
+        showNotification({
+            type: "cart",
+            message: `${item.name} removed from your shopping bag.`
+        });
     };
 
     const handleMoveToWishlist = (item) => {
         if (!isAuthenticated) {
-            toast.info("Please sign in to save timepieces to your wishlist.");
+            showNotification({
+                type: "info",
+                message: "Please sign in to save timepieces to your wishlist."
+            });
             navigate("/login", { state: { from: { pathname: "/cart" } } });
             return;
         }
         dispatch(addToWishlist(item.product));
         dispatch(removeFromCart(item.product));
+        showNotification({
+            type: "wishlist",
+            message: `${item.name} moved to your wishlist.`
+        });
     };
 
     const handleClearBag = async () => {
@@ -61,7 +77,10 @@ function CartPage() {
         });
         if (confirmed) {
             dispatch(clearCart());
-            toast.info("Shopping bag cleared.");
+            showNotification({
+                type: "info",
+                message: "Shopping bag cleared."
+            });
         }
     };
 
@@ -78,7 +97,10 @@ function CartPage() {
 
     const handleProceedToCheckout = () => {
         if (!isAuthenticated) {
-            toast.info("Please sign in to proceed to secure checkout.");
+            showNotification({
+                type: "info",
+                message: "Please sign in to proceed to secure checkout."
+            });
             navigate("/login", { state: { from: { pathname: "/checkout" } } });
             return;
         }

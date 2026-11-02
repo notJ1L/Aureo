@@ -3,11 +3,11 @@ import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { toast } from "react-toastify";
 import { updateProfile, uploadAvatar, logoutUser, clearAuthError } from "../redux/actions/authActions";
 import { ValidatedField } from "../components/ui/ValidatedField";
 import { profileSchema } from "../utils/validationSchemas";
 import { showError } from "../utils/sweetAlert";
+import { showNotification } from "../utils/notification";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
 
@@ -71,7 +71,10 @@ function ProfilePage() {
                 }
             })
         );
-        toast.success("Profile updated successfully.");
+        showNotification({
+            type: "success",
+            message: "Profile updated successfully."
+        });
         setSavedMsg("Profile updated successfully.");
         setTimeout(() => setSavedMsg(""), 3000);
     };
@@ -90,7 +93,10 @@ function ProfilePage() {
             if (reader.readyState === 2) {
                 setAvatarPreview(reader.result);
                 dispatch(uploadAvatar(reader.result));
-                toast.success("Profile avatar updated.");
+                showNotification({
+                    type: "success",
+                    message: "Profile avatar updated."
+                });
             }
         };
         reader.readAsDataURL(file);

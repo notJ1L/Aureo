@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { toast } from "react-toastify";
 import api from "../services/api";
 import { confirmAction } from "../utils/sweetAlert";
+import { showNotification } from "../utils/notification";
 
 function ProductReviews({ productId, onReviewAdded }) {
     const { isAuthenticated, user } = useSelector((state) => state.auth);
@@ -82,14 +82,20 @@ function ProductReviews({ productId, onReviewAdded }) {
                     comment
                 });
                 setSuccessMsg("Your review has been updated.");
-                toast.success("Review updated");
+                showNotification({
+                    type: "success",
+                    message: "Review updated successfully."
+                });
             } else {
                 await api.post(`/product/${productId}/review`, {
                     rating: Number(rating),
                     comment
                 });
                 setSuccessMsg("Your review has been submitted to the Aureo register.");
-                toast.success("Review submitted");
+                showNotification({
+                    type: "success",
+                    message: "Review submitted successfully."
+                });
             }
 
             resetForm();
@@ -101,7 +107,10 @@ function ProductReviews({ productId, onReviewAdded }) {
                 "Failed to submit review. Note: Only verified customers who acquired this piece may leave a review.";
 
             setErrorMsg(message);
-            toast.error(message);
+            showNotification({
+                type: "error",
+                message: message
+            });
         } finally {
             setSubmitting(false);
         }
@@ -128,11 +137,17 @@ function ProductReviews({ productId, onReviewAdded }) {
 
         try {
             await api.delete(`/review/${reviewId}`);
-            toast.success("Review removed");
+            showNotification({
+                type: "success",
+                message: "Review removed successfully."
+            });
             loadReviews();
             if (onReviewAdded) onReviewAdded();
         } catch (err) {
-            toast.error(err.response?.data?.message || "Failed to remove review");
+            showNotification({
+                type: "error",
+                message: err.response?.data?.message || "Failed to remove review."
+            });
         }
     };
 
