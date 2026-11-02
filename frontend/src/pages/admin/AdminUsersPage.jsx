@@ -20,7 +20,7 @@ import {
 import { adminUserSchema } from "../../utils/validationSchemas";
 import { confirmAction } from "../../utils/sweetAlert";
 import AdminHeader from "../../components/layout/AdminHeader";
-import { AureoCheckbox } from "../../components/ui";
+import { AureoCheckbox, AureoSelect } from "../../components/ui";
 import {
     IconUser,
     IconBag,
@@ -342,7 +342,7 @@ export default function AdminUsersPage() {
         <main className="admin-page page-enter">
             <AdminHeader />
 
-            <div className="admin-container">
+            <div className="admin-container admin-container--wide">
                 {/* Title & Action Bar */}
                 <div className="admin-page-title-row">
                     <div>
@@ -450,23 +450,25 @@ export default function AdminUsersPage() {
                     </div>
 
                     <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
-                        <select
-                            className="admin-filter-select"
-                            value={`${sortField}-${sortOrder}`}
-                            onChange={(e) => {
-                                const [field, order] = e.target.value.split("-");
-                                setSortField(field);
-                                setSortOrder(order);
-                            }}
-                            aria-label="Sort users"
-                        >
-                            <option value="name-asc">Name: A to Z</option>
-                            <option value="name-desc">Name: Z to A</option>
-                            <option value="joined-desc">Joined: Newest First</option>
-                            <option value="joined-asc">Joined: Oldest First</option>
-                            <option value="role-desc">Role: Admins First</option>
-                            <option value="role-asc">Role: Clients First</option>
-                        </select>
+                        <div style={{ width: "190px" }}>
+                            <AureoSelect
+                                aria-label="Sort users"
+                                value={`${sortField}-${sortOrder}`}
+                                onChange={(e) => {
+                                    const [field, order] = e.target.value.split("-");
+                                    setSortField(field);
+                                    setSortOrder(order);
+                                }}
+                                options={[
+                                    { value: "name-asc", label: "Name: A to Z" },
+                                    { value: "name-desc", label: "Name: Z to A" },
+                                    { value: "joined-desc", label: "Joined: Newest First" },
+                                    { value: "joined-asc", label: "Joined: Oldest First" },
+                                    { value: "role-desc", label: "Role: Admins First" },
+                                    { value: "role-asc", label: "Role: Clients First" }
+                                ]}
+                            />
+                        </div>
 
                         <div style={{ position: "relative", minWidth: "240px" }}>
                             <input
@@ -552,7 +554,7 @@ export default function AdminUsersPage() {
                     </div>
                 ) : (
                     <div className="admin-table-wrap">
-                        <table className="admin-table">
+                        <table className="admin-table admin-table--users">
                             <thead>
                                 <tr>
                                     <th style={{ width: "40px" }}>
@@ -766,11 +768,6 @@ export default function AdminUsersPage() {
                                                     <button
                                                         type="button"
                                                         className="admin-btn"
-                                                        style={{
-                                                            background: "transparent",
-                                                            border: "1px solid var(--border)",
-                                                            color: isAdmin ? "var(--text-muted)" : "var(--gold)"
-                                                        }}
                                                         onClick={() => handleToggleRole(targetUser)}
                                                         disabled={isSelf}
                                                         title={isAdmin ? "Demote to Client" : "Promote to Admin"}
@@ -861,10 +858,14 @@ export default function AdminUsersPage() {
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                                 <div className="admin-field">
                                     <label>Role</label>
-                                    <select {...register("role")} style={{ width: "100%", padding: "0.6rem", background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "var(--ivory)", borderRadius: "6px" }}>
-                                        <option value="user">Client</option>
-                                        <option value="admin">Administrator</option>
-                                    </select>
+                                    <AureoSelect
+                                        value={watch("role") || "user"}
+                                        onChange={(e) => setValue("role", e.target.value, { shouldValidate: true })}
+                                        options={[
+                                            { value: "user", label: "Client" },
+                                            { value: "admin", label: "Administrator" }
+                                        ]}
+                                    />
                                     {errors.role && <span className="auth-field-error">{errors.role.message}</span>}
                                 </div>
 

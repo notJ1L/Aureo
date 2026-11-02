@@ -21,7 +21,7 @@ import {
 } from "../../redux/constants/productConstants";
 import { confirmAction } from "../../utils/sweetAlert";
 import { ValidatedField } from "../../components/ui/ValidatedField";
-import { StatusBadge, AureoCheckbox } from "../../components/ui";
+import { StatusBadge, AureoCheckbox, AureoSelect } from "../../components/ui";
 import { productSchema } from "../../utils/validationSchemas";
 import AdminHeader from "../../components/layout/AdminHeader";
 import {
@@ -541,48 +541,54 @@ function AdminProductsPage() {
                     </div>
 
                     <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
-                        <select
-                            className="admin-filter-select"
-                            value={conditionFilter}
-                            onChange={(e) => setConditionFilter(e.target.value)}
-                            aria-label="Filter by condition"
-                        >
-                            <option value="">All Conditions</option>
-                            <option value="new">New</option>
-                            <option value="second-hand">Second-hand</option>
-                            <option value="vintage">Vintage</option>
-                        </select>
+                        <div style={{ width: "160px" }}>
+                            <AureoSelect
+                                aria-label="Filter by condition"
+                                value={conditionFilter}
+                                onChange={(e) => setConditionFilter(e.target.value)}
+                                options={[
+                                    { value: "", label: "All Conditions" },
+                                    { value: "new", label: "New" },
+                                    { value: "second-hand", label: "Second-hand" },
+                                    { value: "vintage", label: "Vintage" }
+                                ]}
+                            />
+                        </div>
 
-                        <select
-                            className="admin-filter-select"
-                            value={stockFilter}
-                            onChange={(e) => setStockFilter(e.target.value)}
-                            aria-label="Filter by stock"
-                        >
-                            <option value="">All Stock Levels</option>
-                            <option value="in-stock">In Stock (&gt; 0)</option>
-                            <option value="out-of-stock">Out of Stock (0)</option>
-                        </select>
+                        <div style={{ width: "180px" }}>
+                            <AureoSelect
+                                aria-label="Filter by stock"
+                                value={stockFilter}
+                                onChange={(e) => setStockFilter(e.target.value)}
+                                options={[
+                                    { value: "", label: "All Stock Levels" },
+                                    { value: "in-stock", label: "In Stock (> 0)" },
+                                    { value: "out-of-stock", label: "Out of Stock (0)" }
+                                ]}
+                            />
+                        </div>
 
-                        <select
-                            className="admin-filter-select"
-                            value={`${sortField}-${sortOrder}`}
-                            onChange={(e) => {
-                                const [field, order] = e.target.value.split("-");
-                                setSortField(field);
-                                setSortOrder(order);
-                            }}
-                            aria-label="Sort inventory"
-                        >
-                            <option value="createdAt-desc">Newest Added</option>
-                            <option value="createdAt-asc">Oldest Added</option>
-                            <option value="price-desc">Price: High to Low</option>
-                            <option value="price-asc">Price: Low to High</option>
-                            <option value="stock-asc">Stock: Low to High</option>
-                            <option value="stock-desc">Stock: High to Low</option>
-                            <option value="name-asc">Name: A to Z</option>
-                            <option value="name-desc">Name: Z to A</option>
-                        </select>
+                        <div style={{ width: "180px" }}>
+                            <AureoSelect
+                                aria-label="Sort inventory"
+                                value={`${sortField}-${sortOrder}`}
+                                onChange={(e) => {
+                                    const [field, order] = e.target.value.split("-");
+                                    setSortField(field);
+                                    setSortOrder(order);
+                                }}
+                                options={[
+                                    { value: "createdAt-desc", label: "Newest Added" },
+                                    { value: "createdAt-asc", label: "Oldest Added" },
+                                    { value: "price-desc", label: "Price: High to Low" },
+                                    { value: "price-asc", label: "Price: Low to High" },
+                                    { value: "stock-asc", label: "Stock: Low to High" },
+                                    { value: "stock-desc", label: "Stock: High to Low" },
+                                    { value: "name-asc", label: "Name: A to Z" },
+                                    { value: "name-desc", label: "Name: Z to A" }
+                                ]}
+                            />
+                        </div>
 
                         <input
                             type="text"

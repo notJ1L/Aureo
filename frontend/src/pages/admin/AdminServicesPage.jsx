@@ -20,7 +20,7 @@ import {
 import { serviceSchema } from "../../utils/validationSchemas";
 import { confirmAction } from "../../utils/sweetAlert";
 import AdminHeader from "../../components/layout/AdminHeader";
-import { AureoCheckbox } from "../../components/ui";
+import { AureoCheckbox, AureoSelect } from "../../components/ui";
 import {
     IconTool,
     IconSparkle,
@@ -333,21 +333,23 @@ function AdminServicesPage() {
                     </div>
 
                     <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
-                        <select
-                            className="admin-filter-select"
-                            value={`${sortField}-${sortOrder}`}
-                            onChange={(e) => {
-                                const [field, order] = e.target.value.split("-");
-                                setSortField(field);
-                                setSortOrder(order);
-                            }}
-                            aria-label="Sort services"
-                        >
-                            <option value="name-asc">Name: A to Z</option>
-                            <option value="name-desc">Name: Z to A</option>
-                            <option value="price-desc">Price: High to Low</option>
-                            <option value="price-asc">Price: Low to High</option>
-                        </select>
+                        <div style={{ width: "180px" }}>
+                            <AureoSelect
+                                aria-label="Sort services"
+                                value={`${sortField}-${sortOrder}`}
+                                onChange={(e) => {
+                                    const [field, order] = e.target.value.split("-");
+                                    setSortField(field);
+                                    setSortOrder(order);
+                                }}
+                                options={[
+                                    { value: "name-asc", label: "Name: A to Z" },
+                                    { value: "name-desc", label: "Name: Z to A" },
+                                    { value: "price-desc", label: "Price: High to Low" },
+                                    { value: "price-asc", label: "Price: Low to High" }
+                                ]}
+                            />
+                        </div>
 
                         <input
                             type="text"

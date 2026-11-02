@@ -99,7 +99,7 @@ function AdminDashboardPage() {
                             className="admin-date-input"
                             aria-label="To date"
                         />
-                        <div className="admin-select-input" style={{ width: "150px" }}>
+                        <div style={{ width: "150px" }}>
                             <AureoSelect
                                 value={chartType}
                                 onChange={(e) => setChartType(e.target.value)}

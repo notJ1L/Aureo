@@ -242,23 +242,25 @@ function AdminAppraisalsPage() {
                     </div>
 
                     <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
-                        <select
-                            className="admin-filter-select"
-                            value={`${sortField}-${sortOrder}`}
-                            onChange={(e) => {
-                                const [field, order] = e.target.value.split("-");
-                                setSortField(field);
-                                setSortOrder(order);
-                            }}
-                            aria-label="Sort appraisals"
-                        >
-                            <option value="createdAt-desc">Submission: Newest First</option>
-                            <option value="createdAt-asc">Submission: Oldest First</option>
-                            <option value="brand-asc">Brand: A to Z</option>
-                            <option value="brand-desc">Brand: Z to A</option>
-                            <option value="offer-desc">Offer: High to Low</option>
-                            <option value="offer-asc">Offer: Low to High</option>
-                        </select>
+                        <div style={{ width: "200px" }}>
+                            <AureoSelect
+                                aria-label="Sort appraisals"
+                                value={`${sortField}-${sortOrder}`}
+                                onChange={(e) => {
+                                    const [field, order] = e.target.value.split("-");
+                                    setSortField(field);
+                                    setSortOrder(order);
+                                }}
+                                options={[
+                                    { value: "createdAt-desc", label: "Submission: Newest First" },
+                                    { value: "createdAt-asc", label: "Submission: Oldest First" },
+                                    { value: "brand-asc", label: "Brand: A to Z" },
+                                    { value: "brand-desc", label: "Brand: Z to A" },
+                                    { value: "offer-desc", label: "Offer: High to Low" },
+                                    { value: "offer-asc", label: "Offer: Low to High" }
+                                ]}
+                            />
+                        </div>
 
                         <input
                             type="text"

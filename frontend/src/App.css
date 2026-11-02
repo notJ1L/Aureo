@@ -1483,6 +1483,24 @@ a {
     border-radius: 4px;
 }
 
+/* The user directory carries the most columns of any admin table, so it gets
+ * a wider panel and tighter cell padding instead of a horizontal scrollbar. */
+.admin-container--wide {
+    width: min(1560px, calc(100% - 48px));
+}
+
+.admin-table--users th,
+.admin-table--users td {
+    padding-left: 0.85rem;
+    padding-right: 0.85rem;
+}
+
+/* Long e-mail strings have no natural break point; allow them to wrap so the
+ * user directory never overflows into a horizontal scrollbar. */
+.admin-table--users td {
+    overflow-wrap: anywhere;
+}
+
 .admin-table {
     width: 100%;
     border-collapse: collapse;
@@ -1622,46 +1640,90 @@ a {
     gap: 0.5rem;
 }
 
+/* Admin action buttons. Only three variants exist across the whole panel:
+ * secondary (gold outline, the default) and danger (red outline). The filled
+ * primary lives in `.gold-button`. Everything else is an alias of one of
+ * these so no admin button ever falls back to the browser default. */
 .admin-btn {
-    padding: 0.4rem 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.42rem 0.85rem;
     font-size: 0.75rem;
-    border-radius: 2px;
-    border: 1px solid transparent;
+    font-weight: 600;
+    line-height: 1.2;
+    border-radius: 4px;
+    border: 1px solid var(--gold);
+    background: transparent;
+    color: var(--gold);
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
 }
 
+.admin-btn:hover:not(:disabled) {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #0b0c10;
+}
+
+.admin-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* Edit / Restore / View and the bare "Cancel" / "Close" actions are all the
+ * neutral secondary variant. */
+.admin-btn.edit-btn,
+.admin-btn.restore-btn {
+    border-color: var(--gold);
+    background: transparent;
+    color: var(--gold);
+}
+
+.admin-btn.edit-btn:hover:not(:disabled),
+.admin-btn.restore-btn:hover:not(:disabled) {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #0b0c10;
+}
+
+/* Delete / Reject / Deactivate / bulk delete use the outlined danger variant. */
+.admin-btn.del-btn {
+    border: 1px solid var(--danger);
+    background: transparent;
+    color: var(--danger-text);
+}
+
+.admin-btn.del-btn:hover:not(:disabled) {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #ffffff;
+}
+
+/* The same names are reused for the small status chips that do not carry the
+ * `.admin-btn` base (e.g. the "Rejected" appraisal badge), so they keep a
+ * tinted fill when used on their own. The `.admin-btn.*` rules above win on
+ * specificity for the actual buttons. */
 .edit-btn {
     background: var(--bg-elevated);
-    border-color: var(--border);
+    border: 1px solid var(--border);
     color: var(--text-primary);
-}
-
-.edit-btn:hover {
-    border-color: var(--gold);
-    color: var(--gold);
 }
 
 .del-btn {
     background: var(--danger-10);
-    border-color: var(--danger-30);
+    border: 1px solid var(--danger-30);
     color: var(--danger-text);
-}
-
-.del-btn:hover {
-    background: var(--danger);
-    color: var(--text-primary);
 }
 
 .restore-btn {
     background: rgba(201, 164, 92, 0.15);
-    border-color: rgba(201, 164, 92, 0.4);
+    border: 1px solid rgba(201, 164, 92, 0.4);
     color: var(--gold-light, #e2bb76);
     font-weight: 600;
-}
-
-.restore-btn:hover {
-    background: var(--gold);
-    border-color: var(--gold);
-    color: #0b0c10;
 }
 
 .admin-status-tabs {

@@ -226,23 +226,25 @@ function AdminOrdersPage() {
                     </div>
 
                     <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
-                        <select
-                            className="admin-filter-select"
-                            value={`${sortField}-${sortOrder}`}
-                            onChange={(e) => {
-                                const [field, order] = e.target.value.split("-");
-                                setSortField(field);
-                                setSortOrder(order);
-                            }}
-                            aria-label="Sort orders"
-                        >
-                            <option value="createdAt-desc">Date: Newest First</option>
-                            <option value="createdAt-asc">Date: Oldest First</option>
-                            <option value="total-desc">Total: High to Low</option>
-                            <option value="total-asc">Total: Low to High</option>
-                            <option value="customer-asc">Customer: A to Z</option>
-                            <option value="customer-desc">Customer: Z to A</option>
-                        </select>
+                        <div style={{ width: "190px" }}>
+                            <AureoSelect
+                                aria-label="Sort orders"
+                                value={`${sortField}-${sortOrder}`}
+                                onChange={(e) => {
+                                    const [field, order] = e.target.value.split("-");
+                                    setSortField(field);
+                                    setSortOrder(order);
+                                }}
+                                options={[
+                                    { value: "createdAt-desc", label: "Date: Newest First" },
+                                    { value: "createdAt-asc", label: "Date: Oldest First" },
+                                    { value: "total-desc", label: "Total: High to Low" },
+                                    { value: "total-asc", label: "Total: Low to High" },
+                                    { value: "customer-asc", label: "Customer: A to Z" },
+                                    { value: "customer-desc", label: "Customer: Z to A" }
+                                ]}
+                            />
+                        </div>
 
                         <input
                             type="text"

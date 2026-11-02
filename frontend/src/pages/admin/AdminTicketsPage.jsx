@@ -8,6 +8,7 @@ import {
 import { ADMIN_TICKET_STATUS_RESET } from "../../redux/constants/serviceConstants";
 import { confirmAction } from "../../utils/sweetAlert";
 import AdminHeader from "../../components/layout/AdminHeader";
+import { AureoSelect } from "../../components/ui";
 import {
     IconChat,
     IconTool,
@@ -234,22 +235,24 @@ function AdminTicketsPage() {
                     </div>
 
                     <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
-                        <select
-                            className="admin-filter-select"
-                            value={`${sortField}-${sortOrder}`}
-                            onChange={(e) => {
-                                const [field, order] = e.target.value.split("-");
-                                setSortField(field);
-                                setSortOrder(order);
-                            }}
-                            aria-label="Sort tickets"
-                        >
-                            <option value="createdAt-desc">Newest First</option>
-                            <option value="createdAt-asc">Oldest First</option>
-                            <option value="ticket-asc">Ticket #: A to Z</option>
-                            <option value="ticket-desc">Ticket #: Z to A</option>
-                            <option value="user-asc">Collector: A to Z</option>
-                        </select>
+                        <div style={{ width: "190px" }}>
+                            <AureoSelect
+                                aria-label="Sort tickets"
+                                value={`${sortField}-${sortOrder}`}
+                                onChange={(e) => {
+                                    const [field, order] = e.target.value.split("-");
+                                    setSortField(field);
+                                    setSortOrder(order);
+                                }}
+                                options={[
+                                    { value: "createdAt-desc", label: "Newest First" },
+                                    { value: "createdAt-asc", label: "Oldest First" },
+                                    { value: "ticket-asc", label: "Ticket #: A to Z" },
+                                    { value: "ticket-desc", label: "Ticket #: Z to A" },
+                                    { value: "user-asc", label: "Collector: A to Z" }
+                                ]}
+                            />
+                        </div>
 
                         <input
                             type="text"
