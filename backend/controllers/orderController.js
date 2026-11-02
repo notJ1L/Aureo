@@ -75,80 +75,230 @@ const buildCheckoutOrderHtml = (order, user, titleText = "Acquisition Order Conf
     );
     const grandTotal = order.calculateTotal();
     const { address, city, postalCode, country, phone } = order.shippingInfo || {};
+    const formattedDate = new Date(order.createdAt || Date.now()).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric"
+    });
+    const clientUrl = (process.env.CLIENT_URL || "http://localhost:5173").split(",")[0].trim();
+    const orderUrl = `${clientUrl}/order/${order._id}`;
+
+    const statusBadgeBg =
+        order.status === "Completed" || order.status === "Paid"
+            ? "#132a20"
+            : order.status === "Cancelled"
+            ? "#2d1619"
+            : "#2a2315";
+    const statusBadgeBorder =
+        order.status === "Completed" || order.status === "Paid"
+            ? "#2e6f4e"
+            : order.status === "Cancelled"
+            ? "#7f2d36"
+            : "#7a6133";
+    const statusBadgeColor =
+        order.status === "Completed" || order.status === "Paid"
+            ? "#6ee7a8"
+            : order.status === "Cancelled"
+            ? "#f87171"
+            : "#e5c687";
 
     const itemRowsHtml = order.orderItems
-        .map(
-            (item) => `
+        .map((item) => {
+            const thumbCell = item.image
+                ? `<td width="56" valign="middle" style="padding:14px 12px 14px 0;border-bottom:1px solid #232734;">
+                        <img src="${item.image}" alt="${item.name}" width="48" height="48" style="display:block;width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #2e3344;background:#0b0c10;" />
+                   </td>`
+                : "";
+
+            return `
             <tr>
-                <td style="padding:12px 8px;border-bottom:1px solid #262936;color:#f5efe2;font-weight:600;">
-                    ${item.name}
+                <td style="padding:0;border-bottom:1px solid #232734;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            ${thumbCell}
+                            <td valign="middle" style="padding:14px 8px 14px 0;color:#f7f1e5;font-size:14px;font-weight:600;">
+                                ${item.name}
+                            </td>
+                        </tr>
+                    </table>
                 </td>
-                <td style="padding:12px 8px;border-bottom:1px solid #262936;color:#b8b0a2;text-align:center;">
+                <td width="50" align="center" valign="middle" style="padding:14px 8px;border-bottom:1px solid #232734;color:#b8b0a2;font-size:13px;">
                     ${item.quantity}
                 </td>
-                <td style="padding:12px 8px;border-bottom:1px solid #262936;color:#b8b0a2;text-align:right;">
+                <td width="120" align="right" valign="middle" style="padding:14px 8px;border-bottom:1px solid #232734;color:#b8b0a2;font-size:13px;white-space:nowrap;">
                     ${formatCurrency(item.price)}
                 </td>
-                <td style="padding:12px 8px;border-bottom:1px solid #262936;color:#e5c687;font-weight:600;text-align:right;">
+                <td width="130" align="right" valign="middle" style="padding:14px 0 14px 8px;border-bottom:1px solid #232734;color:#e5c687;font-size:14px;font-weight:700;white-space:nowrap;">
                     ${formatCurrency(item.price * item.quantity)}
                 </td>
-            </tr>`
-        )
+            </tr>`;
+        })
         .join("");
 
     return `
-    <div style="background:#0d0f14;color:#f5efe2;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;padding:32px 16px;">
-        <div style="max-width:620px;margin:0 auto;background:#151821;border:1px solid rgba(201,164,92,0.38);border-top:3px solid #c9a45c;border-radius:8px;padding:32px;">
-            <div style="margin-bottom:24px;">
-                <span style="color:#c9a45c;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">AUREO HOROLOGY VAULT</span>
-                <h1 style="margin:6px 0 8px;font-size:24px;color:#f7f1e5;font-weight:600;">${titleText}</h1>
-                <p style="margin:0;color:#a9a193;font-size:14px;line-height:1.6;">
-                    Dear ${user?.name || "Collector"}, thank you for choosing Aureo. Below is the official summary of your order <strong>#${order._id}</strong>.
-                </p>
-            </div>
+    <div style="margin:0;padding:36px 16px;background-color:#0b0d12;color:#f5efe2;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;margin:0 auto;background-color:#141720;border:1px solid #3a3222;border-top:3px solid #c9a45c;border-radius:10px;overflow:hidden;">
+            <!-- Header Banner -->
+            <tr>
+                <td style="padding:32px 32px 24px 32px;border-bottom:1px solid #222634;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            <td align="left" valign="top">
+                                <div style="color:#c9a45c;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px;">
+                                    AUREO HOROLOGY VAULT
+                                </div>
+                                <h1 style="margin:0;font-size:24px;line-height:1.25;color:#f7f1e5;font-weight:600;font-family:Georgia,'Times New Roman',serif;">
+                                    ${titleText}
+                                </h1>
+                            </td>
+                            <td align="right" valign="top">
+                                <span style="display:inline-block;padding:5px 12px;border-radius:999px;background-color:${statusBadgeBg};border:1px solid ${statusBadgeBorder};color:${statusBadgeColor};font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+                                    ${order.status}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                    <p style="margin:14px 0 0 0;color:#a9a193;font-size:14px;line-height:1.6;">
+                        Dear <strong style="color:#f5efe2;">${user?.name || "Collector"}</strong>, thank you for choosing Aureo. Below is the official archival summary of your acquisition.
+                    </p>
+                </td>
+            </tr>
 
-            <div style="background:#10131b;border:1px solid #262936;border-radius:6px;padding:16px;margin-bottom:24px;font-size:13px;color:#c7bfb0;">
-                <p style="margin:0 0 6px;"><strong>Order Reference:</strong> #${order._id}</p>
-                <p style="margin:0 0 6px;"><strong>Current Status:</strong> <span style="color:#e5c687;">${order.status}</span></p>
-                <p style="margin:0 0 6px;"><strong>Payment Method:</strong> ${order.paymentMethod} (${order.paymentStatus})</p>
-                <p style="margin:0;"><strong>Delivery Destination:</strong> ${address || ""}, ${city || ""} ${postalCode || ""}, ${country || ""} ${phone ? `• ${phone}` : ""}</p>
-            </div>
+            <!-- Order Metadata Box -->
+            <tr>
+                <td style="padding:24px 32px 8px 32px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0f1219;border:1px solid #252938;border-radius:8px;">
+                        <tr>
+                            <td width="50%" valign="top" style="padding:16px 18px;border-right:1px solid #222634;border-bottom:1px solid #222634;">
+                                <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#8b8477;margin-bottom:4px;">
+                                    Order Reference
+                                </div>
+                                <div style="font-size:13px;font-weight:600;color:#f5efe2;word-break:break-all;">
+                                    #${order._id}
+                                </div>
+                            </td>
+                            <td width="50%" valign="top" style="padding:16px 18px;border-bottom:1px solid #222634;">
+                                <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#8b8477;margin-bottom:4px;">
+                                    Acquisition Date
+                                </div>
+                                <div style="font-size:13px;font-weight:600;color:#f5efe2;">
+                                    ${formattedDate}
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="50%" valign="top" style="padding:16px 18px;border-right:1px solid #222634;">
+                                <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#8b8477;margin-bottom:4px;">
+                                    Settlement Method
+                                </div>
+                                <div style="font-size:13px;font-weight:600;color:#f5efe2;">
+                                    ${order.paymentMethod} <span style="color:#c9a45c;">(${order.paymentStatus})</span>
+                                </div>
+                            </td>
+                            <td width="50%" valign="top" style="padding:16px 18px;">
+                                <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#8b8477;margin-bottom:4px;">
+                                    Armored Courier Destination
+                                </div>
+                                <div style="font-size:13px;color:#d6cfc2;line-height:1.45;">
+                                    ${address || ""}${city ? `, ${city}` : ""} ${postalCode || ""}${country ? `, ${country}` : ""}
+                                    ${phone ? `<br/><span style="color:#9e9688;font-size:12px;">Tel: ${phone}</span>` : ""}
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
 
-            <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;">
-                <thead>
-                    <tr style="border-bottom:1px solid #35394a;color:#9e9688;text-transform:uppercase;font-size:11px;letter-spacing:1px;">
-                        <th style="padding:8px;text-align:left;">Timepiece</th>
-                        <th style="padding:8px;text-align:center;">Qty</th>
-                        <th style="padding:8px;text-align:right;">Unit Price</th>
-                        <th style="padding:8px;text-align:right;">Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${itemRowsHtml}
-                </tbody>
-            </table>
+            <!-- Itemized Timepieces Table -->
+            <tr>
+                <td style="padding:20px 32px 8px 32px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+                        <thead>
+                            <tr>
+                                <th align="left" style="padding:10px 8px 10px 0;border-bottom:1px solid #32374a;color:#9e9688;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;">
+                                    Timepiece
+                                </th>
+                                <th width="50" align="center" style="padding:10px 8px;border-bottom:1px solid #32374a;color:#9e9688;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;">
+                                    Qty
+                                </th>
+                                <th width="120" align="right" style="padding:10px 8px;border-bottom:1px solid #32374a;color:#9e9688;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;">
+                                    Unit Price
+                                </th>
+                                <th width="130" align="right" style="padding:10px 0 10px 8px;border-bottom:1px solid #32374a;color:#9e9688;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;">
+                                    Subtotal
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemRowsHtml}
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
 
-            <div style="border-top:1px solid #262936;padding-top:14px;font-size:14px;">
-                <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:#a9a193;">
-                    <span>Subtotal: </span>
-                    <strong style="color:#f5efe2;float:right;">${formatCurrency(subtotal)}</strong>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:#a9a193;">
-                    <span>Armored Insured Courier: </span>
-                    <strong style="color:#6ee7a8;float:right;">Complimentary</strong>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid #262936;font-size:17px;color:#e5c687;">
-                    <strong>Grand Total: </strong>
-                    <strong style="float:right;">${formatCurrency(grandTotal)}</strong>
-                </div>
-            </div>
+            <!-- Totals Breakdown Table (Email-safe left/right cells) -->
+            <tr>
+                <td style="padding:12px 32px 24px 32px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0f1219;border:1px solid #252938;border-radius:8px;padding:18px 20px;">
+                        <tr>
+                            <td align="left" style="padding:5px 0;font-size:13px;color:#a9a193;">
+                                Subtotal
+                            </td>
+                            <td align="right" style="padding:5px 0;font-size:13px;font-weight:600;color:#f5efe2;white-space:nowrap;">
+                                ${formatCurrency(subtotal)}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="left" style="padding:5px 0;font-size:13px;color:#a9a193;">
+                                Armored Insured Courier
+                            </td>
+                            <td align="right" style="padding:5px 0;font-size:13px;font-weight:600;color:#6ee7a8;white-space:nowrap;">
+                                Complimentary
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="left" style="padding:5px 0 12px 0;font-size:13px;color:#a9a193;border-bottom:1px solid #232734;">
+                                5-Position Chronometer &amp; Provenance Audit
+                            </td>
+                            <td align="right" style="padding:5px 0 12px 0;font-size:13px;font-weight:600;color:#6ee7a8;border-bottom:1px solid #232734;white-space:nowrap;">
+                                Included
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="left" style="padding:14px 0 2px 0;font-size:16px;font-weight:700;color:#f7f1e5;">
+                                Grand Total
+                            </td>
+                            <td align="right" style="padding:14px 0 2px 0;font-size:18px;font-weight:700;color:#e5c687;white-space:nowrap;">
+                                ${formatCurrency(grandTotal)}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
 
-            <p style="margin:28px 0 0;padding-top:16px;border-top:1px solid #262936;font-size:12px;color:#8b8477;line-height:1.5;">
-                Your official Aureo PDF invoice/receipt is attached to this email.<br/>
-                Warm regards,<br/>
-                <strong style="color:#c9a45c;">Aureo Horology Vault</strong>
-            </p>
-        </div>
+            <!-- CTA Button & PDF Notice -->
+            <tr>
+                <td style="padding:0 32px 28px 32px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            <td align="left" valign="middle">
+                                <a href="${orderUrl}" style="display:inline-block;padding:12px 22px;background-color:#c9a45c;color:#0d0f14;font-size:13px;font-weight:700;text-decoration:none;border-radius:5px;letter-spacing:0.4px;">
+                                    View Order &amp; Provenance Timeline →
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+                <td style="padding:20px 32px 26px 32px;background-color:#10121a;border-top:1px solid #222634;font-size:12px;color:#8b8477;line-height:1.6;">
+                    📎 <strong style="color:#c7bfb0;">Official PDF Receipt Attached:</strong> Your signed transaction invoice (<code style="color:#e5c687;">aureo-receipt-${order._id}.pdf</code>) is attached to this email for your collection records.<br/>
+                    <span style="display:inline-block;margin-top:8px;">Warm regards, <strong style="color:#c9a45c;">Aureo Horology Vault</strong> &bull; Geneva &amp; Manila</span>
+                </td>
+            </tr>
+        </table>
     </div>`;
 };
 
