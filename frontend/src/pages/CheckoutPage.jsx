@@ -27,9 +27,10 @@ function CheckoutPage() {
     const cartItems = useSelector((state) => state.cart?.cartItems) || [];
 
     const [paymentMethod, setPaymentMethod] = useState("Dummy Credit Card");
-    const [cardNumber, setCardNumber] = useState("4000 1234 5678 9010");
-    const [cardExpiry, setCardExpiry] = useState("12/28");
-    const [cardCvv, setCardCvv] = useState("888");
+    const [cardNumber, setCardNumber] = useState("");
+    const [cardExpiry, setCardExpiry] = useState("");
+    const [cardCvv, setCardCvv] = useState("");
+    const [orderCreateReady, setOrderCreateReady] = useState(false);
 
     const {
         register,
@@ -49,6 +50,11 @@ function CheckoutPage() {
     });
 
     useEffect(() => {
+        dispatch({ type: ORDER_CREATE_RESET });
+        setOrderCreateReady(true);
+    }, [dispatch]);
+
+    useEffect(() => {
         if (user) {
             reset({
                 addressLine: user.address?.addressLine || "",
@@ -61,18 +67,28 @@ function CheckoutPage() {
     }, [user, reset]);
 
     useEffect(() => {
-        if (cartItems.length === 0 && !success) {
+        if (orderCreateReady && cartItems.length === 0 && !success && !order) {
             navigate("/cart");
         }
-    }, [cartItems.length, success, navigate]);
+    }, [cartItems.length, success, order, navigate, orderCreateReady]);
 
     useEffect(() => {
-        if (success && order) {
+        if (orderCreateReady && success && order) {
+            reset({
+                addressLine: "",
+                city: "",
+                postalCode: "",
+                country: "Philippines",
+                contactNumber: ""
+            });
+            setPaymentMethod("Dummy Credit Card");
+            setCardNumber("");
+            setCardExpiry("");
+            setCardCvv("");
             dispatch(clearCart());
-            dispatch({ type: ORDER_CREATE_RESET });
-            navigate("/orders", { state: { newOrderPlaced: true } });
+            navigate(`/order/success/${order._id}`);
         }
-    }, [success, order, navigate, dispatch]);
+    }, [success, order, navigate, dispatch, reset, orderCreateReady]);
 
     useEffect(() => {
         return () => {

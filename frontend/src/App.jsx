@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Link, Route, Routes, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -11,6 +11,7 @@ import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrdersPage from "./pages/OrdersPage";
 import OrderDetailPage from "./pages/OrderDetailPage";
+import OrderSuccessPage from "./pages/OrderSuccessPage";
 import SellWatchPage from "./pages/SellWatchPage";
 import MyAppraisalsPage from "./pages/MyAppraisalsPage";
 import ServicesPage from "./pages/ServicesPage";
@@ -35,6 +36,16 @@ const AdminUsersPage = lazy(() => import("./pages/admin/AdminUsersPage"));
 
 function RouteFallback() {
     return <div className="route-fallback">Loading the vault...</div>;
+}
+
+function ScrollToTop() {
+    const { pathname } = useLocation();
+
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: "instant" });
+    }, [pathname]);
+
+    return null;
 }
 
 import { useNavigate } from "react-router-dom";
@@ -571,6 +582,7 @@ function LandingRoute() {
 function App() {
     return (
         <BrowserRouter>
+            <ScrollToTop />
             <Suspense fallback={<RouteFallback />}>
                 <Routes>
                     <Route path="/" element={<StoreLanding />} />
@@ -697,6 +709,14 @@ function App() {
                     element={
                         <PrivateRoute>
                             <OrdersPage />
+                        </PrivateRoute>
+                    }
+                />
+                <Route
+                    path="/order/success/:id"
+                    element={
+                        <PrivateRoute>
+                            <OrderSuccessPage />
                         </PrivateRoute>
                     }
                 />
