@@ -43,14 +43,9 @@ function AureoNotification({ type, message }) {
 export function showNotification({ type = "info", message }) {
     const content = <AureoNotification type={type} message={message} />;
 
+    // Position and timing are controlled globally by the ToastContainer in
+    // main.jsx, so the only thing set per toast is the shared shell class.
     toast(content, {
-        position: "bottom-right",
-        autoClose: AUTO_CLOSE_MS,
-        hideProgressBar: true,
-        closeButton: false,
-        closeOnClick: false,
-        draggable: false,
-        pauseOnHover: true,
-        className: "aureo-notification",
+        className: "aureo-notification"
     });
 }

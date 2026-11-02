@@ -25,11 +25,14 @@ createRoot(document.getElementById("root")).render(
             <AureoProvider>
                 <App />
                 <ToastContainer
-                    position="top-right"
+                    position="bottom-right"
                     autoClose={AUTO_CLOSE_MS}
-                    theme="dark"
+                    hideProgressBar
+                    closeButton={false}
+                    closeOnClick={false}
+                    pauseOnHover
                     pauseOnFocusLoss
-                    draggable
+                    theme="dark"
                 />
             </AureoProvider>
         </Provider>
