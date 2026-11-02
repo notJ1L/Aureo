@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
 const Order = require("../models/order");
 const Product = require("../models/product");
+const User = require("../models/user");
 const ErrorHandler = require("../utils/ErrorHandler");
 const catchAsyncErrors = require("../utils/catchAsyncErrors");
 const mockEmail = require("../utils/mockEmail");
@@ -81,7 +83,23 @@ const buildCheckoutOrderHtml = (order, user, titleText = "Acquisition Order Conf
         year: "numeric"
     });
     const clientUrl = (process.env.CLIENT_URL || "http://localhost:5173").split(",")[0].trim();
+    const apiBaseUrl = process.env.API_PUBLIC_URL || `http://localhost:${process.env.PORT || 3000}`;
     const orderUrl = `${clientUrl}/order/${order._id}`;
+
+    const userId = user?._id || order?.user?._id || order?.user;
+    let pdfDownloadUrl = orderUrl;
+    if (userId && process.env.JWT_SECRET) {
+        try {
+            const receiptToken = jwt.sign({ id: userId.toString() }, process.env.JWT_SECRET, {
+                expiresIn: "30d"
+            });
+            pdfDownloadUrl = `${apiBaseUrl}/api/v1/order/${order._id}/receipt?token=${encodeURIComponent(
+                receiptToken
+            )}&download=1`;
+        } catch (err) {
+            pdfDownloadUrl = orderUrl;
+        }
+    }
 
     const statusBadgeBg =
         order.status === "Completed" || order.status === "Paid"
@@ -238,7 +256,7 @@ const buildCheckoutOrderHtml = (order, user, titleText = "Acquisition Order Conf
 
             <!-- Totals Breakdown Table (Email-safe left/right cells) -->
             <tr>
-                <td style="padding:12px 32px 24px 32px;">
+                <td style="padding:12px 32px 20px 32px;">
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0f1219;border:1px solid #252938;border-radius:8px;padding:18px 20px;">
                         <tr>
                             <td align="left" style="padding:5px 0;font-size:13px;color:#a9a193;">
@@ -276,13 +294,41 @@ const buildCheckoutOrderHtml = (order, user, titleText = "Acquisition Order Conf
                 </td>
             </tr>
 
-            <!-- CTA Button & PDF Notice -->
+            <!-- Interactive Official PDF Invoice Card inside Email -->
+            <tr>
+                <td style="padding:0 32px 20px 32px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#191d28;border:1px solid #4a3e28;border-radius:8px;padding:14px 18px;">
+                        <tr>
+                            <td width="42" valign="middle" style="padding-right:12px;">
+                                <div style="width:38px;height:38px;border-radius:6px;background-color:#262015;border:1px solid #c9a45c;color:#e5c687;font-size:11px;font-weight:800;line-height:38px;text-align:center;">
+                                    PDF
+                                </div>
+                            </td>
+                            <td valign="middle" align="left">
+                                <div style="font-size:13px;font-weight:700;color:#f7f1e5;">
+                                    aureo-receipt-${order._id}.pdf
+                                </div>
+                                <div style="font-size:11px;color:#a9a193;margin-top:2px;">
+                                    Official Aureo Acquisition Invoice &bull; Attached &amp; Ready for Download
+                                </div>
+                            </td>
+                            <td valign="middle" align="right" style="padding-left:12px;white-space:nowrap;">
+                                <a href="${pdfDownloadUrl}" target="_blank" style="display:inline-block;padding:9px 14px;background-color:#c9a45c;color:#0d0f14;font-size:12px;font-weight:700;text-decoration:none;border-radius:5px;">
+                                    Download PDF ↓
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- CTA Buttons Row -->
             <tr>
                 <td style="padding:0 32px 28px 32px;">
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                         <tr>
                             <td align="left" valign="middle">
-                                <a href="${orderUrl}" style="display:inline-block;padding:12px 22px;background-color:#c9a45c;color:#0d0f14;font-size:13px;font-weight:700;text-decoration:none;border-radius:5px;letter-spacing:0.4px;">
+                                <a href="${orderUrl}" style="display:inline-block;padding:12px 20px;background-color:transparent;border:1px solid #c9a45c;color:#e5c687;font-size:13px;font-weight:700;text-decoration:none;border-radius:5px;letter-spacing:0.4px;">
                                     View Order &amp; Provenance Timeline →
                                 </a>
                             </td>
@@ -293,9 +339,9 @@ const buildCheckoutOrderHtml = (order, user, titleText = "Acquisition Order Conf
 
             <!-- Footer -->
             <tr>
-                <td style="padding:20px 32px 26px 32px;background-color:#10121a;border-top:1px solid #222634;font-size:12px;color:#8b8477;line-height:1.6;">
-                    📎 <strong style="color:#c7bfb0;">Official PDF Receipt Attached:</strong> Your signed transaction invoice (<code style="color:#e5c687;">aureo-receipt-${order._id}.pdf</code>) is attached to this email for your collection records.<br/>
-                    <span style="display:inline-block;margin-top:8px;">Warm regards, <strong style="color:#c9a45c;">Aureo Horology Vault</strong> &bull; Geneva &amp; Manila</span>
+                <td style="padding:18px 32px 24px 32px;background-color:#10121a;border-top:1px solid #222634;font-size:12px;color:#8b8477;line-height:1.6;">
+                    Your official PDF invoice (<code style="color:#e5c687;">aureo-receipt-${order._id}.pdf</code>) is both clickable above and attached as a file to this email.<br/>
+                    <span style="display:inline-block;margin-top:6px;">Warm regards, <strong style="color:#c9a45c;">Aureo Horology Vault</strong> &bull; Geneva &amp; Manila</span>
                 </td>
             </tr>
         </table>
@@ -312,6 +358,8 @@ const buildOrderStatusEmail = (order, user) => {
         "",
         `Order total: ${formatCurrency(total)}`,
         `Payment method: ${order.paymentMethod}`,
+        "",
+        "Your updated PDF receipt is attached to this email.",
         "",
         "Warm regards,",
         "Aureo Horology Vault"
@@ -352,6 +400,24 @@ const buildCompletedOrderEmail = (order, user) => {
         "Warm regards,",
         "Aureo Horology Vault"
     ].join("\n");
+};
+
+// Helper to build the Nodemailer PDF attachment for an order
+const buildPdfAttachment = async (order, user) => {
+    try {
+        const receiptBuffer = await generateReceipt(order, user);
+        return [
+            {
+                filename: `aureo-receipt-${order._id}.pdf`,
+                content: Buffer.from(receiptBuffer),
+                contentType: "application/pdf",
+                contentDisposition: "attachment"
+            }
+        ];
+    } catch (pdfErr) {
+        console.error("Failed to generate PDF receipt attachment:", pdfErr.message);
+        return [];
+    }
 };
 
 // FR 4.1 & FR 4.2 & FR 4.3: Create new order
@@ -449,19 +515,7 @@ const createOrder = catchAsyncErrors(async (req, res, next) => {
     });
 
     // FR 4.5: Send confirmation email with attached PDF receipt upon checkout
-    let checkoutAttachments = [];
-    try {
-        const receiptBuffer = await generateReceipt(order, req.user);
-        checkoutAttachments = [
-            {
-                filename: `aureo-receipt-${order._id}.pdf`,
-                content: receiptBuffer,
-                contentType: "application/pdf"
-            }
-        ];
-    } catch (pdfErr) {
-        console.error("Failed to generate checkout PDF attachment:", pdfErr.message);
-    }
+    const checkoutAttachments = await buildPdfAttachment(order, req.user);
 
     await mockEmail({
         to: req.user.email,
@@ -639,18 +693,11 @@ const updateAdminOrder = catchAsyncErrors(async (req, res, next) => {
 
     await order.save();
 
-    // FR 4.5: every status change notifies the customer.
+    // Generate PDF receipt attachment for every status notification
+    const attachments = await buildPdfAttachment(order, order.user);
+
+    // FR 4.5: every status change notifies the customer with the updated PDF receipt attached.
     if (status === "Completed") {
-        // Term Test Lab: the completed transaction email carries the product
-        // list, the subtotals and the grand total, and the PDF receipt.
-        const receipt = await generateReceipt(order, order.user);
-
-        const attachment = {
-            filename: `aureo-receipt-${order._id}.pdf`,
-            content: receipt,
-            contentType: "application/pdf"
-        };
-
         await mockEmail({
             to: order.user.email,
             subject: `Aureo Transaction Complete - Order #${order._id}`,
@@ -658,7 +705,7 @@ const updateAdminOrder = catchAsyncErrors(async (req, res, next) => {
             html: buildCheckoutOrderHtml(order, order.user, "Transaction Complete — Delivered"),
             type: "order",
             relatedId: order._id.toString(),
-            attachments: [attachment]
+            attachments
         });
     } else {
         await mockEmail({
@@ -667,7 +714,8 @@ const updateAdminOrder = catchAsyncErrors(async (req, res, next) => {
             body: buildOrderStatusEmail(order, order.user),
             html: buildCheckoutOrderHtml(order, order.user, `Order Status Updated: ${status}`),
             type: "order",
-            relatedId: order._id.toString()
+            relatedId: order._id.toString(),
+            attachments
         });
     }
 
@@ -711,21 +759,53 @@ const deleteAdminOrder = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Get Order PDF Receipt
+// Get Order PDF Receipt (supports Bearer header OR ?token= query param from email links)
 const getOrderReceipt = catchAsyncErrors(async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         return next(new ErrorHandler("Invalid order ID", 400));
     }
+
+    let token = null;
+    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+        token = req.headers.authorization.split(" ")[1];
+    } else if (req.query.token) {
+        token = String(req.query.token);
+    }
+
+    if (!token) {
+        return next(new ErrorHandler("Please log in to access this receipt", 401));
+    }
+
+    let decoded;
+    try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+        return next(new ErrorHandler("Invalid or expired receipt link. Please log in again.", 401));
+    }
+
+    const requestingUser = await User.findById(decoded.id);
+    if (!requestingUser) {
+        return next(new ErrorHandler("User not found", 401));
+    }
+
     const order = await Order.findById(req.params.id).populate("user", "name email");
     if (!order) {
         return next(new ErrorHandler("Order not found", 404));
     }
-    if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== "admin") {
+
+    const isOwner = order.user._id.toString() === requestingUser._id.toString();
+    const isAdmin = requestingUser.role === "admin";
+    if (!isOwner && !isAdmin) {
         return next(new ErrorHandler("Unauthorized to view this receipt", 403));
     }
+
     const pdfBuffer = await generateReceipt(order, order.user);
+    const dispositionType = req.query.download === "1" ? "attachment" : "inline";
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", 'inline; filename="aureo-receipt-' + order._id + '.pdf"');
+    res.setHeader(
+        "Content-Disposition",
+        `${dispositionType}; filename="aureo-receipt-${order._id}.pdf"`
+    );
     res.send(pdfBuffer);
 });
 

@@ -1,14 +1,20 @@
 const PDFDocument = require("pdfkit");
 
 const GOLD = "#c9a45c";
-const INK = "#1a1a1a";
-const MUTED = "#6b6b6b";
+const DARK_BG = "#12151e";
+const INK = "#1a1d24";
+const MUTED = "#6b707b";
+const BORDER = "#e2e4e9";
 
-const formatCurrency = (amount) =>
-    new Intl.NumberFormat("en-PH", {
-        style: "currency",
-        currency: "PHP"
+// Standard PDF Helvetica uses WinAnsiEncoding where the Unicode peso sign (₱)
+// renders as garbled characters. Using "PHP " ensures crisp typography across all PDF viewers.
+const formatCurrency = (amount) => {
+    const formatted = new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
     }).format(Number(amount) || 0);
+    return `PHP ${formatted}`;
+};
 
 const formatDate = (date) =>
     new Date(date || Date.now()).toLocaleString("en-PH", {
@@ -19,9 +25,7 @@ const formatDate = (date) =>
         minute: "2-digit"
     });
 
-// Term Test Lab: builds the PDF receipt that is attached to the completed
-// transaction email. It contains the product / service list, the subtotal of
-// every line and the grand total. No payment data is ever written to it.
+// Builds the official PDF receipt attached to order emails and downloadable from the vault.
 const generateReceipt = (order, customer = {}) => {
     const items = Array.isArray(order?.orderItems) ? order.orderItems : [];
     const services = Array.isArray(order?.services) ? order.services : [];
@@ -35,7 +39,7 @@ const generateReceipt = (order, customer = {}) => {
     const grandTotal = Number(order?.totalPrice ?? subtotal + serviceTotal);
 
     return new Promise((resolve, reject) => {
-        const doc = new PDFDocument({ size: "A4", margin: 50 });
+        const doc = new PDFDocument({ size: "A4", margin: 48 });
         const chunks = [];
 
         doc.on("data", (chunk) => chunks.push(chunk));
@@ -43,175 +47,324 @@ const generateReceipt = (order, customer = {}) => {
         doc.on("error", reject);
 
         const left = doc.page.margins.left;
-        const contentWidth =
-            doc.page.width - doc.page.margins.left - doc.page.margins.right;
+        const pageWidth = doc.page.width;
+        const contentWidth = pageWidth - doc.page.margins.left - doc.page.margins.right;
         const right = left + contentWidth;
 
-        // Header
-        doc.fillColor(GOLD).fontSize(26).font("Helvetica-Bold").text("AUREO", left, 50);
+        // Top Dark Luxury Banner
+        doc.rect(0, 0, pageWidth, 118).fill(DARK_BG);
+        doc.rect(0, 115, pageWidth, 3).fill(GOLD);
+
+        doc
+            .fillColor(GOLD)
+            .fontSize(24)
+            .font("Helvetica-Bold")
+            .text("A U R E O", left, 34);
+
+        doc
+            .fillColor("#a8a296")
+            .fontSize(8.5)
+            .font("Helvetica")
+            .text("HAUTE HORLOGERIE VAULT  •  GENEVA & MANILA", left, 64);
+
+        doc
+            .fillColor("#ffffff")
+            .fontSize(15)
+            .font("Helvetica-Bold")
+            .text("OFFICIAL ACQUISITION RECEIPT", left, 36, {
+                width: contentWidth,
+                align: "right"
+            });
+
+        doc
+            .fillColor(GOLD)
+            .fontSize(9)
+            .font("Helvetica-Bold")
+            .text(`STATUS: ${String(order?.status || "CONFIRMED").toUpperCase()}`, left, 60, {
+                width: contentWidth,
+                align: "right"
+            });
+
+        // Order Metadata Strip
+        let cursorY = 140;
+        doc
+            .roundedRect(left, cursorY, contentWidth, 54, 5)
+            .fillAndStroke("#f7f8fa", BORDER);
+
         doc
             .fillColor(MUTED)
-            .fontSize(9)
-            .font("Helvetica")
-            .text("WATCH HOROLOGY VAULT", left, doc.y + 2);
+            .fontSize(8)
+            .font("Helvetica-Bold")
+            .text("ORDER REFERENCE", left + 16, cursorY + 12)
+            .text("ISSUED DATE", left + 210, cursorY + 12)
+            .text("SETTLEMENT METHOD", left + 365, cursorY + 12);
 
         doc
             .fillColor(INK)
-            .fontSize(16)
+            .fontSize(9.5)
             .font("Helvetica-Bold")
-            .text("Transaction Receipt", left, 95);
+            .text(`#${order?._id || "N/A"}`, left + 16, cursorY + 26, { width: 185 })
+            .font("Helvetica")
+            .text(formatDate(order?.createdAt), left + 210, cursorY + 26, { width: 145 })
+            .text(
+                `${order?.paymentMethod || "N/A"} (${order?.paymentStatus || "Paid"})`,
+                left + 365,
+                cursorY + 26,
+                { width: 125 }
+            );
+
+        // Collector & Destination Columns
+        cursorY = 214;
+        doc
+            .fillColor(GOLD)
+            .fontSize(8.5)
+            .font("Helvetica-Bold")
+            .text("COLLECTOR DETAILS", left, cursorY)
+            .text("ARMORED COURIER DESTINATION", left + 260, cursorY);
+
+        cursorY += 15;
+        const customerName = customer?.name || order?.user?.name || "Aureo Collector";
+        const customerEmail = customer?.email || order?.user?.email || "";
 
         doc
-            .fillColor(MUTED)
-            .fontSize(9)
-            .font("Helvetica")
-            .text(`Order ${order?._id || ""}`, left, doc.y + 2)
-            .text(`Issued ${formatDate(order?.createdAt)}`, left, doc.y);
+            .fillColor(INK)
+            .fontSize(10)
+            .font("Helvetica-Bold")
+            .text(customerName, left, cursorY);
 
-        // Customer + shipping block
-        let cursorY = doc.y + 18;
-
-        doc.fillColor(INK).fontSize(10).font("Helvetica-Bold").text("Billed to", left, cursorY);
-        doc
-            .fillColor(MUTED)
-            .fontSize(9)
-            .font("Helvetica")
-            .text(customer.name || order?.user?.name || "Aureo customer", left, doc.y + 2)
-            .text(customer.email || order?.user?.email || "", left, doc.y);
+        if (customerEmail) {
+            doc
+                .fillColor(MUTED)
+                .fontSize(9)
+                .font("Helvetica")
+                .text(customerEmail, left, cursorY + 14);
+        }
 
         if (order?.shippingInfo) {
             const { address, city, postalCode, country, phone } = order.shippingInfo;
-
-            doc.text(
-                `Ship to: ${address}, ${city} ${postalCode || ""} ${country || ""}`.trim(),
-                left,
-                doc.y
-            );
-
+            doc
+                .fillColor(INK)
+                .fontSize(9.5)
+                .font("Helvetica")
+                .text(
+                    `${address || ""}, ${city || ""} ${postalCode || ""}, ${country || ""}`.trim(),
+                    left + 260,
+                    cursorY,
+                    { width: 235 }
+                );
             if (phone) {
-                doc.text(`Contact: ${phone}`, left, doc.y);
+                doc
+                    .fillColor(MUTED)
+                    .fontSize(9)
+                    .text(`Contact Tel: ${phone}`, left + 260, doc.y + 3);
             }
         }
 
-        cursorY = doc.y + 16;
+        // Itemized Table Header
+        cursorY = 285;
+        doc.rect(left, cursorY, contentWidth, 26).fill(DARK_BG);
 
-        // Item table
         doc
-            .fillColor(INK)
-            .fontSize(9)
+            .fillColor(GOLD)
+            .fontSize(8.5)
             .font("Helvetica-Bold")
-            .text("ITEM", left, cursorY)
-            .text("QTY", left + 250, cursorY, { width: 40, align: "right" })
-            .text("PRICE", left + 300, cursorY, { width: 80, align: "right" })
-            .text("SUBTOTAL", left + 390, cursorY, { width: 80, align: "right" });
+            .text("TIMEPIECE / DESCRIPTION", left + 12, cursorY + 9, { width: 230 })
+            .text("QTY", left + 245, cursorY + 9, { width: 40, align: "center" })
+            .text("UNIT PRICE", left + 290, cursorY + 9, { width: 95, align: "right" })
+            .text("LINE TOTAL", left + 390, cursorY + 9, { width: 98, align: "right" });
 
-        cursorY = doc.y + 4;
+        cursorY += 34;
 
-        doc
-            .moveTo(left, cursorY)
-            .lineTo(right, cursorY)
-            .strokeColor("#dddddd")
-            .lineWidth(1)
-            .stroke();
+        items.forEach((item, index) => {
+            if (index % 2 === 1) {
+                doc.rect(left, cursorY - 6, contentWidth, 26).fill("#fafbfc");
+            }
 
-        cursorY += 8;
+            doc
+                .fillColor(INK)
+                .fontSize(9.5)
+                .font("Helvetica-Bold")
+                .text(item.name || "Timepiece", left + 12, cursorY, { width: 230 });
 
-        doc.font("Helvetica").fontSize(9).fillColor(INK);
+            doc
+                .fillColor(MUTED)
+                .font("Helvetica")
+                .text(String(item.quantity || 1), left + 245, cursorY, {
+                    width: 40,
+                    align: "center"
+                })
+                .text(formatCurrency(item.price), left + 290, cursorY, {
+                    width: 95,
+                    align: "right"
+                });
 
-        items.forEach((item) => {
-            const y = cursorY;
+            doc
+                .fillColor(INK)
+                .font("Helvetica-Bold")
+                .text(formatCurrency(lineTotal(item)), left + 390, cursorY, {
+                    width: 98,
+                    align: "right"
+                });
 
-            doc.text(item.name || "Watch", left, y, { width: 240 });
-            doc.text(String(item.quantity || 1), left + 250, y, { width: 40, align: "right" });
-            doc.text(formatCurrency(item.price), left + 300, y, { width: 80, align: "right" });
-            doc.text(
-                formatCurrency(lineTotal(item)),
-                left + 390,
-                y,
-                { width: 80, align: "right" }
-            );
-
-            cursorY = doc.y + 6;
+            cursorY += 24;
+            doc
+                .moveTo(left, cursorY - 4)
+                .lineTo(right, cursorY - 4)
+                .strokeColor(BORDER)
+                .lineWidth(0.75)
+                .stroke();
         });
 
         services.forEach((service) => {
-            const y = cursorY;
+            doc
+                .fillColor(INK)
+                .fontSize(9.5)
+                .font("Helvetica-Bold")
+                .text(`${service.name} (Atelier Service)`, left + 12, cursorY, { width: 230 });
 
-            doc.text(`${service.name} (service)`, left, y, { width: 240 });
-            doc.text("1", left + 250, y, { width: 40, align: "right" });
-            doc.text(formatCurrency(service.price), left + 300, y, { width: 80, align: "right" });
-            doc.text(formatCurrency(service.price), left + 390, y, { width: 80, align: "right" });
+            doc
+                .fillColor(MUTED)
+                .font("Helvetica")
+                .text("1", left + 245, cursorY, { width: 40, align: "center" })
+                .text(formatCurrency(service.price), left + 290, cursorY, {
+                    width: 95,
+                    align: "right"
+                });
 
-            cursorY = doc.y + 6;
+            doc
+                .fillColor(INK)
+                .font("Helvetica-Bold")
+                .text(formatCurrency(service.price), left + 390, cursorY, {
+                    width: 98,
+                    align: "right"
+                });
+
+            cursorY += 24;
+            doc
+                .moveTo(left, cursorY - 4)
+                .lineTo(right, cursorY - 4)
+                .strokeColor(BORDER)
+                .lineWidth(0.75)
+                .stroke();
         });
 
         if (items.length === 0 && services.length === 0) {
-            doc.fillColor(MUTED).text("No items on this order.", left, cursorY);
-            cursorY = doc.y + 6;
+            doc
+                .fillColor(MUTED)
+                .fontSize(9.5)
+                .font("Helvetica")
+                .text("No items recorded on this order.", left + 12, cursorY);
+            cursorY += 24;
         }
 
-        // Totals
-        const totalsY = cursorY + 10;
-
-        doc
-            .moveTo(left, totalsY)
-            .lineTo(right, totalsY)
-            .strokeColor("#dddddd")
-            .lineWidth(1)
-            .stroke();
+        // Totals Summary Box
+        const summaryTop = cursorY + 14;
+        const summaryLeft = right - 230;
 
         doc
             .fillColor(MUTED)
             .fontSize(9)
             .font("Helvetica")
-            .text("Subtotal", right - 120, totalsY + 8, { width: 120, align: "right" });
-
+            .text("Subtotal", summaryLeft, summaryTop, { width: 110, align: "left" });
         doc
             .fillColor(INK)
             .font("Helvetica-Bold")
-            .text(formatCurrency(subtotal), right - 120, totalsY + 8, { width: 120, align: "right" });
+            .text(formatCurrency(subtotal), summaryLeft + 110, summaryTop, {
+                width: 120,
+                align: "right"
+            });
+
+        doc
+            .fillColor(MUTED)
+            .font("Helvetica")
+            .text("Armored Insured Transit", summaryLeft, summaryTop + 18, {
+                width: 120,
+                align: "left"
+            });
+        doc
+            .fillColor("#1f8b55")
+            .font("Helvetica-Bold")
+            .text("COMPLIMENTARY", summaryLeft + 110, summaryTop + 18, {
+                width: 120,
+                align: "right"
+            });
+
+        doc
+            .fillColor(MUTED)
+            .font("Helvetica")
+            .text("5-Position Chronometer Audit", summaryLeft, summaryTop + 36, {
+                width: 130,
+                align: "left"
+            });
+        doc
+            .fillColor("#1f8b55")
+            .font("Helvetica-Bold")
+            .text("INCLUDED", summaryLeft + 110, summaryTop + 36, {
+                width: 120,
+                align: "right"
+            });
 
         if (serviceTotal > 0) {
             doc
                 .fillColor(MUTED)
                 .font("Helvetica")
-                .text("Services", right - 120, doc.y + 2, { width: 120, align: "right" });
-
+                .text("Atelier Services", summaryLeft, summaryTop + 54, {
+                    width: 110,
+                    align: "left"
+                });
             doc
                 .fillColor(INK)
                 .font("Helvetica-Bold")
-                .text(formatCurrency(serviceTotal), right - 120, doc.y, {
+                .text(formatCurrency(serviceTotal), summaryLeft + 110, summaryTop + 54, {
                     width: 120,
                     align: "right"
                 });
         }
 
+        const totalBarY = summaryTop + (serviceTotal > 0 ? 76 : 58);
+        doc.roundedRect(summaryLeft - 10, totalBarY, 240, 34, 4).fill(DARK_BG);
+
         doc
             .fillColor(GOLD)
-            .fontSize(11)
+            .fontSize(10)
             .font("Helvetica-Bold")
-            .text("Grand Total", right - 120, doc.y + 8, { width: 120, align: "right" });
+            .text("GRAND TOTAL", summaryLeft + 2, totalBarY + 11, { width: 95, align: "left" });
 
         doc
-            .fontSize(12)
-            .text(formatCurrency(grandTotal), right - 120, doc.y, { width: 120, align: "right" });
+            .fillColor("#ffffff")
+            .fontSize(11)
+            .font("Helvetica-Bold")
+            .text(formatCurrency(grandTotal), summaryLeft + 95, totalBarY + 11, {
+                width: 125,
+                align: "right"
+            });
 
-        // Footer
+        // Provenance Guarantee Box at Footer
+        const footerY = totalBarY + 60;
+        doc
+            .roundedRect(left, footerY, contentWidth, 56, 5)
+            .fillAndStroke("#fcfaf5", "#e6d8bc");
+
+        doc
+            .fillColor(INK)
+            .fontSize(8.5)
+            .font("Helvetica-Bold")
+            .text(
+                "AUREO PROVENANCE & CHRONOMETER CERTIFICATION",
+                left + 14,
+                footerY + 12
+            );
+
         doc
             .fillColor(MUTED)
             .fontSize(8)
             .font("Helvetica")
             .text(
-                "Payment method: " + (order?.paymentMethod || "N/A"),
-                left,
-                doc.y + 26
+                "This document serves as your official Aureo Horology Vault acquisition receipt and 2-Year Maison mechanical warranty record. No sensitive payment card credentials are stored.",
+                left + 14,
+                footerY + 26,
+                { width: contentWidth - 28 }
             );
-
-        doc.text(
-            "This receipt was generated automatically by Aureo. No card details are stored.",
-            left,
-            doc.y + 2
-        );
 
         doc.end();
     });
