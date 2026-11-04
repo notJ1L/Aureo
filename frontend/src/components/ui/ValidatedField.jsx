@@ -85,9 +85,24 @@ export function ValidatedField({
                     placeholder={placeholder}
                     readOnly={readOnly}
                     value={field.value ?? ""}
-                    onChange={(event) =>
-                        notify(event.target.value === "" ? undefined : event.target.valueAsNumber)
-                    }
+                    onWheel={(e) => e.target.blur()}
+                    onFocus={(e) => {
+                        if (e.target.value === "0") {
+                            e.target.select();
+                        }
+                    }}
+                    onChange={(event) => {
+                        const raw = event.target.value;
+                        if (raw === "") {
+                            notify("");
+                            return;
+                        }
+                        const clean = raw.length > 1 && raw.startsWith("0") && !raw.startsWith("0.")
+                            ? raw.replace(/^0+/, "")
+                            : raw;
+                        const num = Number(clean);
+                        notify(isNaN(num) ? clean : num);
+                    }}
                 />
             );
         }

@@ -85,24 +85,28 @@ const createProduct = catchAsyncErrors(async (req, res, next) => {
         );
     }
 
-    const uploadedImages = [];
+    let uploadedImages = [];
 
     if (Array.isArray(images) && images.length > 0) {
-        for (const img of images) {
+        const uploadPromises = images.map(async (img) => {
             if (typeof img === "string" && img.startsWith("data:image")) {
                 const result = await cloudinary.uploader.upload(img, {
                     folder: "aureo/products",
                     crop: "limit",
-                    width: 1200
+                    width: 1400
                 });
-                uploadedImages.push({
+                return {
                     public_id: result.public_id,
                     url: result.secure_url
-                });
+                };
             } else if (img && img.url) {
-                uploadedImages.push(img);
+                return img;
             }
-        }
+            return null;
+        });
+
+        const uploadResults = await Promise.all(uploadPromises);
+        uploadedImages = uploadResults.filter(Boolean);
     }
 
     const session = await mongoose.startSession();
@@ -173,34 +177,33 @@ const updateProduct = catchAsyncErrors(async (req, res, next) => {
         }
 
         if (Array.isArray(req.body.images)) {
-            const newImages = [];
-            for (const img of req.body.images) {
+            const uploadPromises = req.body.images.map(async (img) => {
                 if (typeof img === "string" && img.startsWith("data:image")) {
                     const result = await cloudinary.uploader.upload(img, {
                         folder: "aureo/products",
                         crop: "limit",
-                        width: 1200
+                        width: 1400
                     });
-                    newImages.push({
+                    return {
                         public_id: result.public_id,
                         url: result.secure_url
-                    });
+                    };
                 } else if (img && img.url) {
-                    newImages.push(img);
+                    return img;
                 }
-            }
+                return null;
+            });
+
+            const resolvedResults = await Promise.all(uploadPromises);
+            const newImages = resolvedResults.filter(Boolean);
 
             if (product.images && product.images.length > 0) {
                 const keptPublicIds = new Set(newImages.map((i) => i.public_id).filter(Boolean));
-                for (const oldImg of product.images) {
-                    if (oldImg.public_id && !keptPublicIds.has(oldImg.public_id)) {
-                        try {
-                            await cloudinary.uploader.destroy(oldImg.public_id);
-                        } catch {
-                            // ignore cloudinary deletion error
-                        }
-                    }
-                }
+                const deletePromises = product.images
+                    .filter((oldImg) => oldImg.public_id && !keptPublicIds.has(oldImg.public_id))
+                    .map((oldImg) => cloudinary.uploader.destroy(oldImg.public_id).catch(() => {}));
+
+                await Promise.allSettled(deletePromises);
             }
 
             req.body.images = newImages;

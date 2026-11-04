@@ -66,6 +66,7 @@ export const productSchema = Yup.object({
         .oneOf(["automatic", "quartz", "manual"], "Choose a valid movement.")
         .required("Movement is required."),
     caseSize: Yup.number()
+        .transform((value, originalValue) => (originalValue === "" || originalValue === null ? undefined : value))
         .typeError("Case size must be a number.")
         .min(1, "Case size must be greater than zero.")
         .max(70, "Case size must be 70mm or smaller.")
@@ -74,12 +75,14 @@ export const productSchema = Yup.object({
         .oneOf(["new", "second-hand"], "Choose a valid condition.")
         .required("Condition is required."),
     price: Yup.number()
-        .typeError("Price must be a number.")
+        .transform((value, originalValue) => (originalValue === "" || originalValue === null ? undefined : value))
+        .typeError("Price must be a valid number.")
         .min(0, "Price cannot be negative.")
         .required("Price is required."),
     description: requiredText("Description", { min: 10, max: 2000 }),
     stock: Yup.number()
-        .typeError("Stock must be a number.")
+        .transform((value, originalValue) => (originalValue === "" || originalValue === null ? undefined : value))
+        .typeError("Stock must be a whole number.")
         .min(0, "Stock cannot be negative.")
         .integer("Stock must be a whole number.")
         .required("Stock is required.")

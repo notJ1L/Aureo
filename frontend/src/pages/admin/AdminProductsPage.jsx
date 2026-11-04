@@ -1,3 +1,4 @@
+import { compressImage } from "../../utils/imageCompressor";
 import ModalPortal from "../../components/ui/ModalPortal";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -47,7 +48,7 @@ const EMPTY_PRODUCT = {
     movement: "automatic",
     caseSize: 40,
     condition: "new",
-    price: 0,
+    price: "",
     stock: 5,
     description: ""
 };
@@ -194,7 +195,7 @@ function AdminProductsPage() {
             movement: prod.movement,
             caseSize: prod.caseSize,
             condition: prod.condition,
-            price: prod.price,
+            price: prod.price ?? "",
             stock: prod.stock,
             description: prod.description
         });
@@ -213,25 +214,19 @@ function AdminProductsPage() {
         }
     };
 
-    const handleImageUpload = (e) => {
+    const handleImageUpload = async (e) => {
         const files = Array.from(e.target.files);
         if (!files.length) return;
 
-        const newImages = [...images];
-        const newPreviews = [...imagePreviews];
+        try {
+            const compressedList = await Promise.all(files.map((file) => compressImage(file)));
+            const valid = compressedList.filter(Boolean);
 
-        files.forEach((file) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-                if (reader.readyState === 2) {
-                    newImages.push(reader.result);
-                    newPreviews.push(reader.result);
-                    setImagePreviews([...newPreviews]);
-                    setImages([...newImages]);
-                }
-            };
-            reader.readAsDataURL(file);
-        });
+            setImages((prev) => [...prev, ...valid]);
+            setImagePreviews((prev) => [...prev, ...valid]);
+        } catch {
+            toast.error("Failed to process one or more photographs.");
+        }
     };
 
     const handleRemoveImage = (indexToRemove) => {
@@ -272,25 +267,26 @@ function AdminProductsPage() {
         setImagePreviews(newPreviews);
     };
 
-    const handleReplaceImage = (index, file) => {
+    const handleReplaceImage = async (index, file) => {
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-            if (reader.readyState === 2) {
-                setImages((prev) => {
-                    const copy = [...prev];
-                    copy[index] = reader.result;
-                    return copy;
-                });
-                setImagePreviews((prev) => {
-                    const copy = [...prev];
-                    copy[index] = reader.result;
-                    return copy;
-                });
-                toast.success(`Photograph ${index + 1} updated.`);
-            }
-        };
-        reader.readAsDataURL(file);
+        try {
+            const compressed = await compressImage(file);
+            if (!compressed) return;
+
+            setImages((prev) => {
+                const copy = [...prev];
+                copy[index] = compressed;
+                return copy;
+            });
+            setImagePreviews((prev) => {
+                const copy = [...prev];
+                copy[index] = compressed;
+                return copy;
+            });
+            toast.success(`Photograph ${index + 1} updated.`);
+        } catch {
+            toast.error("Failed to replace photograph.");
+        }
     };
 
     const onSubmit = (values) => {
@@ -928,6 +924,7 @@ function AdminProductsPage() {
                                     name="price"
                                     label="Price (PHP)"
                                     type="number"
+                                    placeholder="e.g. 2500000"
                                     error={errors.price?.message}
                                 />
                                 <ValidatedField
