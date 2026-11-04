@@ -8,12 +8,14 @@ dotenv.config({ //pang load ng env file natin
 const app = require("./app"); //para sa ginawang express app
 const { connectDB } = require("./config/db"); //pang connect sa database
 const { ensureCatalogSeeded } = require("./seeder/seedData");
+const { startEmailRelayWorker } = require("./utils/emailRelay");
 
 const PORT = process.env.PORT || 3000; //pang set ng port number natin ung || para pag wala edi 3000
 
 const startServer = async () => {
     await connectDB();
     await ensureCatalogSeeded();
+    startEmailRelayWorker();
 
     app.listen(PORT, () => {
         console.log(`Aureo server running on port ${PORT}`);

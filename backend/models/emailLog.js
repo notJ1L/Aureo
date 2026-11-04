@@ -20,6 +20,11 @@ const emailLogSchema = new mongoose.Schema(
             required: [true, "Email body is required"]
         },
 
+        html: {
+            type: String,
+            default: null
+        },
+
         type: {
             type: String,
             enum: ["verification", "registration", "order", "ticket"],
