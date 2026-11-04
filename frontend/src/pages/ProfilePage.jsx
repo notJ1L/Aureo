@@ -114,7 +114,8 @@ function ProfilePage() {
                 <section className="profile-hero">
                     <div className="avatar-wrapper">
                         <img
-                            src={avatarPreview || user?.avatar?.url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80"}
+                            src={avatarPreview || user?.avatar?.url || "/default_avatar.png"}
+                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/default_avatar.png"; }}
                             alt={user?.name || "User Avatar"}
                             className="profile-avatar"
                         />

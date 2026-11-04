@@ -13,7 +13,8 @@ import {
     IconUser,
     IconMenu,
     IconMoon,
-    IconSun
+    IconSun,
+    IconStar
 } from "./icons";
 import "../../styles/admin.css";
 
@@ -21,6 +22,7 @@ const ADMIN_LINKS = [
     { to: "/admin/dashboard", label: "Dashboard", icon: IconGrid },
     { to: "/admin/products", label: "Inventory", icon: IconBox },
     { to: "/admin/orders", label: "Orders", icon: IconReceipt },
+    { to: "/admin/reviews", label: "Reviews", icon: IconStar },
     { to: "/admin/services", label: "Services", icon: IconTool },
     { to: "/admin/appraisals", label: "Appraisals", icon: IconScale },
     { to: "/admin/tickets", label: "Tickets", icon: IconChat },

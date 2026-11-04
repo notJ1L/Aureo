@@ -251,7 +251,8 @@ function ProductReviews({ productId, onReviewAdded }) {
                                 <div className="review-user-row">
                                     <div className="review-user-info">
                                         <img
-                                            src={rev.user?.avatar?.url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=80"}
+                                            src={rev.user?.avatar?.url || "/default_avatar.png"}
+                                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/default_avatar.png"; }}
                                             alt={rev.user?.name || "Client"}
                                             className="review-user-avatar"
                                         />

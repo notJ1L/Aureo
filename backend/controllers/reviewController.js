@@ -323,9 +323,170 @@ const deleteReview = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
+// Admin: Get all reviews across all products (with optional filtering)
+const getAdminReviews = catchAsyncErrors(async (req, res) => {
+    const { status, rating, productId } = req.query;
+    const filter = {};
+
+    if (status === "active") {
+        filter.isActive = true;
+    } else if (status === "deleted") {
+        filter.isActive = false;
+    }
+
+    if (rating) {
+        filter.rating = Number(rating);
+    }
+
+    if (productId && mongoose.Types.ObjectId.isValid(productId)) {
+        filter.product = productId;
+    }
+
+    const reviews = await Review.find(filter)
+        .populate("user", "name email avatar")
+        .populate("product", "name brand price images")
+        .sort({ createdAt: -1 });
+
+    res.status(200).json({
+        success: true,
+        count: reviews.length,
+        reviews
+    });
+});
+
+// Admin: Restore a soft-deleted review
+const restoreReview = catchAsyncErrors(async (req, res, next) => {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return next(new ErrorHandler("Invalid review ID", 400));
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    let review;
+    try {
+        review = await Review.findById(id).session(session);
+        if (!review) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Review not found", 404));
+        }
+
+        review.isActive = true;
+        await review.save({ session });
+
+        await updateProductRatingStats(review.product, session);
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Review restored successfully",
+        review
+    });
+});
+
+// Admin: Bulk delete / restore reviews
+const bulkReviewAction = catchAsyncErrors(async (req, res, next) => {
+    const { reviewIds, action } = req.body;
+
+    if (!Array.isArray(reviewIds) || reviewIds.length === 0) {
+        return next(new ErrorHandler("Please provide an array of review IDs", 400));
+    }
+
+    const validIds = reviewIds.filter((id) => mongoose.Types.ObjectId.isValid(id));
+    if (validIds.length === 0) {
+        return next(new ErrorHandler("No valid review IDs provided", 400));
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const targetStatus = action === "restore";
+        const reviewsToUpdate = await Review.find({ _id: { $in: validIds } }).session(session);
+
+        await Review.updateMany(
+            { _id: { $in: validIds } },
+            { $set: { isActive: targetStatus } },
+            { session }
+        );
+
+        // Recalculate unique product ratings
+        const affectedProductIds = [...new Set(reviewsToUpdate.map((r) => r.product.toString()))];
+        for (const pId of affectedProductIds) {
+            await updateProductRatingStats(pId, session);
+        }
+
+        await session.commitTransaction();
+
+        res.status(200).json({
+            success: true,
+            message: `Successfully ${action === "restore" ? "restored" : "deleted"} ${validIds.length} review(s)`
+        });
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
+    }
+});
+
+// Admin: Permanent delete review
+const permanentlyDeleteReview = catchAsyncErrors(async (req, res, next) => {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return next(new ErrorHandler("Invalid review ID", 400));
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const review = await Review.findById(id).session(session);
+        if (!review) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Review not found", 404));
+        }
+
+        const productId = review.product;
+        await Review.findByIdAndDelete(id).session(session);
+
+        await updateProductRatingStats(productId, session);
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Review permanently deleted"
+    });
+});
+
 module.exports = {
     getProductReviews,
+    getAdminReviews,
     createOrUpdateReview,
     updateReview,
-    deleteReview
+    deleteReview,
+    restoreReview,
+    bulkReviewAction,
+    permanentlyDeleteReview
 };

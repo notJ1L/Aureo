@@ -27,6 +27,7 @@ import "./App.css";
 // tables), so they are split out of the main bundle.
 const AdminProductsPage = lazy(() => import("./pages/admin/AdminProductsPage"));
 const AdminOrdersPage = lazy(() => import("./pages/admin/AdminOrdersPage"));
+const AdminReviewsPage = lazy(() => import("./pages/admin/AdminReviewsPage"));
 const AdminOrderDetailPage = lazy(() => import("./pages/admin/AdminOrderDetailPage"));
 const AdminAppraisalsPage = lazy(() => import("./pages/admin/AdminAppraisalsPage"));
 const AdminServicesPage = lazy(() => import("./pages/admin/AdminServicesPage"));
@@ -635,6 +636,14 @@ function App() {
                     element={
                         <AdminRoute>
                             <AdminOrderDetailPage />
+                        </AdminRoute>
+                    }
+                />
+                <Route
+                    path="/admin/reviews"
+                    element={
+                        <AdminRoute>
+                            <AdminReviewsPage />
                         </AdminRoute>
                     }
                 />
