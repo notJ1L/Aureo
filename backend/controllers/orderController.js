@@ -105,20 +105,20 @@ const buildCheckoutOrderHtml = (order, user, titleText = "Acquisition Order Conf
         order.status === "Completed" || order.status === "Paid"
             ? "#132a20"
             : order.status === "Cancelled"
-            ? "#2d1619"
-            : "#2a2315";
+                ? "#2d1619"
+                : "#2a2315";
     const statusBadgeBorder =
         order.status === "Completed" || order.status === "Paid"
             ? "#2e6f4e"
             : order.status === "Cancelled"
-            ? "#7f2d36"
-            : "#7a6133";
+                ? "#7f2d36"
+                : "#7a6133";
     const statusBadgeColor =
         order.status === "Completed" || order.status === "Paid"
             ? "#6ee7a8"
             : order.status === "Cancelled"
-            ? "#f87171"
-            : "#e5c687";
+                ? "#f87171"
+                : "#e5c687";
 
     const itemRowsHtml = order.orderItems
         .map((item) => {
@@ -454,7 +454,6 @@ const createOrder = catchAsyncErrors(async (req, res, next) => {
         orderInitialStatus = "Paid";
     }
 
-    // Begin MongoDB multi-document transaction for stock deduction + order creation
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -738,8 +737,7 @@ const updateAdminOrder = catchAsyncErrors(async (req, res, next) => {
             await session.abortTransaction();
             return next(
                 new ErrorHandler(
-                    `Order cannot move from "${order.status}" to "${status}". Allowed next status: ${
-                        allowedNextStatuses.length ? allowedNextStatuses.join(", ") : "none"
+                    `Order cannot move from "${order.status}" to "${status}". Allowed next status: ${allowedNextStatuses.length ? allowedNextStatuses.join(", ") : "none"
                     }.`,
                     400
                 )

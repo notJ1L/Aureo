@@ -12,7 +12,7 @@ import { showNotification } from "../utils/notification";
 import "../styles/watchCard.css";
 import "../styles/catalog.css";
 
-const BRANDS = ["Rolex", "Patek Philippe", "Audemars Piguet", "Omega", "Cartier", "Grand Seiko", "Tudor", "IWC"];
+const BRANDS = ["Rolex", "Patek Philippe", "Audemars Piguet", "Omega", "Cartier", "Grand Seiko", "Tudor", "IWC", "Seiko"];
 const CASE_SIZES = [36, 38, 39, 40, 41, 42, 44];
 
 const MOVEMENTS = [

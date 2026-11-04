@@ -241,45 +241,11 @@ const registerUser = catchAsyncErrors(async (req, res, next) => {
             return next(new ErrorHandler("Email is already registered", 400));
         }
 
-        let providerUserId = supabaseUserId || null;
-        let authSource = "local";
-
-        if (!providerUserId && isSupabaseConfigured() && password) {
-            try {
-                const admin = getSupabaseAdmin();
-
-                const { data, error } = await admin.auth.admin.createUser({
-                    email: normalizedEmail,
-                    password,
-                    email_confirm: true,
-                    user_metadata: { name: String(name).trim() }
-                });
-
-                if (error) {
-                    const existingProviderUser = await findSupabaseUserByEmail(
-                        normalizedEmail
-                    );
-
-                    if (existingProviderUser) {
-                        providerUserId = existingProviderUser.id;
-                        authSource = "supabase";
-                    }
-                } else if (data?.user) {
-                    providerUserId = data.user.id;
-                    authSource = "supabase";
-                }
-            } catch {
-                authSource = "local";
-            }
-        } else if (providerUserId) {
-            authSource = "supabase";
-        }
-
         const userPayload = {
             name: String(name).trim(),
             email: normalizedEmail,
-            supabaseUserId: providerUserId,
-            authSource,
+            supabaseUserId: supabaseUserId || null,
+            authSource: supabaseUserId ? "supabase" : "local",
             isVerified: true,
             verificationCodeHash: null,
             verificationCodeExpiresAt: null
@@ -512,16 +478,14 @@ const loginUser = catchAsyncErrors(async (req, res, next) => {
         }
 
         // Check local password hash first if present on the user document
-        let authenticatedLocally = false;
         if (user.password) {
-            authenticatedLocally = await user.comparePassword(password);
-        }
-
-        if (!authenticatedLocally) {
-            if (user.authSource === "local") {
+            const isPasswordValid = await user.comparePassword(password);
+            if (!isPasswordValid) {
                 return next(new ErrorHandler(INVALID_CREDENTIALS, 401));
             }
-
+        } else if (user.authSource === "local") {
+            return next(new ErrorHandler(INVALID_CREDENTIALS, 401));
+        } else {
             if (!isSupabaseConfigured()) {
                 return next(
                     new ErrorHandler(
@@ -531,29 +495,33 @@ const loginUser = catchAsyncErrors(async (req, res, next) => {
                 );
             }
 
-            const anon = getSupabaseAnon();
-            let { data, error } = await anon.auth.signInWithPassword({
-                email: normalizedEmail,
-                password
-            });
-
-            if (error && error.code === "email_not_confirmed" && user.supabaseUserId) {
-                await confirmSupabaseAccount(user.supabaseUserId);
-
-                const retry = await anon.auth.signInWithPassword({
+            try {
+                const anon = getSupabaseAnon();
+                let { data, error } = await anon.auth.signInWithPassword({
                     email: normalizedEmail,
                     password
                 });
 
-                data = retry.data;
-                error = retry.error;
-            }
+                if (error && error.code === "email_not_confirmed" && user.supabaseUserId) {
+                    await confirmSupabaseAccount(user.supabaseUserId);
 
-            if (error || !data?.user) {
+                    const retry = await anon.auth.signInWithPassword({
+                        email: normalizedEmail,
+                        password
+                    });
+
+                    data = retry.data;
+                    error = retry.error;
+                }
+
+                if (error || !data?.user) {
+                    return next(new ErrorHandler(INVALID_CREDENTIALS, 401));
+                }
+
+                providerUser = data.user;
+            } catch {
                 return next(new ErrorHandler(INVALID_CREDENTIALS, 401));
             }
-
-            providerUser = data.user;
         }
     }
 

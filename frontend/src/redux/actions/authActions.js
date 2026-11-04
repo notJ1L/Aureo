@@ -1,7 +1,6 @@
 import api from "../../services/api";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../../config/firebase";
-import getSupabase from "../../config/supabase";
 import {
     AUTH_REGISTER_REQUEST, AUTH_REGISTER_SUCCESS, AUTH_REGISTER_FAIL,
     AUTH_VERIFY_REQUEST,   AUTH_VERIFY_SUCCESS,   AUTH_VERIFY_FAIL,
@@ -14,21 +13,8 @@ import {
     AUTH_CLEAR_ERROR
 } from "../constants/authConstants";
 
-const SUPABASE_ERROR_MESSAGES = {
-    "User already registered": "Email is already registered",
-    "Invalid login credentials": "Invalid email or password",
-    "Email not confirmed": "Please verify your email before signing in",
-    "Token has expired or is invalid": "Invalid or expired verification code"
-};
-
-const translateSupabaseError = (error) => {
-    const raw = error?.message || "Authentication failed";
-
-    return SUPABASE_ERROR_MESSAGES[raw] || raw;
-};
-
-// FR 1.1: Register the Aureo Collector profile and dispatch the
-// Registration Acknowledgement Email via the backend SMTP service.
+// FR 1.1: Register the Aureo Collector profile directly on the backend inside a
+// MongoDB transaction and send the Registration Acknowledgement Email via SMTP.
 export const registerUser = ({ name, email, password }) => async (dispatch) => {
     dispatch({ type: AUTH_REGISTER_REQUEST });
     try {
@@ -47,28 +33,10 @@ export const registerUser = ({ name, email, password }) => async (dispatch) => {
     }
 };
 
-// FR 1.5: Verify email if a verification code is used.
+// FR 1.5: Verify email code against the Aureo backend.
 export const verifyEmail = (email, code) => async (dispatch) => {
     dispatch({ type: AUTH_VERIFY_REQUEST });
     try {
-        const supabase = getSupabase();
-
-        const { data, error } = await supabase.auth.verifyOtp({
-            email,
-            token: code,
-            type: "email"
-        });
-
-        if (!error && data?.session) {
-            const { data: response } = await api.post("/verify-email", {
-                email,
-                accessToken: data.session.access_token
-            });
-
-            dispatch({ type: AUTH_VERIFY_SUCCESS, payload: response.message });
-            return;
-        }
-
         const { data: response } = await api.post("/verify-email", { email, code });
 
         dispatch({ type: AUTH_VERIFY_SUCCESS, payload: response.message });
@@ -80,47 +48,18 @@ export const verifyEmail = (email, code) => async (dispatch) => {
     }
 };
 
-// FR 1.1: Sign in with email and password.
+// FR 1.1: Sign in with email and password via the Aureo backend.
 export const loginUser = (email, password) => async (dispatch) => {
     dispatch({ type: AUTH_LOGIN_REQUEST });
     try {
-        // Authenticate directly against the Aureo backend first (supports both
-        // local password hashes and Supabase-backed identities seamlessly).
-        try {
-            const { data: response } = await api.post("/login", { email, password });
+        const { data: response } = await api.post("/login", { email, password });
 
-            localStorage.setItem("aureoToken", response.token);
-            dispatch({ type: AUTH_LOGIN_SUCCESS, payload: response.user });
-            return;
-        } catch (backendErr) {
-            // If backend direct login failed, check if client-side Supabase session works
-            const supabase = getSupabase();
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password
-            });
-
-            const accessToken = data?.session?.access_token;
-            if (error || !accessToken) {
-                const message =
-                    backendErr.response?.data?.message ||
-                    translateSupabaseError(error) ||
-                    "Invalid email or password";
-                throw new Error(message);
-            }
-
-            const { data: response } = await api.post("/login", {
-                email,
-                accessToken
-            });
-
-            localStorage.setItem("aureoToken", response.token);
-            dispatch({ type: AUTH_LOGIN_SUCCESS, payload: response.user });
-        }
+        localStorage.setItem("aureoToken", response.token);
+        dispatch({ type: AUTH_LOGIN_SUCCESS, payload: response.user });
     } catch (err) {
         dispatch({
             type: AUTH_LOGIN_FAIL,
-            payload: err.response?.data?.message || err.message || "Login failed"
+            payload: err.response?.data?.message || err.message || "Invalid email or password"
         });
     }
 };
