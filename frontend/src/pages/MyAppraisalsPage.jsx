@@ -1,3 +1,4 @@
+import ModalPortal from "../components/ui/ModalPortal";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -254,7 +255,8 @@ function MyAppraisalsPage() {
 
                 {/* Collector Inspection Modal */}
                 {selectedAppraisal && (
-                    <div
+                    <ModalPortal>
+                <div
                         className="modal-backdrop"
                         onClick={() => {
                             setSelectedAppraisal(null);
@@ -423,6 +425,7 @@ function MyAppraisalsPage() {
                             </div>
                         </div>
                     </div>
+                    </ModalPortal>
                 )}
             </div>
 

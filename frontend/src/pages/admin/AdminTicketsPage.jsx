@@ -1,3 +1,4 @@
+import ModalPortal from "../../components/ui/ModalPortal";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
@@ -418,7 +419,8 @@ function AdminTicketsPage() {
 
                 {/* Full-view Ticket & Progress Inspection Modal */}
                 {selectedTicket && (
-                    <div
+                    <ModalPortal>
+                <div
                         className="modal-backdrop"
                         onClick={() => {
                             setSelectedTicketId(null);
@@ -653,7 +655,8 @@ function AdminTicketsPage() {
                             </div>
                         </div>
                     </div>
-                )}
+                </ModalPortal>
+            )}
             </div>
         </main>
     );

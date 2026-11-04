@@ -1,3 +1,4 @@
+import ModalPortal from "../../components/ui/ModalPortal";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -856,6 +857,7 @@ function AdminProductsPage() {
 
             {/* Modal for Add / Edit */}
             {isModalOpen && (
+                <ModalPortal>
                 <div className="modal-backdrop">
                     <div className="modal-card">
                         <div className="modal-head">
@@ -1065,6 +1067,7 @@ function AdminProductsPage() {
                         </form>
                     </div>
                 </div>
+            </ModalPortal>
             )}
         </main>
     );

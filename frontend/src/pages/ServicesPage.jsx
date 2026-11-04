@@ -1,3 +1,4 @@
+import ModalPortal from "../components/ui/ModalPortal";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -493,7 +494,8 @@ function ServicesPage() {
 
                 {/* Collector Expandable Ticket Inspection Modal */}
                 {selectedTicket && (
-                    <div
+                    <ModalPortal>
+                <div
                         className="modal-backdrop"
                         onClick={() => {
                             setSelectedTicket(null);
@@ -678,6 +680,7 @@ function ServicesPage() {
                             </div>
                         </div>
                     </div>
+                    </ModalPortal>
                 )}
             </div>
 

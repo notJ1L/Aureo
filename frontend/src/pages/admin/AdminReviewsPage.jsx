@@ -1,3 +1,4 @@
+import ModalPortal from "../../components/ui/ModalPortal";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
@@ -436,6 +437,7 @@ function AdminReviewsPage() {
 
             {/* Edit Review Modal */}
             {editingReview && (
+                <ModalPortal>
                 <div className="modal-backdrop" onClick={() => setEditingReview(null)}>
                     <div className="modal-card" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-head">
@@ -529,6 +531,7 @@ function AdminReviewsPage() {
                         </form>
                     </div>
                 </div>
+            </ModalPortal>
             )}
         </div>
     );

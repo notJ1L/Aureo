@@ -1,3 +1,4 @@
+import ModalPortal from "../../components/ui/ModalPortal";
 import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
@@ -865,6 +866,7 @@ export default function AdminUsersPage() {
 
             {/* Create / Edit User Modal */}
             {isModalOpen && (
+                <ModalPortal>
                 <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}>
                     <div
                         className="modal-card"
@@ -1026,6 +1028,7 @@ export default function AdminUsersPage() {
                         </form>
                     </div>
                 </div>
+            </ModalPortal>
             )}
         </main>
     );

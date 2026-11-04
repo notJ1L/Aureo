@@ -382,11 +382,18 @@
 @keyframes aureoFadeIn {
     from {
         opacity: 0;
-        transform: translateY(12px);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+    }
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
     }
 }
 
@@ -563,8 +570,26 @@ textarea[aria-invalid="true"] {
 }
 
 /* Unified Modal Backdrop & Transitions */
+/* Unified Modal Backdrop & Transitions */
 .modal-backdrop {
-    animation: aureoFadeIn 200ms ease forwards;
+    animation: modalFadeIn 200ms ease forwards !important;
+    position: fixed !important;
+    inset: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: var(--overlay-80, rgba(11, 12, 16, 0.85)) !important;
+    backdrop-filter: blur(8px) !important;
+    z-index: 99999 !important;
+    padding: 1.5rem !important;
+    overflow-y: auto !important;
+    box-sizing: border-box !important;
 }
 
 .modal-card {
@@ -583,4 +608,9 @@ textarea[aria-invalid="true"] {
  * panel; on the pale page it becomes a light card like every other surface. */
 :root[data-theme="light"] .modal-card {
     background: var(--bg-card) !important;
+}
+
+
+body:has(.modal-backdrop) {
+    overflow: hidden !important;
 }
