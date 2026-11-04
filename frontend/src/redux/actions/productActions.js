@@ -10,6 +10,9 @@ import {
     PRODUCT_BULK_STATUS_REQUEST, PRODUCT_BULK_STATUS_SUCCESS, PRODUCT_BULK_STATUS_FAIL,
     WISHLIST_GET_REQUEST, WISHLIST_GET_SUCCESS, WISHLIST_GET_FAIL,
     WISHLIST_TOGGLE_REQUEST, WISHLIST_TOGGLE_SUCCESS, WISHLIST_TOGGLE_FAIL,
+    PRODUCT_REVIEWS_REQUEST, PRODUCT_REVIEWS_SUCCESS, PRODUCT_REVIEWS_FAIL,
+    REVIEW_SUBMIT_REQUEST, REVIEW_SUBMIT_SUCCESS, REVIEW_SUBMIT_FAIL,
+    REVIEW_DELETE_REQUEST, REVIEW_DELETE_SUCCESS, REVIEW_DELETE_FAIL,
     PRODUCT_CLEAR_ERRORS
 } from "../constants/productConstants";
 
@@ -192,6 +195,82 @@ export const removeFromWishlist = (productId) => async (dispatch) => {
             type: WISHLIST_TOGGLE_FAIL,
             payload: err.response?.data?.message || "Failed to remove from wishlist"
         });
+    }
+};
+
+// MP3 / Quiz 4: Product reviews Redux actions
+export const getProductReviews = (productId) => async (dispatch) => {
+    dispatch({ type: PRODUCT_REVIEWS_REQUEST });
+    try {
+        const { data } = await api.get(`/product/${productId}/reviews`);
+        dispatch({
+            type: PRODUCT_REVIEWS_SUCCESS,
+            payload: data
+        });
+    } catch (err) {
+        dispatch({
+            type: PRODUCT_REVIEWS_FAIL,
+            payload: err.response?.data?.message || "Failed to load reviews"
+        });
+    }
+};
+
+export const submitProductReview = (productId, reviewData) => async (dispatch) => {
+    dispatch({ type: REVIEW_SUBMIT_REQUEST });
+    try {
+        const { data } = await api.post(`/product/${productId}/review`, reviewData);
+        dispatch({
+            type: REVIEW_SUBMIT_SUCCESS,
+            payload: data.message || "Your review has been submitted to the Aureo register."
+        });
+        return { success: true };
+    } catch (err) {
+        const message =
+            err.response?.data?.message ||
+            "Failed to submit review. Note: Only verified customers who acquired this piece may leave a review.";
+        dispatch({
+            type: REVIEW_SUBMIT_FAIL,
+            payload: message
+        });
+        return { success: false, message };
+    }
+};
+
+export const updateProductReview = (reviewId, reviewData) => async (dispatch) => {
+    dispatch({ type: REVIEW_SUBMIT_REQUEST });
+    try {
+        const { data } = await api.put(`/review/${reviewId}`, reviewData);
+        dispatch({
+            type: REVIEW_SUBMIT_SUCCESS,
+            payload: data.message || "Your review has been updated."
+        });
+        return { success: true };
+    } catch (err) {
+        const message = err.response?.data?.message || "Failed to update review.";
+        dispatch({
+            type: REVIEW_SUBMIT_FAIL,
+            payload: message
+        });
+        return { success: false, message };
+    }
+};
+
+export const deleteProductReview = (reviewId) => async (dispatch) => {
+    dispatch({ type: REVIEW_DELETE_REQUEST });
+    try {
+        const { data } = await api.delete(`/review/${reviewId}`);
+        dispatch({
+            type: REVIEW_DELETE_SUCCESS,
+            payload: data.message || "Review removed successfully."
+        });
+        return { success: true };
+    } catch (err) {
+        const message = err.response?.data?.message || "Failed to remove review.";
+        dispatch({
+            type: REVIEW_DELETE_FAIL,
+            payload: message
+        });
+        return { success: false, message };
     }
 };
 

@@ -182,7 +182,7 @@ function ServicesPage() {
         <main className="sell-page page-enter">
             <SiteHeader variant="solid" />
 
-            <div className="sell-container">
+            <div className="sell-container sell-container--services">
                 <div className="sell-heading">
                     <p className="eyebrow">SERVICES &amp; AFTERCARE</p>
                     <h1>Keep your timepiece in its best condition</h1>
@@ -195,44 +195,46 @@ function ServicesPage() {
 
                 {loading ? (
                     <div className="service-grid">
-                        {[1, 2, 3].map((n) => (
-                            <div key={n} style={{ height: "180px", borderRadius: "8px", background: "var(--bg-elevated)", border: "1px solid var(--border)", animation: "aureoPulseGold 2s infinite" }} />
+                        {[1, 2, 3, 4, 5, 6].map((n) => (
+                            <div key={n} style={{ height: "240px", borderRadius: "12px", background: "var(--bg-elevated)", border: "1px solid var(--border)", animation: "aureoPulseGold 2s infinite" }} />
                         ))}
                     </div>
                 ) : (
                     <div className="service-grid">
-                        {services.map((service) => (
-                            <article
-                                className={`service-card ${selectedServiceId === service._id ? "is-selected" : ""}`}
-                                key={service._id}
-                                style={{
-                                    borderColor: selectedServiceId === service._id ? "var(--gold)" : undefined,
-                                    cursor: "pointer"
-                                }}
-                                onClick={() => handleSelectService(service)}
-                            >
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                                    <h3>{service.name}</h3>
-                                    {selectedServiceId === service._id && (
-                                        <span className="badge verified-badge">Selected</span>
-                                    )}
-                                </div>
-                                <p>{service.description}</p>
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "1rem" }}>
-                                    <strong className="service-price">{formatPrice(service.price)}</strong>
-                                    <button
-                                        type="button"
-                                        className="gold-button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleSelectService(service);
-                                        }}
-                                    >
-                                        Book Service
-                                    </button>
-                                </div>
-                            </article>
-                        ))}
+                        {services.map((service) => {
+                            const isSelected = selectedServiceId === service._id;
+                            return (
+                                <article
+                                    className={`service-card ${isSelected ? "is-selected" : ""}`}
+                                    key={service._id}
+                                    onClick={() => handleSelectService(service)}
+                                >
+                                    <div className="service-card__head">
+                                        <h3>{service.name}</h3>
+                                        {isSelected && (
+                                            <span className="badge verified-badge">Selected</span>
+                                        )}
+                                    </div>
+                                    <p className="service-card__desc">{service.description}</p>
+                                    <div className="service-card__footer">
+                                        <div className="service-card__price-group">
+                                            <span className="service-card__price-label">Atelier Fee</span>
+                                            <strong className="service-price">{formatPrice(service.price)}</strong>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="gold-button service-card__cta"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleSelectService(service);
+                                            }}
+                                        >
+                                            {isSelected ? "Selected" : "Book Service"}
+                                        </button>
+                                    </div>
+                                </article>
+                            );
+                        })}
                     </div>
                 )}
 

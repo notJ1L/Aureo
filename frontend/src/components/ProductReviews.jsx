@@ -1,125 +1,120 @@
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
-import api from "../services/api";
+import { useDispatch, useSelector } from "react-redux";
+import { useForm, useWatch } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import {
+    getProductReviews,
+    submitProductReview,
+    updateProductReview,
+    deleteProductReview
+} from "../redux/actions/productActions";
+import { reviewSchema } from "../utils/validationSchemas";
 import { confirmAction } from "../utils/sweetAlert";
 import { showNotification } from "../utils/notification";
 
 function ProductReviews({ productId, onReviewAdded }) {
+    const dispatch = useDispatch();
     const { isAuthenticated, user } = useSelector((state) => state.auth);
+    const {
+        reviews = [],
+        canReview = false,
+        purchaseStatus = null,
+        ineligibleReason = "",
+        loading = false
+    } = useSelector((state) => state.productReviews || {});
+    const { loading: submitting = false } = useSelector((state) => state.reviewMutation || {});
 
-    const [reviews, setReviews] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [canReview, setCanReview] = useState(false);
-    const [purchaseStatus, setPurchaseStatus] = useState(null);
-    const [ineligibleReason, setIneligibleReason] = useState("");
-    const [rating, setRating] = useState(5);
-    const [comment, setComment] = useState("");
-    const [submitting, setSubmitting] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
     const [successMsg, setSuccessMsg] = useState("");
     const [editingReview, setEditingReview] = useState(null);
 
-    const loadReviews = async () => {
-        try {
-            const { data } = await api.get(`/product/${productId}/reviews`);
-            setReviews(data.reviews || []);
-            setCanReview(Boolean(data.canReview));
-            setPurchaseStatus(data.purchaseStatus || null);
-            setIneligibleReason(data.ineligibleReason || "");
-        } catch (err) {
-            console.error("Failed to fetch reviews", err);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const {
+        register,
+        handleSubmit,
+        setValue,
+        reset,
+        control,
+        formState: { errors }
+    } = useForm({
+        resolver: yupResolver(reviewSchema),
+        mode: "onBlur",
+        defaultValues: { rating: 5, comment: "" }
+    });
+
+    const rating = useWatch({ control, name: "rating" }) || 5;
 
     useEffect(() => {
-        let active = true;
-
-        api
-            .get(`/product/${productId}/reviews`)
-            .then(({ data }) => {
-                if (active) {
-                    setReviews(data.reviews || []);
-                    setCanReview(Boolean(data.canReview));
-                    setPurchaseStatus(data.purchaseStatus || null);
-                    setIneligibleReason(data.ineligibleReason || "");
-                }
-            })
-            .catch((err) => {
-                console.error("Failed to fetch reviews", err);
-            })
-            .finally(() => {
-                if (active) {
-                    setLoading(false);
-                }
-            });
-
-        return () => {
-            active = false;
-        };
-    }, [productId, isAuthenticated, user?._id]);
+        if (productId) {
+            dispatch(getProductReviews(productId));
+        }
+    }, [dispatch, productId, isAuthenticated, user?._id]);
 
     const resetForm = () => {
-        setRating(5);
-        setComment("");
+        reset({ rating: 5, comment: "" });
         setEditingReview(null);
         setErrorMsg("");
         setSuccessMsg("");
     };
 
-    const handleSubmitReview = async (e) => {
-        e.preventDefault();
+    const onSubmitReview = async (values) => {
         setErrorMsg("");
         setSuccessMsg("");
-        setSubmitting(true);
 
-        try {
-            if (editingReview) {
-                // FR 6.1 / MP3: the owner updates their own review.
-                await api.put(`/review/${editingReview._id}`, {
-                    rating: Number(rating),
-                    comment
-                });
+        if (editingReview) {
+            const result = await dispatch(
+                updateProductReview(editingReview._id, {
+                    rating: Number(values.rating),
+                    comment: values.comment
+                })
+            );
+
+            if (result?.success) {
                 setSuccessMsg("Your review has been updated.");
                 showNotification({
                     type: "success",
                     message: "Review updated successfully."
                 });
+                resetForm();
+                dispatch(getProductReviews(productId));
+                if (onReviewAdded) onReviewAdded();
             } else {
-                await api.post(`/product/${productId}/review`, {
-                    rating: Number(rating),
-                    comment
+                setErrorMsg(result?.message || "Failed to update review.");
+                showNotification({
+                    type: "error",
+                    message: result?.message || "Failed to update review."
                 });
+            }
+        } else {
+            const result = await dispatch(
+                submitProductReview(productId, {
+                    rating: Number(values.rating),
+                    comment: values.comment
+                })
+            );
+
+            if (result?.success) {
                 setSuccessMsg("Your review has been submitted to the Aureo register.");
                 showNotification({
                     type: "success",
                     message: "Review submitted successfully."
                 });
+                resetForm();
+                dispatch(getProductReviews(productId));
+                if (onReviewAdded) onReviewAdded();
+            } else {
+                setErrorMsg(result?.message || "Failed to submit review.");
+                showNotification({
+                    type: "error",
+                    message: result?.message || "Failed to submit review."
+                });
             }
-
-            resetForm();
-            loadReviews();
-            if (onReviewAdded) onReviewAdded();
-        } catch (err) {
-            const message =
-                err.response?.data?.message ||
-                "Failed to submit review. Note: Only verified customers who acquired this piece may leave a review.";
-
-            setErrorMsg(message);
-            showNotification({
-                type: "error",
-                message: message
-            });
-        } finally {
-            setSubmitting(false);
         }
     };
 
     const handleStartEdit = (review) => {
         setEditingReview(review);
-        setRating(review.rating);
-        setComment(review.comment);
+        setValue("rating", Number(review.rating), { shouldValidate: true });
+        setValue("comment", review.comment || "", { shouldValidate: true });
         setErrorMsg("");
         setSuccessMsg("");
     };
@@ -135,18 +130,18 @@ function ProductReviews({ productId, onReviewAdded }) {
             return;
         }
 
-        try {
-            await api.delete(`/review/${reviewId}`);
+        const result = await dispatch(deleteProductReview(reviewId));
+        if (result?.success) {
             showNotification({
                 type: "success",
                 message: "Review removed successfully."
             });
-            loadReviews();
+            dispatch(getProductReviews(productId));
             if (onReviewAdded) onReviewAdded();
-        } catch (err) {
+        } else {
             showNotification({
                 type: "error",
-                message: err.response?.data?.message || "Failed to remove review."
+                message: result?.message || "Failed to remove review."
             });
         }
     };
@@ -176,7 +171,7 @@ function ProductReviews({ productId, onReviewAdded }) {
                     {errorMsg && <div className="auth-error">{errorMsg}</div>}
                     {successMsg && <div className="auth-info">{successMsg}</div>}
 
-                    <form onSubmit={handleSubmitReview} className="review-form">
+                    <form onSubmit={handleSubmit(onSubmitReview)} className="review-form" noValidate>
                         {editingReview && (
                             <p className="field-hint">
                                 You are editing your existing review. Submitting updates it.
@@ -191,24 +186,32 @@ function ProductReviews({ productId, onReviewAdded }) {
                                         type="button"
                                         key={star}
                                         className={`star-btn ${rating >= star ? "filled" : ""}`}
-                                        onClick={() => setRating(star)}
+                                        onClick={() => setValue("rating", star, { shouldValidate: true })}
                                     >
                                         ★
                                     </button>
                                 ))}
                                 <span className="rating-num-label">({rating} of 5 Stars)</span>
                             </div>
+                            {errors.rating && (
+                                <p className="field-error" style={{ color: "#f87171", fontSize: "0.78rem", marginTop: "4px" }}>
+                                    {errors.rating.message}
+                                </p>
+                            )}
                         </div>
 
                         <label>
                             Your review
                             <textarea
                                 rows={3}
-                                value={comment}
-                                onChange={(e) => setComment(e.target.value)}
-                                placeholder="Share your experience with this watch"
-                                required
+                                {...register("comment")}
+                                placeholder="Share your experience with this watch (at least 10 characters)"
                             />
+                            {errors.comment && (
+                                <p className="field-error" style={{ color: "#f87171", fontSize: "0.78rem", marginTop: "4px" }}>
+                                    {errors.comment.message}
+                                </p>
+                            )}
                         </label>
 
                         <button
@@ -216,7 +219,7 @@ function ProductReviews({ productId, onReviewAdded }) {
                             className="gold-button submit-review-btn"
                             disabled={submitting}
                         >
-                            {submitting ? "Submitting…" : "Submit review"}
+                            {submitting ? "Submitting…" : editingReview ? "Update review" : "Submit review"}
                         </button>
                     </form>
                 </div>

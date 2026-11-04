@@ -9,6 +9,9 @@ import {
     PRODUCT_BULK_STATUS_REQUEST, PRODUCT_BULK_STATUS_SUCCESS, PRODUCT_BULK_STATUS_FAIL, PRODUCT_BULK_STATUS_RESET,
     WISHLIST_GET_REQUEST, WISHLIST_GET_SUCCESS, WISHLIST_GET_FAIL,
     WISHLIST_TOGGLE_REQUEST, WISHLIST_TOGGLE_SUCCESS, WISHLIST_TOGGLE_FAIL,
+    PRODUCT_REVIEWS_REQUEST, PRODUCT_REVIEWS_SUCCESS, PRODUCT_REVIEWS_FAIL,
+    REVIEW_SUBMIT_REQUEST, REVIEW_SUBMIT_SUCCESS, REVIEW_SUBMIT_FAIL, REVIEW_SUBMIT_RESET,
+    REVIEW_DELETE_REQUEST, REVIEW_DELETE_SUCCESS, REVIEW_DELETE_FAIL, REVIEW_DELETE_RESET,
     PRODUCT_CLEAR_ERRORS
 } from "../constants/productConstants";
 
@@ -122,6 +125,51 @@ export const productMutationReducer = (state = {}, action) => {
             return {};
         case PRODUCT_CLEAR_ERRORS:
             return { ...state, error: null };
+        default:
+            return state;
+    }
+};
+
+export const productReviewsReducer = (
+    state = { reviews: [], canReview: false, purchaseStatus: null, ineligibleReason: "", loading: false },
+    action
+) => {
+    switch (action.type) {
+        case PRODUCT_REVIEWS_REQUEST:
+            return { ...state, loading: true, error: null };
+        case PRODUCT_REVIEWS_SUCCESS:
+            return {
+                loading: false,
+                reviews: action.payload.reviews || [],
+                canReview: Boolean(action.payload.canReview),
+                purchaseStatus: action.payload.purchaseStatus || null,
+                ineligibleReason: action.payload.ineligibleReason || "",
+                error: null
+            };
+        case PRODUCT_REVIEWS_FAIL:
+            return { ...state, loading: false, error: action.payload };
+        case PRODUCT_CLEAR_ERRORS:
+            return { ...state, error: null };
+        default:
+            return state;
+    }
+};
+
+export const reviewMutationReducer = (state = {}, action) => {
+    switch (action.type) {
+        case REVIEW_SUBMIT_REQUEST:
+        case REVIEW_DELETE_REQUEST:
+            return { loading: true, error: null };
+        case REVIEW_SUBMIT_SUCCESS:
+            return { loading: false, success: true, message: action.payload };
+        case REVIEW_DELETE_SUCCESS:
+            return { loading: false, isDeleted: true, message: action.payload };
+        case REVIEW_SUBMIT_FAIL:
+        case REVIEW_DELETE_FAIL:
+            return { loading: false, error: action.payload };
+        case REVIEW_SUBMIT_RESET:
+        case REVIEW_DELETE_RESET:
+            return {};
         default:
             return state;
     }

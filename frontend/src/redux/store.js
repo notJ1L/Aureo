@@ -7,7 +7,9 @@ import {
     productDetailsReducer,
     wishlistReducer,
     adminProductsReducer,
-    productMutationReducer
+    productMutationReducer,
+    productReviewsReducer,
+    reviewMutationReducer
 } from "./reducers/productReducer";
 import {
     orderCreateReducer,
@@ -47,6 +49,8 @@ const rootReducer = combineReducers({
     wishlist: wishlistReducer,
     adminProducts: adminProductsReducer,
     productMutation: productMutationReducer,
+    productReviews: productReviewsReducer,
+    reviewMutation: reviewMutationReducer,
     adminUsers: adminUsersReducer,
     userMutation: userMutationReducer,
     orderCreate: orderCreateReducer,
