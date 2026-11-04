@@ -12,10 +12,7 @@ const {
     isSupabaseConfigured
 } = require("../config/supabase");
 const {
-    generateVerificationCode,
-    hashVerificationCode,
-    verifyVerificationCode,
-    CODE_EXPIRE_MINUTES
+    verifyVerificationCode
 } = require("../utils/verificationCode");
 
 // Every authentication failure must return the same message so the endpoint
@@ -24,21 +21,7 @@ const INVALID_CREDENTIALS = "Invalid email or password";
 
 const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
 
-const getSupabaseErrorMessage = (error) => {
-    const message = error?.message || "Authentication provider error";
-
-    if (/already|registered|exists|duplicate/i.test(message)) {
-        return "Email is already registered";
-    }
-
-    if (/invalid login credentials/i.test(message)) {
-        return INVALID_CREDENTIALS;
-    }
-
-    return message;
-};
-
-const buildRegistrationAcknowledgementText = (user, verificationCode = null) => {
+const buildRegistrationAcknowledgementText = (user) => {
     const registrationDate = new Date(user.createdAt || Date.now()).toLocaleDateString("en-US", {
         month: "long",
         day: "numeric",
@@ -47,41 +30,30 @@ const buildRegistrationAcknowledgementText = (user, verificationCode = null) => 
     const methodLabel =
         user.authSource === "google" ? "Google Identity" : "Email & Password";
 
-    const lines = [
+    return [
         `Dear ${user.name},`,
         "",
         "Welcome to Aureo Horology Vault.",
-        `This email officially acknowledges that your email address (${user.email}) has been registered with Aureo.`,
+        `This email is an official acknowledgement that your email address (${user.email}) has been used to register a Collector account at Aureo.`,
         "",
-        "ACCOUNT REGISTRATION SUMMARY",
+        "ACCOUNT REGISTRATION ACKNOWLEDGEMENT",
         `• Collector Name: ${user.name}`,
         `• Registered Email: ${user.email}`,
+        "• Account Status: Active & Verified Collector",
         "• Membership Tier: Aureo Private Collector",
         `• Registration Method: ${methodLabel}`,
-        `• Date Registered: ${registrationDate}`
-    ];
-
-    if (verificationCode) {
-        lines.push(
-            "",
-            "EMAIL VERIFICATION CODE",
-            `Your 6-digit Aureo verification code is: ${verificationCode}`,
-            `(Valid for ${CODE_EXPIRE_MINUTES} minutes)`
-        );
-    }
-
-    lines.push(
+        `• Date Registered: ${registrationDate}`,
         "",
-        "If you did not register an Aureo account using this email address, please disregard this notice or contact our Geneva & Manila concierge.",
+        "Your account is now active. You may browse the collection, acquire timepieces, submit watches for appraisal, and book atelier servicing.",
+        "",
+        "If you did not register an Aureo account using this email address, please disregard this acknowledgement or contact our Geneva & Manila concierge.",
         "",
         "Warm regards,",
         "Aureo Horology Vault • Geneva & Manila"
-    );
-
-    return lines.join("\n");
+    ].join("\n");
 };
 
-const buildRegistrationAcknowledgementHtml = (user, verificationCode = null) => {
+const buildRegistrationAcknowledgementHtml = (user) => {
     const clientUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
     const registrationDate = new Date(user.createdAt || Date.now()).toLocaleDateString("en-US", {
         month: "long",
@@ -90,29 +62,6 @@ const buildRegistrationAcknowledgementHtml = (user, verificationCode = null) => 
     });
     const methodLabel =
         user.authSource === "google" ? "Google Identity" : "Email & Password";
-
-    const verificationBlock = verificationCode
-        ? `
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#13161c;border:1px solid rgba(201,169,110,0.35);border-radius:10px;margin-bottom:26px;">
-                <tr>
-                    <td align="center" style="padding:22px 24px;">
-                        <div style="font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:#c9a96e;font-weight:700;margin-bottom:8px;">
-                            Security Verification Code
-                        </div>
-                        <div style="font-size:13px;color:#9da3ae;margin-bottom:14px;line-height:1.5;">
-                            Enter this 6-digit verification code on the Aureo verification screen to activate full acquisition, appraisal, and atelier privileges:
-                        </div>
-                        <div style="display:inline-block;padding:12px 28px;background-color:#0b0d10;border:1px solid #c9a96e;border-radius:8px;font-family:'Courier New',monospace;font-size:28px;font-weight:700;letter-spacing:0.32em;color:#f5f2eb;">
-                            ${verificationCode}
-                        </div>
-                        <div style="font-size:11px;color:#737984;margin-top:10px;">
-                            This code expires in ${CODE_EXPIRE_MINUTES} minutes.
-                        </div>
-                    </td>
-                </tr>
-            </table>
-        `
-        : "";
 
     return `
     <div style="margin:0;padding:36px 16px;background-color:#07080a;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#f5f2eb;">
@@ -127,24 +76,24 @@ const buildRegistrationAcknowledgementHtml = (user, verificationCode = null) => 
                                 </div>
                             </td>
                             <td align="right" valign="middle">
-                                <span style="display:inline-block;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background-color:rgba(201,169,110,0.14);color:#c9a96e;border:1px solid rgba(201,169,110,0.4);">
-                                    REGISTERED
+                                <span style="display:inline-block;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background-color:rgba(74,222,128,0.14);color:#4ade80;border:1px solid rgba(74,222,128,0.35);">
+                                    REGISTRATION ACKNOWLEDGED
                                 </span>
                             </td>
                         </tr>
                     </table>
                     <h1 style="margin:14px 0 8px;font-size:26px;font-weight:600;color:#f5f2eb;font-family:Georgia,'Times New Roman',serif;letter-spacing:0.01em;">
-                        Account Registration Acknowledged
+                        Welcome to Aureo Horology Vault
                     </h1>
                     <p style="margin:0;color:#9da3ae;font-size:14px;line-height:1.6;">
-                        Dear <strong style="color:#f5f2eb;">${user.name}</strong>, welcome to Aureo. This email officially acknowledges that an Aureo Collector account has been registered using <strong style="color:#c9a96e;">${user.email}</strong>.
+                        Dear <strong style="color:#f5f2eb;">${user.name}</strong>, this email officially acknowledges that you have registered an Aureo Collector account using <strong style="color:#c9a96e;">${user.email}</strong>.
                     </p>
                 </td>
             </tr>
 
             <tr>
                 <td style="padding:28px 36px;">
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#13161c;border:1px solid #22262e;border-radius:10px;margin-bottom:26px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#13161c;border:1px solid #22262e;border-radius:10px;margin-bottom:24px;">
                         <tr>
                             <td width="50%" valign="top" style="padding:16px 20px;border-bottom:1px solid #1e222a;border-right:1px solid #1e222a;">
                                 <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#737984;margin-bottom:5px;">Collector Name</div>
@@ -158,7 +107,7 @@ const buildRegistrationAcknowledgementHtml = (user, verificationCode = null) => 
                         <tr>
                             <td width="50%" valign="top" style="padding:16px 20px;border-right:1px solid #1e222a;">
                                 <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#737984;margin-bottom:5px;">Membership Tier</div>
-                                <div style="font-size:13px;color:#f5f2eb;font-weight:600;">Aureo Private Collector</div>
+                                <div style="font-size:13px;color:#4ade80;font-weight:600;">Active Private Collector</div>
                             </td>
                             <td width="50%" valign="top" style="padding:16px 20px;">
                                 <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#737984;margin-bottom:5px;">Registration Date &amp; Method</div>
@@ -167,7 +116,18 @@ const buildRegistrationAcknowledgementHtml = (user, verificationCode = null) => 
                         </tr>
                     </table>
 
-                    ${verificationBlock}
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#13161c;border:1px solid rgba(201,169,110,0.28);border-radius:10px;margin-bottom:24px;">
+                        <tr>
+                            <td style="padding:18px 22px;">
+                                <div style="font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#c9a96e;font-weight:700;margin-bottom:6px;">
+                                    Collector Privileges Unlocked
+                                </div>
+                                <div style="font-size:13px;color:#c8ccd4;line-height:1.6;">
+                                    Your Aureo account is ready for immediate use. You can now acquire authenticated timepieces, submit watches for provenance appraisal, and schedule horological servicing.
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
 
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
                         <tr>
@@ -183,7 +143,7 @@ const buildRegistrationAcknowledgementHtml = (user, verificationCode = null) => 
                         <tr>
                             <td style="padding-top:16px;">
                                 <p style="margin:0 0 8px;font-size:12px;color:#9da3ae;line-height:1.6;">
-                                    <strong style="color:#f5f2eb;">Security Notice:</strong> This is an automated registration acknowledgement confirming that <span style="color:#c9a96e;">${user.email}</span> was used to create an account at Aureo Horology Vault. If you did not authorize this registration, please disregard this message or contact our support desk.
+                                    <strong style="color:#f5f2eb;">Registration Acknowledgement:</strong> This email confirms that <span style="color:#c9a96e;">${user.email}</span> was registered with Aureo Horology Vault. If you did not create this account, please disregard this notice or contact our concierge.
                                 </p>
                                 <p style="margin:0;font-size:12px;color:#737984;">
                                     Warm regards, <strong style="color:#c9a96e;">Aureo Horology Vault</strong> &bull; Geneva &amp; Manila
@@ -197,8 +157,7 @@ const buildRegistrationAcknowledgementHtml = (user, verificationCode = null) => 
     </div>`;
 };
 
-// Confirms the Supabase account so the provider reports the address as
-// verified. Used after Aureo accepted a verification code.
+// Confirms the Supabase account so the provider reports the address as verified.
 const confirmSupabaseAccount = async (supabaseUserId) => {
     const admin = getSupabaseAdmin();
 
@@ -221,8 +180,7 @@ const fetchSupabaseUser = async (supabaseUserId) => {
     return data?.user || null;
 };
 
-// Looks a Supabase identity up by email. The admin API has no email filter,
-// so the user list is scanned page by page.
+// Looks a Supabase identity up by email.
 const findSupabaseUserByEmail = async (email) => {
     const admin = getSupabaseAdmin();
     const normalized = normalizeEmail(email);
@@ -253,9 +211,9 @@ const findSupabaseUserByEmail = async (email) => {
     return null;
 };
 
-// FR 1.1 / FR 1.5: Register with Supabase email/password identity.
-// Uses a Mongoose transaction for atomic user profile creation and sends a
-// luxury Registration Acknowledgement Email (with verification code) via SMTP.
+// FR 1.1 / FR 1.5: Register a new Aureo Collector account inside a MongoDB
+// transaction and send a Registration Acknowledgement Email confirming that
+// the email address was registered on Aureo.
 const registerUser = catchAsyncErrors(async (req, res, next) => {
     const { name, email, password, supabaseUserId } = req.body;
 
@@ -271,76 +229,63 @@ const registerUser = catchAsyncErrors(async (req, res, next) => {
 
     const normalizedEmail = normalizeEmail(email);
 
-    const existingUser = await User.findOne({ email: normalizedEmail });
-
-    if (existingUser) {
-        return next(new ErrorHandler("Email is already registered", 400));
-    }
-
-    let providerUserId = supabaseUserId || null;
-    let providerUser = null;
-    let authSource = "supabase";
-
-    if (!providerUserId && isSupabaseConfigured() && password) {
-        try {
-            const admin = getSupabaseAdmin();
-
-            const { data, error } = await admin.auth.admin.createUser({
-                email: normalizedEmail,
-                password,
-                email_confirm: false,
-                user_metadata: { name: String(name).trim() }
-            });
-
-            if (error) {
-                const existingProviderUser = await findSupabaseUserByEmail(
-                    normalizedEmail
-                );
-
-                if (existingProviderUser) {
-                    providerUser = existingProviderUser;
-                    providerUserId = providerUser.id;
-                } else {
-                    // Fall back to local password storage if Supabase is rate-limited
-                    authSource = "local";
-                }
-            } else if (data?.user) {
-                providerUser = data.user;
-                providerUserId = providerUser.id;
-            }
-        } catch {
-            authSource = "local";
-        }
-    } else if (providerUserId && isSupabaseConfigured()) {
-        try {
-            providerUser = await fetchSupabaseUser(supabaseUserId);
-        } catch {
-            providerUser = null;
-        }
-    } else {
-        authSource = "local";
-    }
-
-    const verificationCode = generateVerificationCode();
-
     const session = await mongoose.startSession();
     session.startTransaction();
 
     let user;
     try {
+        const existingUser = await User.findOne({ email: normalizedEmail }).session(session);
+
+        if (existingUser) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Email is already registered", 400));
+        }
+
+        let providerUserId = supabaseUserId || null;
+        let authSource = "local";
+
+        if (!providerUserId && isSupabaseConfigured() && password) {
+            try {
+                const admin = getSupabaseAdmin();
+
+                const { data, error } = await admin.auth.admin.createUser({
+                    email: normalizedEmail,
+                    password,
+                    email_confirm: true,
+                    user_metadata: { name: String(name).trim() }
+                });
+
+                if (error) {
+                    const existingProviderUser = await findSupabaseUserByEmail(
+                        normalizedEmail
+                    );
+
+                    if (existingProviderUser) {
+                        providerUserId = existingProviderUser.id;
+                        authSource = "supabase";
+                    }
+                } else if (data?.user) {
+                    providerUserId = data.user.id;
+                    authSource = "supabase";
+                }
+            } catch {
+                authSource = "local";
+            }
+        } else if (providerUserId) {
+            authSource = "supabase";
+        }
+
         const userPayload = {
             name: String(name).trim(),
             email: normalizedEmail,
             supabaseUserId: providerUserId,
-            authSource: providerUserId ? "supabase" : authSource,
-            isVerified: false,
-            verificationCodeHash: hashVerificationCode(verificationCode),
-            verificationCodeExpiresAt: new Date(
-                Date.now() + CODE_EXPIRE_MINUTES * 60 * 1000
-            )
+            authSource,
+            isVerified: true,
+            verificationCodeHash: null,
+            verificationCodeExpiresAt: null
         };
 
-        if (!providerUserId && password) {
+        if (password) {
             userPayload.password = password;
         }
 
@@ -349,7 +294,9 @@ const registerUser = catchAsyncErrors(async (req, res, next) => {
 
         await session.commitTransaction();
     } catch (txError) {
-        await session.abortTransaction();
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
         return next(txError);
     } finally {
         session.endSession();
@@ -357,24 +304,31 @@ const registerUser = catchAsyncErrors(async (req, res, next) => {
 
     await sendEmail({
         to: user.email,
-        subject: "Welcome to Aureo Horology Vault — Registration Confirmed",
-        text: buildRegistrationAcknowledgementText(user, verificationCode),
-        html: buildRegistrationAcknowledgementHtml(user, verificationCode),
-        type: "verification",
+        subject: "Welcome to Aureo Horology Vault — Registration Acknowledgement",
+        text: buildRegistrationAcknowledgementText(user),
+        html: buildRegistrationAcknowledgementHtml(user),
+        type: "registration",
         relatedId: user._id.toString()
     }).catch((error) => {
-        // A missing SMTP provider must not block the registration itself.
         console.error("Registration acknowledgement email could not be sent:", error.message);
     });
 
+    const token = generateToken(user._id);
+    const userData = user.toObject();
+    delete userData.password;
+    delete userData.supabaseUserId;
+    delete userData.googleId;
+
     res.status(201).json({
         success: true,
-        message: "Registration successful. An acknowledgement email with your verification code has been sent.",
-        email: user.email
+        message: "Registration successful. An acknowledgement email has been sent to your email address.",
+        email: user.email,
+        token,
+        user: userData
     });
 });
 
-// FR 1.5: Sync the Supabase verification state into the Aureo profile.
+// FR 1.5: Sync verification state into the Aureo profile inside a transaction.
 const verifyEmail = catchAsyncErrors(async (req, res, next) => {
     const { email, code, accessToken } = req.body;
 
@@ -411,7 +365,6 @@ const verifyEmail = catchAsyncErrors(async (req, res, next) => {
 
         const normalizedEmail = normalizeEmail(email);
 
-        // Primary channel: let Supabase validate the code it sent.
         try {
             const anon = getSupabaseAnon();
             const { data, error } = await anon.auth.verifyOtp({
@@ -429,7 +382,6 @@ const verifyEmail = catchAsyncErrors(async (req, res, next) => {
         }
 
         if (!codeAccepted) {
-            // Fallback channel: validate the Aureo fallback code.
             const user = await User.findOne({ email: normalizedEmail }).select(
                 "+verificationCodeHash +verificationCodeExpiresAt +supabaseUserId"
             );
@@ -461,7 +413,6 @@ const verifyEmail = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Invalid or expired verification code", 400));
     }
 
-    // Make sure the Supabase account is confirmed as well.
     if (providerUser && !providerUser.email_confirmed_at && providerUser.id) {
         providerUser =
             (await confirmSupabaseAccount(providerUser.id)) || providerUser;
@@ -471,7 +422,6 @@ const verifyEmail = catchAsyncErrors(async (req, res, next) => {
     session.startTransaction();
 
     try {
-        // FR 1.5: the backend syncs the provider verification state.
         const user = await User.findOne({
             $or: [
                 { email: normalizeEmail(providerUser?.email || email) },
@@ -501,7 +451,9 @@ const verifyEmail = catchAsyncErrors(async (req, res, next) => {
         await user.save({ session });
         await session.commitTransaction();
     } catch (txError) {
-        await session.abortTransaction();
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
         return next(txError);
     } finally {
         session.endSession();
@@ -514,7 +466,6 @@ const verifyEmail = catchAsyncErrors(async (req, res, next) => {
 });
 
 // FR 1.1 / FR 1.4: Sign in with email + password.
-// Accepts a Supabase access token (client signed in) or raw credentials.
 const loginUser = catchAsyncErrors(async (req, res, next) => {
     const { email, password, accessToken } = req.body;
 
@@ -560,14 +511,17 @@ const loginUser = catchAsyncErrors(async (req, res, next) => {
             );
         }
 
-        if (user.authSource === "local") {
-            // Locally seeded account (the administrator created by the seeder).
-            const isPasswordValid = await user.comparePassword(password);
+        // Check local password hash first if present on the user document
+        let authenticatedLocally = false;
+        if (user.password) {
+            authenticatedLocally = await user.comparePassword(password);
+        }
 
-            if (!isPasswordValid) {
+        if (!authenticatedLocally) {
+            if (user.authSource === "local") {
                 return next(new ErrorHandler(INVALID_CREDENTIALS, 401));
             }
-        } else {
+
             if (!isSupabaseConfigured()) {
                 return next(
                     new ErrorHandler(
@@ -583,11 +537,6 @@ const loginUser = catchAsyncErrors(async (req, res, next) => {
                 password
             });
 
-            // FR 1.5: an unverified user is still allowed to sign in, they are
-            // only blocked from ordering, appraisals and tickets. Supabase
-            // refuses the sign-in while the address is unconfirmed, so the
-            // provider state is confirmed and the Aureo `isVerified` flag is
-            // kept untouched until the verification code is accepted.
             if (error && error.code === "email_not_confirmed" && user.supabaseUserId) {
                 await confirmSupabaseAccount(user.supabaseUserId);
 
@@ -618,38 +567,46 @@ const loginUser = catchAsyncErrors(async (req, res, next) => {
         );
     }
 
-    // Link the provider identity on first successful sign-in.
     if (providerUser) {
-        const conflictingLink = await User.findOne({
-            _id: { $ne: user._id },
-            $or: [
-                { email: normalizeEmail(providerUser.email) },
-                { supabaseUserId: providerUser.id }
-            ]
-        });
+        const session = await mongoose.startSession();
+        session.startTransaction();
+        try {
+            const conflictingLink = await User.findOne({
+                _id: { $ne: user._id },
+                $or: [
+                    { email: normalizeEmail(providerUser.email) },
+                    { supabaseUserId: providerUser.id }
+                ]
+            }).session(session);
 
-        if (conflictingLink) {
-            return next(
-                new ErrorHandler(
-                    "This account is already linked to a different Aureo profile",
-                    409
-                )
-            );
+            if (conflictingLink) {
+                await session.abortTransaction();
+                return next(
+                    new ErrorHandler(
+                        "This account is already linked to a different Aureo profile",
+                        409
+                    )
+                );
+            }
+
+            if (!user.supabaseUserId) {
+                user.supabaseUserId = providerUser.id;
+            }
+
+            if (user.authSource === "local") {
+                user.authSource = "supabase";
+            }
+
+            await user.save({ session });
+            await session.commitTransaction();
+        } catch (txError) {
+            if (session.inTransaction()) {
+                await session.abortTransaction();
+            }
+            return next(txError);
+        } finally {
+            session.endSession();
         }
-
-        if (!user.supabaseUserId) {
-            user.supabaseUserId = providerUser.id;
-        }
-
-        if (user.authSource === "local") {
-            user.authSource = "supabase";
-        }
-
-        // FR 1.5: the Aureo `isVerified` flag is only raised by the
-        // verification endpoint, which requires a valid code. Signing in never
-        // verifies the account on its own, so an unverified user stays blocked
-        // from orders, appraisals and tickets.
-        await user.save();
     }
 
     const token = generateToken(user._id);
@@ -680,8 +637,7 @@ const logoutUser = catchAsyncErrors(async (req, res) => {
     });
 });
 
-// FR 1.2: The user may only edit their own profile. Email and role are
-// intentionally not editable.
+// FR 1.2: The user may only edit their own profile inside a transaction.
 const updateProfile = catchAsyncErrors(async (req, res, next) => {
     const allowedFields = [
         "name",
@@ -716,14 +672,30 @@ const updateProfile = catchAsyncErrors(async (req, res, next) => {
         );
     }
 
-    const user = await User.findByIdAndUpdate(
-        req.user._id,
-        updates,
-        {
-            new: true,
-            runValidators: true
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    let user;
+    try {
+        user = await User.findByIdAndUpdate(
+            req.user._id,
+            updates,
+            {
+                new: true,
+                runValidators: true,
+                session
+            }
+        );
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
         }
-    );
+        return next(txError);
+    } finally {
+        session.endSession();
+    }
 
     res.status(200).json({
         success: true,
@@ -731,7 +703,7 @@ const updateProfile = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// FR 1.1 / Quiz 4: Google sign-in through Firebase.
+// FR 1.1 / Quiz 4: Google sign-in through Firebase inside a transaction.
 const googleLogin = catchAsyncErrors(async (req, res, next) => {
     const { idToken } = req.body;
 
@@ -767,8 +739,6 @@ const googleLogin = catchAsyncErrors(async (req, res, next) => {
             .session(session);
 
         if (user) {
-            // FR 1.4 / Phase 3.8: never silently rebind a provider identity that
-            // already belongs to a different profile.
             if (user.googleId && user.googleId !== uid) {
                 await session.abortTransaction();
                 return next(
@@ -817,7 +787,9 @@ const googleLogin = catchAsyncErrors(async (req, res, next) => {
 
         await session.commitTransaction();
     } catch (txError) {
-        await session.abortTransaction();
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
         return next(txError);
     } finally {
         session.endSession();
@@ -826,9 +798,9 @@ const googleLogin = catchAsyncErrors(async (req, res, next) => {
     if (isNewRegistration && user) {
         await sendEmail({
             to: user.email,
-            subject: "Welcome to Aureo Horology Vault — Registration Confirmed",
-            text: buildRegistrationAcknowledgementText(user, null),
-            html: buildRegistrationAcknowledgementHtml(user, null),
+            subject: "Welcome to Aureo Horology Vault — Registration Acknowledgement",
+            text: buildRegistrationAcknowledgementText(user),
+            html: buildRegistrationAcknowledgementHtml(user),
             type: "registration",
             relatedId: user._id.toString()
         }).catch((error) => {
@@ -880,25 +852,39 @@ const uploadAvatar = catchAsyncErrors(async (req, res, next) => {
         );
     }
 
-    const user = await User.findById(req.user._id);
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (user.avatar?.public_id) {
-        await cloudinary.uploader.destroy(user.avatar.public_id);
+    let user;
+    try {
+        user = await User.findById(req.user._id).session(session);
+
+        if (user.avatar?.public_id) {
+            await cloudinary.uploader.destroy(user.avatar.public_id);
+        }
+
+        const result = await cloudinary.uploader.upload(avatar, {
+            folder: "aureo/avatars",
+            width: 400,
+            crop: "fill",
+            gravity: "face"
+        });
+
+        user.avatar = {
+            public_id: result.public_id,
+            url: result.secure_url
+        };
+
+        await user.save({ session, validateBeforeSave: false });
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        return next(txError);
+    } finally {
+        session.endSession();
     }
-
-    const result = await cloudinary.uploader.upload(avatar, {
-        folder: "aureo/avatars",
-        width: 400,
-        crop: "fill",
-        gravity: "face"
-    });
-
-    user.avatar = {
-        public_id: result.public_id,
-        url: result.secure_url
-    };
-
-    await user.save({ validateBeforeSave: false });
 
     res.status(200).json({
         success: true,
@@ -931,7 +917,7 @@ const getSingleUser = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Admin: Create user (FR 1.4 / Full Admin User CRUD)
+// Admin: Create user (FR 1.4 / Full Admin User CRUD) inside a transaction
 const createUserByAdmin = catchAsyncErrors(async (req, res, next) => {
     const { name, email, password, role, contactNumber, address, isVerified } = req.body;
 
@@ -940,21 +926,44 @@ const createUserByAdmin = catchAsyncErrors(async (req, res, next) => {
     }
 
     const normalizedEmail = normalizeEmail(email);
-    const existingUser = await User.findOne({ email: normalizedEmail });
-    if (existingUser) {
-        return next(new ErrorHandler("A user with this email already exists", 409));
-    }
 
-    const user = await User.create({
-        name: String(name).trim(),
-        email: normalizedEmail,
-        password: password || "AureoPass123!",
-        role: role === "admin" ? "admin" : "user",
-        contactNumber: contactNumber ? String(contactNumber).trim() : "",
-        address: address ? String(address).trim() : "",
-        isVerified: isVerified !== undefined ? Boolean(isVerified) : true,
-        authSource: "local"
-    });
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    let user;
+    try {
+        const existingUser = await User.findOne({ email: normalizedEmail }).session(session);
+        if (existingUser) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("A user with this email already exists", 409));
+        }
+
+        const [createdUser] = await User.create(
+            [
+                {
+                    name: String(name).trim(),
+                    email: normalizedEmail,
+                    password: password || "AureoPass123!",
+                    role: role === "admin" ? "admin" : "user",
+                    contactNumber: contactNumber ? String(contactNumber).trim() : "",
+                    address: address ? String(address).trim() : "",
+                    isVerified: isVerified !== undefined ? Boolean(isVerified) : true,
+                    authSource: "local"
+                }
+            ],
+            { session }
+        );
+        user = createdUser;
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        return next(txError);
+    } finally {
+        session.endSession();
+    }
 
     const userData = user.toObject();
     delete userData.password;
@@ -966,71 +975,89 @@ const createUserByAdmin = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Admin: Update user details & role (FR 1.4 / Full Admin User CRUD)
+// Admin: Update user details & role (FR 1.4 / Full Admin User CRUD) inside a transaction
 const updateUserByAdmin = catchAsyncErrors(async (req, res, next) => {
     const { name, email, role, contactNumber, address, isVerified, password } = req.body;
 
-    const user = await User.findById(req.params.id).select("+password");
-    if (!user) {
-        return next(new ErrorHandler("User not found", 404));
-    }
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (role !== undefined) {
-        if (!["user", "admin"].includes(role)) {
-            return next(
-                new ErrorHandler("Please provide a valid role ('user' or 'admin')", 400)
-            );
+    let user;
+    try {
+        user = await User.findById(req.params.id).select("+password").session(session);
+        if (!user) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("User not found", 404));
         }
-        // Protect self-demotion
-        if (user._id.toString() === req.user._id.toString() && role !== "admin") {
-            return next(
-                new ErrorHandler("You cannot remove your own administrator role", 400)
-            );
-        }
-        user.role = role;
-    }
 
-    if (name) {
-        user.name = String(name).trim();
-    }
-
-    if (email) {
-        const normalizedEmail = normalizeEmail(email);
-        if (normalizedEmail !== user.email) {
-            const conflict = await User.findOne({ email: normalizedEmail });
-            if (conflict) {
-                return next(new ErrorHandler("Email is already taken by another account", 409));
+        if (role !== undefined) {
+            if (!["user", "admin"].includes(role)) {
+                await session.abortTransaction();
+                return next(
+                    new ErrorHandler("Please provide a valid role ('user' or 'admin')", 400)
+                );
             }
-            user.email = normalizedEmail;
+            if (user._id.toString() === req.user._id.toString() && role !== "admin") {
+                await session.abortTransaction();
+                return next(
+                    new ErrorHandler("You cannot remove your own administrator role", 400)
+                );
+            }
+            user.role = role;
         }
-    }
 
-    if (contactNumber !== undefined) {
-        user.contactNumber = String(contactNumber).trim();
-    }
-
-    if (address !== undefined) {
-        user.address = String(address).trim();
-    }
-
-    if (isVerified !== undefined) {
-        user.isVerified = Boolean(isVerified);
-    }
-
-    if (req.body.isActive !== undefined) {
-        if (user._id.toString() === req.user._id.toString() && !req.body.isActive) {
-            return next(
-                new ErrorHandler("You cannot deactivate your own administrator account", 400)
-            );
+        if (name) {
+            user.name = String(name).trim();
         }
-        user.isActive = Boolean(req.body.isActive);
-    }
 
-    if (password && String(password).trim().length >= 8) {
-        user.password = String(password).trim();
-    }
+        if (email) {
+            const normalizedEmail = normalizeEmail(email);
+            if (normalizedEmail !== user.email) {
+                const conflict = await User.findOne({ email: normalizedEmail }).session(session);
+                if (conflict) {
+                    await session.abortTransaction();
+                    return next(new ErrorHandler("Email is already taken by another account", 409));
+                }
+                user.email = normalizedEmail;
+            }
+        }
 
-    await user.save({ validateBeforeSave: false });
+        if (contactNumber !== undefined) {
+            user.contactNumber = String(contactNumber).trim();
+        }
+
+        if (address !== undefined) {
+            user.address = String(address).trim();
+        }
+
+        if (isVerified !== undefined) {
+            user.isVerified = Boolean(isVerified);
+        }
+
+        if (req.body.isActive !== undefined) {
+            if (user._id.toString() === req.user._id.toString() && !req.body.isActive) {
+                await session.abortTransaction();
+                return next(
+                    new ErrorHandler("You cannot deactivate your own administrator account", 400)
+                );
+            }
+            user.isActive = Boolean(req.body.isActive);
+        }
+
+        if (password && String(password).trim().length >= 8) {
+            user.password = String(password).trim();
+        }
+
+        await user.save({ session, validateBeforeSave: false });
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        return next(txError);
+    } finally {
+        session.endSession();
+    }
 
     const userData = user.toObject();
     delete userData.password;
@@ -1044,7 +1071,7 @@ const updateUserByAdmin = catchAsyncErrors(async (req, res, next) => {
 
 const updateUserRole = updateUserByAdmin;
 
-// Admin: Bulk delete users (Strictly soft delete - no hard delete)
+// Admin: Bulk delete users (Strictly soft delete - no hard delete) inside a transaction
 const bulkDeleteUsers = catchAsyncErrors(async (req, res, next) => {
     const { ids } = req.body;
 
@@ -1052,14 +1079,31 @@ const bulkDeleteUsers = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Please provide an array of user IDs", 400));
     }
 
-    // Never allow an admin to deactivate their own account in bulk
     const safeIds = ids.filter((id) => id.toString() !== req.user._id.toString());
 
     if (safeIds.length === 0) {
         return next(new ErrorHandler("You cannot deactivate your own administrator account", 400));
     }
 
-    const result = await User.updateMany({ _id: { $in: safeIds } }, { isActive: false });
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    let result;
+    try {
+        result = await User.updateMany(
+            { _id: { $in: safeIds } },
+            { isActive: false },
+            { session }
+        );
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        return next(txError);
+    } finally {
+        session.endSession();
+    }
 
     res.status(200).json({
         success: true,
@@ -1067,22 +1111,37 @@ const bulkDeleteUsers = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Admin: Delete user (Strictly soft delete - no hard delete)
+// Admin: Delete user (Strictly soft delete - no hard delete) inside a transaction
 const deleteUser = catchAsyncErrors(async (req, res, next) => {
-    const user = await User.findById(req.params.id);
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (!user) {
-        return next(new ErrorHandler("User not found", 404));
+    try {
+        const user = await User.findById(req.params.id).session(session);
+
+        if (!user) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("User not found", 404));
+        }
+
+        if (user._id.toString() === req.user._id.toString()) {
+            await session.abortTransaction();
+            return next(
+                new ErrorHandler("An administrator cannot deactivate their own account", 400)
+            );
+        }
+
+        user.isActive = false;
+        await user.save({ session, validateBeforeSave: false });
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        return next(txError);
+    } finally {
+        session.endSession();
     }
-
-    if (user._id.toString() === req.user._id.toString()) {
-        return next(
-            new ErrorHandler("An administrator cannot deactivate their own account", 400)
-        );
-    }
-
-    user.isActive = false;
-    await user.save({ validateBeforeSave: false });
 
     res.status(200).json({
         success: true,
@@ -1090,23 +1149,39 @@ const deleteUser = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Admin: Permanently delete a deactivated user.
+// Admin: Permanently delete a deactivated user inside a transaction
 const permanentlyDeleteUser = catchAsyncErrors(async (req, res, next) => {
-    const user = await User.findById(req.params.id);
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (!user) {
-        return next(new ErrorHandler("User not found", 404));
+    try {
+        const user = await User.findById(req.params.id).session(session);
+
+        if (!user) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("User not found", 404));
+        }
+
+        if (user._id.toString() === req.user._id.toString()) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("An administrator cannot delete their own account", 400));
+        }
+
+        if (user.isActive !== false) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Only deactivated users can be permanently deleted", 400));
+        }
+
+        await User.deleteOne({ _id: user._id }).session(session);
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        return next(txError);
+    } finally {
+        session.endSession();
     }
-
-    if (user._id.toString() === req.user._id.toString()) {
-        return next(new ErrorHandler("An administrator cannot delete their own account", 400));
-    }
-
-    if (user.isActive !== false) {
-        return next(new ErrorHandler("Only deactivated users can be permanently deleted", 400));
-    }
-
-    await User.deleteOne({ _id: user._id });
 
     res.status(200).json({
         success: true,

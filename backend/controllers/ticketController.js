@@ -19,7 +19,7 @@ const TICKET_STATUS_FLOW = {
 const ALLOWED_TICKET_STATUSES = Object.keys(TICKET_STATUS_FLOW);
 
 // Builds a readable and unique ticket number, for example AUR-TCK-20261021-0007.
-const buildTicketNumber = async () => {
+const buildTicketNumber = async (session = null) => {
     const today = new Date();
     const stamp = [
         today.getFullYear(),
@@ -28,14 +28,18 @@ const buildTicketNumber = async () => {
     ].join("");
 
     const prefix = `AUR-TCK-${stamp}`;
-    const count = await Ticket.countDocuments({
+    const query = Ticket.countDocuments({
         ticketNumber: new RegExp(`^${prefix}`)
     });
+    if (session) {
+        query.session(session);
+    }
+    const count = await query;
 
     return `${prefix}-${String(count + 1).padStart(4, "0")}`;
 };
 
-// FR 5.2: a verified user opens a support ticket.
+// FR 5.2: a verified user opens a support ticket inside a transaction.
 const createTicket = catchAsyncErrors(async (req, res, next) => {
     const {
         service,
@@ -57,12 +61,6 @@ const createTicket = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Invalid service ID", 400));
     }
 
-    const chosenService = await Service.findById(service);
-
-    if (!chosenService) {
-        return next(new ErrorHandler("Service not found", 404));
-    }
-
     const files = req.files || [];
 
     if (files.length > MAX_PHOTOS) {
@@ -73,17 +71,48 @@ const createTicket = catchAsyncErrors(async (req, res, next) => {
 
     const photos = files.length > 0 ? await uploadFiles(files, "aureo/tickets") : [];
 
-    const ticket = await Ticket.create({
-        ticketNumber: await buildTicketNumber(),
-        user: req.user._id,
-        service: chosenService._id,
-        watchBrand: watchBrand.trim(),
-        watchModel: watchModel.trim(),
-        problemDescription: problemDescription.trim(),
-        photos,
-        status: "Received",
-        statusHistory: [{ status: "Received", changedAt: new Date() }]
-    });
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    let ticket;
+    let chosenService;
+    try {
+        chosenService = await Service.findById(service).session(session);
+
+        if (!chosenService) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Service not found", 404));
+        }
+
+        const ticketNumber = await buildTicketNumber(session);
+
+        const [createdTicket] = await Ticket.create(
+            [
+                {
+                    ticketNumber,
+                    user: req.user._id,
+                    service: chosenService._id,
+                    watchBrand: watchBrand.trim(),
+                    watchModel: watchModel.trim(),
+                    problemDescription: problemDescription.trim(),
+                    photos,
+                    status: "Received",
+                    statusHistory: [{ status: "Received", changedAt: new Date() }]
+                }
+            ],
+            { session }
+        );
+        ticket = createdTicket;
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
+    }
 
     await mockEmail({
         to: req.user.email,
@@ -184,37 +213,55 @@ const updateTicketStatus = catchAsyncErrors(async (req, res, next) => {
         );
     }
 
-    const ticket = await Ticket.findById(req.params.id)
-        .populate("service", "name price description")
-        .populate("user", "name email contactNumber avatar");
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (!ticket) {
-        return next(new ErrorHandler("Ticket not found", 404));
+    let ticket;
+    try {
+        ticket = await Ticket.findById(req.params.id)
+            .populate("service", "name price description")
+            .populate("user", "name email contactNumber avatar")
+            .session(session);
+
+        if (!ticket) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Ticket not found", 404));
+        }
+
+        if (ticket.status === "Completed") {
+            await session.abortTransaction();
+            return next(
+                new ErrorHandler("A completed ticket can no longer be changed.", 400)
+            );
+        }
+
+        const allowedNextStatuses = TICKET_STATUS_FLOW[ticket.status] || [];
+
+        if (!allowedNextStatuses.includes(status)) {
+            await session.abortTransaction();
+            return next(
+                new ErrorHandler(
+                    `Ticket cannot move from "${ticket.status}" to "${status}". Allowed next status: ${
+                        allowedNextStatuses.length ? allowedNextStatuses.join(", ") : "none"
+                    }.`,
+                    400
+                )
+            );
+        }
+
+        ticket.status = status;
+        ticket.statusHistory.push({ status, changedAt: new Date() });
+
+        await ticket.save({ session });
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
     }
-
-    if (ticket.status === "Completed") {
-        return next(
-            new ErrorHandler("A completed ticket can no longer be changed.", 400)
-        );
-    }
-
-    const allowedNextStatuses = TICKET_STATUS_FLOW[ticket.status] || [];
-
-    if (!allowedNextStatuses.includes(status)) {
-        return next(
-            new ErrorHandler(
-                `Ticket cannot move from "${ticket.status}" to "${status}". Allowed next status: ${
-                    allowedNextStatuses.length ? allowedNextStatuses.join(", ") : "none"
-                }.`,
-                400
-            )
-        );
-    }
-
-    ticket.status = status;
-    ticket.statusHistory.push({ status, changedAt: new Date() });
-
-    await ticket.save();
 
     // FR 5.4: the collector is notified about every status change.
     await mockEmail({

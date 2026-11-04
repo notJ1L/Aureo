@@ -42,7 +42,7 @@ const getService = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// FR 5.1: only an admin creates a service.
+// FR 5.1: only an admin creates a service inside a transaction.
 const createService = catchAsyncErrors(async (req, res, next) => {
     const { name, description, price } = req.body;
 
@@ -60,11 +60,32 @@ const createService = catchAsyncErrors(async (req, res, next) => {
         );
     }
 
-    const service = await Service.create({
-        name: name.trim(),
-        description: description.trim(),
-        price: parsedPrice
-    });
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    let service;
+    try {
+        const [createdService] = await Service.create(
+            [
+                {
+                    name: name.trim(),
+                    description: description.trim(),
+                    price: parsedPrice
+                }
+            ],
+            { session }
+        );
+        service = createdService;
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
+    }
 
     res.status(201).json({
         success: true,
@@ -77,50 +98,69 @@ const updateService = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Invalid service ID", 400));
     }
 
-    const service = await Service.findById(req.params.id);
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (!service) {
-        return next(new ErrorHandler("Service not found", 404));
-    }
+    let service;
+    try {
+        service = await Service.findById(req.params.id).session(session);
 
-    const updates = {};
-
-    if (req.body.name !== undefined) {
-        updates.name = String(req.body.name).trim();
-
-        if (!updates.name) {
-            return next(new ErrorHandler("The service name is required", 400));
-        }
-    }
-
-    if (req.body.description !== undefined) {
-        updates.description = String(req.body.description).trim();
-
-        if (!updates.description) {
-            return next(
-                new ErrorHandler("The service description is required", 400)
-            );
-        }
-    }
-
-    if (req.body.price !== undefined) {
-        const parsedPrice = Number(req.body.price);
-
-        if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
-            return next(
-                new ErrorHandler("The service price must be a positive number", 400)
-            );
+        if (!service) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Service not found", 404));
         }
 
-        updates.price = parsedPrice;
-    }
+        const updates = {};
 
-    if (req.body.isActive !== undefined) {
-        updates.isActive = Boolean(req.body.isActive);
-    }
+        if (req.body.name !== undefined) {
+            updates.name = String(req.body.name).trim();
 
-    Object.assign(service, updates);
-    await service.save();
+            if (!updates.name) {
+                await session.abortTransaction();
+                return next(new ErrorHandler("The service name is required", 400));
+            }
+        }
+
+        if (req.body.description !== undefined) {
+            updates.description = String(req.body.description).trim();
+
+            if (!updates.description) {
+                await session.abortTransaction();
+                return next(
+                    new ErrorHandler("The service description is required", 400)
+                );
+            }
+        }
+
+        if (req.body.price !== undefined) {
+            const parsedPrice = Number(req.body.price);
+
+            if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+                await session.abortTransaction();
+                return next(
+                    new ErrorHandler("The service price must be a positive number", 400)
+                );
+            }
+
+            updates.price = parsedPrice;
+        }
+
+        if (req.body.isActive !== undefined) {
+            updates.isActive = Boolean(req.body.isActive);
+        }
+
+        Object.assign(service, updates);
+        await service.save({ session });
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
+    }
 
     res.status(200).json({
         success: true,
@@ -128,21 +168,36 @@ const updateService = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Admin: Delete service (Strictly soft delete - no hard delete)
+// Admin: Delete service (Strictly soft delete - no hard delete) inside a transaction
 const deleteService = catchAsyncErrors(async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         return next(new ErrorHandler("Invalid service ID", 400));
     }
 
-    const service = await Service.findById(req.params.id);
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (!service) {
-        return next(new ErrorHandler("Service not found", 404));
+    let service;
+    try {
+        service = await Service.findById(req.params.id).session(session);
+
+        if (!service) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Service not found", 404));
+        }
+
+        service.isActive = false;
+        await service.save({ session });
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
     }
-
-    // Strictly soft delete: mark isActive = false
-    service.isActive = false;
-    await service.save();
 
     res.status(200).json({
         success: true,
@@ -151,7 +206,7 @@ const deleteService = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Admin: Bulk delete services (Strictly soft delete - no hard delete)
+// Admin: Bulk delete services (Strictly soft delete - no hard delete) inside a transaction
 const bulkDeleteServices = catchAsyncErrors(async (req, res, next) => {
     const { ids } = req.body;
 
@@ -168,10 +223,26 @@ const bulkDeleteServices = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("No valid service ids were provided", 400));
     }
 
-    const result = await Service.updateMany(
-        { _id: { $in: validIds } },
-        { isActive: false }
-    );
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    let result;
+    try {
+        result = await Service.updateMany(
+            { _id: { $in: validIds } },
+            { isActive: false },
+            { session }
+        );
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
+    }
 
     res.status(200).json({
         success: true,

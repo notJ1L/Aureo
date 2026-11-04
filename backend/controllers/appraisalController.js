@@ -6,7 +6,7 @@ const catchAsyncErrors = require("../utils/catchAsyncErrors");
 const { uploadFiles } = require("../utils/cloudinaryUpload");
 const { MAX_PHOTOS } = require("../utils/multer");
 
-// FR 3.1: a verified user submits an appraisal for their own watch.
+// FR 3.1: a verified user submits an appraisal for their own watch inside a transaction.
 const createAppraisal = catchAsyncErrors(async (req, res, next) => {
     const {
         brand,
@@ -36,20 +36,41 @@ const createAppraisal = catchAsyncErrors(async (req, res, next) => {
 
     const photos = await uploadFiles(files, "aureo/appraisals");
 
-    const appraisal = await Appraisal.create({
-        user: req.user._id,
-        brand,
-        model,
-        movement,
-        caseSize: Number(caseSize),
-        condition,
-        year: Number(year),
-        hasBox: hasBox === "true" || hasBox === true,
-        hasPapers: hasPapers === "true" || hasPapers === true,
-        askingPrice: Number(askingPrice),
-        photos,
-        status: "Pending"
-    });
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    let appraisal;
+    try {
+        const [createdAppraisal] = await Appraisal.create(
+            [
+                {
+                    user: req.user._id,
+                    brand,
+                    model,
+                    movement,
+                    caseSize: Number(caseSize),
+                    condition,
+                    year: Number(year),
+                    hasBox: hasBox === "true" || hasBox === true,
+                    hasPapers: hasPapers === "true" || hasPapers === true,
+                    askingPrice: Number(askingPrice),
+                    photos,
+                    status: "Pending"
+                }
+            ],
+            { session }
+        );
+        appraisal = createdAppraisal;
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
+    }
 
     res.status(201).json({
         success: true,
@@ -100,7 +121,7 @@ const getAppraisal = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// FR 3.3: the user accepts or rejects the offer the admin made.
+// FR 3.3: the user accepts or rejects the offer the admin made inside a transaction.
 const respondToOffer = catchAsyncErrors(async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         return next(new ErrorHandler("Invalid appraisal ID", 400));
@@ -117,29 +138,47 @@ const respondToOffer = catchAsyncErrors(async (req, res, next) => {
         );
     }
 
-    const appraisal = await Appraisal.findById(req.params.id);
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (!appraisal) {
-        return next(new ErrorHandler("Appraisal not found", 404));
+    let appraisal;
+    try {
+        appraisal = await Appraisal.findById(req.params.id).session(session);
+
+        if (!appraisal) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Appraisal not found", 404));
+        }
+
+        if (appraisal.user.toString() !== req.user._id.toString()) {
+            await session.abortTransaction();
+            return next(
+                new ErrorHandler("You can only respond to your own appraisal", 403)
+            );
+        }
+
+        if (appraisal.status !== "Offer Made") {
+            await session.abortTransaction();
+            return next(
+                new ErrorHandler(
+                    `This appraisal cannot be responded to while it is "${appraisal.status}".`,
+                    400
+                )
+            );
+        }
+
+        appraisal.status = decision;
+        await appraisal.save({ session });
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
     }
-
-    if (appraisal.user.toString() !== req.user._id.toString()) {
-        return next(
-            new ErrorHandler("You can only respond to your own appraisal", 403)
-        );
-    }
-
-    if (appraisal.status !== "Offer Made") {
-        return next(
-            new ErrorHandler(
-                `This appraisal cannot be responded to while it is "${appraisal.status}".`,
-                400
-            )
-        );
-    }
-
-    appraisal.status = decision;
-    await appraisal.save();
 
     res.status(200).json({
         success: true,
@@ -162,7 +201,7 @@ const getAdminAppraisals = catchAsyncErrors(async (req, res) => {
     });
 });
 
-// FR 3.3: the admin makes an offer or rejects the appraisal.
+// FR 3.3: the admin makes an offer or rejects the appraisal inside a transaction.
 const adminReviewAppraisal = catchAsyncErrors(async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         return next(new ErrorHandler("Invalid appraisal ID", 400));
@@ -170,49 +209,67 @@ const adminReviewAppraisal = catchAsyncErrors(async (req, res, next) => {
 
     const { offerPrice, action } = req.body;
 
-    const appraisal = await Appraisal.findById(req.params.id);
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (!appraisal) {
-        return next(new ErrorHandler("Appraisal not found", 404));
-    }
+    let appraisal;
+    try {
+        appraisal = await Appraisal.findById(req.params.id).session(session);
 
-    if (appraisal.status === "Accepted" || appraisal.status === "Rejected") {
-        return next(
-            new ErrorHandler(
-                `This appraisal was already ${appraisal.status.toLowerCase()} and can no longer be reviewed.`,
-                400
-            )
-        );
-    }
+        if (!appraisal) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Appraisal not found", 404));
+        }
 
-    if (action === "reject") {
-        appraisal.status = "Rejected";
-        await appraisal.save();
+        if (appraisal.status === "Accepted" || appraisal.status === "Rejected") {
+            await session.abortTransaction();
+            return next(
+                new ErrorHandler(
+                    `This appraisal was already ${appraisal.status.toLowerCase()} and can no longer be reviewed.`,
+                    400
+                )
+            );
+        }
 
-        return res.status(200).json({
+        if (action === "reject") {
+            appraisal.status = "Rejected";
+            await appraisal.save({ session });
+            await session.commitTransaction();
+
+            return res.status(200).json({
+                success: true,
+                message: "Appraisal rejected.",
+                appraisal
+            });
+        }
+
+        const price = Number(offerPrice);
+
+        if (!Number.isFinite(price) || price < 0) {
+            await session.abortTransaction();
+            return next(
+                new ErrorHandler("A valid offer price is required", 400)
+            );
+        }
+
+        appraisal.offerPrice = price;
+        appraisal.status = "Offer Made";
+        await appraisal.save({ session });
+        await session.commitTransaction();
+
+        res.status(200).json({
             success: true,
-            message: "Appraisal rejected.",
+            message: `Offer of ${price} sent to the collector.`,
             appraisal
         });
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
     }
-
-    const price = Number(offerPrice);
-
-    if (!Number.isFinite(price) || price < 0) {
-        return next(
-            new ErrorHandler("A valid offer price is required", 400)
-        );
-    }
-
-    appraisal.offerPrice = price;
-    appraisal.status = "Offer Made";
-    await appraisal.save();
-
-    res.status(200).json({
-        success: true,
-        message: `Offer of ${price} sent to the collector.`,
-        appraisal
-    });
 });
 
 // FR 3.3: an accepted appraisal becomes a second-hand product with a stock of

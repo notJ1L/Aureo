@@ -3,9 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { registerUser, verifyEmail, googleLogin, clearAuthError } from "../redux/actions/authActions";
+import { registerUser, googleLogin, clearAuthError } from "../redux/actions/authActions";
 import { ValidatedField } from "../components/ui/ValidatedField";
-import { registerSchema, verifyCodeSchema } from "../utils/validationSchemas";
+import { registerSchema } from "../utils/validationSchemas";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
 import "../styles/aureo.css";
@@ -14,10 +14,10 @@ function RegisterPage() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    const { isAuthenticated, loading, error, registeredEmail, verified } = useSelector((state) => state.auth);
+    const { isAuthenticated, loading, error, registeredEmail } = useSelector((state) => state.auth);
 
     const [stage, setStage] = useState("register");
-    const [infoMsg, setInfoMsg] = useState("");
+    const [handledEmail, setHandledEmail] = useState(null);
 
     const {
         control: registerControl,
@@ -29,24 +29,9 @@ function RegisterPage() {
         defaultValues: { name: "", email: "", password: "" }
     });
 
-    const {
-        control: verifyControl,
-        handleSubmit: handleVerifySubmit,
-        setValue: setVerifyValue,
-        formState: { errors: verifyErrors }
-    } = useForm({
-        resolver: yupResolver(verifyCodeSchema),
-        mode: "onBlur",
-        defaultValues: { email: "", code: "" }
-    });
-
-    const [handledEmail, setHandledEmail] = useState(null);
-
     if (registeredEmail && registeredEmail !== handledEmail) {
         setHandledEmail(registeredEmail);
-        setStage("verify");
-        setVerifyValue("email", registeredEmail, { shouldValidate: false });
-        setInfoMsg(`An Aureo registration acknowledgement and 6-digit verification code has been sent to ${registeredEmail}. Please check your inbox.`);
+        setStage("acknowledged");
     }
 
     useEffect(() => {
@@ -54,12 +39,6 @@ function RegisterPage() {
             navigate("/");
         }
     }, [isAuthenticated, navigate]);
-
-    useEffect(() => {
-        if (verified) {
-            navigate("/login");
-        }
-    }, [verified, navigate]);
 
     useEffect(() => {
         return () => {
@@ -73,10 +52,6 @@ function RegisterPage() {
             email: values.email,
             password: values.password
         }));
-    };
-
-    const onVerify = (values) => {
-        dispatch(verifyEmail(values.email, values.code));
     };
 
     const handleGoogleSignIn = () => {
@@ -163,7 +138,7 @@ function RegisterPage() {
                                     disabled={loading}
                                     style={{ width: "100%", marginTop: "1rem" }}
                                 >
-                                    {loading ? "Creating account..." : "Continue to Verification"}
+                                    {loading ? "Creating account..." : "Create Account"}
                                 </button>
                             </form>
 
@@ -174,62 +149,31 @@ function RegisterPage() {
                         </>
                     ) : (
                         <>
-                            <p className="eyebrow">VERIFY EMAIL</p>
-                            <h1>Confirm your code</h1>
+                            <p className="eyebrow">REGISTRATION ACKNOWLEDGED</p>
+                            <h1>Welcome to Aureo</h1>
                             <p className="auth-description">
-                                Enter the 6-digit confirmation code sent in your Aureo registration acknowledgement email to activate your account.
+                                Your Aureo Collector account has been registered. We have sent an official registration acknowledgement email to{" "}
+                                <strong style={{ color: "var(--gold)" }}>{registeredEmail}</strong> confirming your registration with Aureo Horology Vault.
                             </p>
 
-                            {infoMsg && (
-                                <div className="auth-info">{infoMsg}</div>
-                            )}
+                            <div
+                                className="auth-info"
+                                style={{
+                                    marginBottom: "1.25rem",
+                                    lineHeight: 1.6
+                                }}
+                            >
+                                Check your inbox at <strong>{registeredEmail}</strong> for your official Aureo registration confirmation notice.
+                            </div>
 
-                            {error && (
-                                <div className="auth-error">{error}</div>
-                            )}
-
-                            <form onSubmit={handleVerifySubmit(onVerify)} noValidate>
-                                <ValidatedField
-                                    control={verifyControl}
-                                    name="email"
-                                    label="Email"
-                                    type="email"
-                                    readOnly
-                                    error={verifyErrors.email?.message}
-                                />
-
-                                <ValidatedField
-                                    control={verifyControl}
-                                    name="code"
-                                    label="Verification Code"
-                                    placeholder="e.g. 123456"
-                                    hint="Six digits sent to your inbox."
-                                    error={verifyErrors.code?.message}
-                                />
-
-                                <button
-                                    type="submit"
-                                    className="gold-button"
-                                    disabled={loading}
-                                    style={{ width: "100%", marginTop: "1rem" }}
-                                >
-                                    {loading ? "Verifying..." : "Verify & Activate Account"}
-                                </button>
-
-                                <button
-                                    type="button"
-                                    className="outline-button"
-                                    onClick={() => setStage("register")}
-                                    style={{ width: "100%", marginTop: "0.5rem" }}
-                                >
-                                    Back to registration
-                                </button>
-                            </form>
-
-                            <p className="auth-footer" style={{ marginTop: "1.5rem", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)" }}>
-                                Already verified?{" "}
-                                <Link to="/login" style={{ color: "var(--gold)" }}>Sign in here</Link>
-                            </p>
+                            <button
+                                type="button"
+                                className="gold-button"
+                                onClick={() => navigate("/login")}
+                                style={{ width: "100%", marginTop: "0.5rem" }}
+                            >
+                                Proceed to Sign In &rarr;
+                            </button>
                         </>
                     )}
                 </section>

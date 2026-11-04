@@ -64,7 +64,7 @@ const getAdminProducts = catchAsyncErrors(async (req, res) => {
     });
 });
 
-// Admin: Create new product (FR 2.1 & FR 2.2)
+// Admin: Create new product (FR 2.1 & FR 2.2) inside a transaction
 const createProduct = catchAsyncErrors(async (req, res, next) => {
     const {
         name,
@@ -105,18 +105,39 @@ const createProduct = catchAsyncErrors(async (req, res, next) => {
         }
     }
 
-    const product = await Product.create({
-        name,
-        brand,
-        category: category || "luxury",
-        movement,
-        caseSize,
-        condition,
-        price,
-        description,
-        stock: condition === "second-hand" ? 1 : Number(stock) || 0,
-        images: uploadedImages
-    });
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    let product;
+    try {
+        const [createdProduct] = await Product.create(
+            [
+                {
+                    name,
+                    brand,
+                    category: category || "luxury",
+                    movement,
+                    caseSize,
+                    condition,
+                    price,
+                    description,
+                    stock: condition === "second-hand" ? 1 : Number(stock) || 0,
+                    images: uploadedImages
+                }
+            ],
+            { session }
+        );
+        product = createdProduct;
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
+    }
 
     res.status(201).json({
         success: true,
@@ -124,65 +145,82 @@ const createProduct = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Admin: Update product
+// Admin: Update product inside a transaction
 const updateProduct = catchAsyncErrors(async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         return next(new ErrorHandler("Invalid product ID", 400));
     }
 
-    let product = await Product.findById(req.params.id);
-    if (!product) {
-        return next(new ErrorHandler("Product not found", 404));
-    }
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    const targetCondition = req.body.condition || product.condition;
-    const targetStock = req.body.stock !== undefined ? Number(req.body.stock) : product.stock;
-
-    if (targetCondition === "second-hand" && ![0, 1].includes(targetStock)) {
-        return next(
-            new ErrorHandler("Second-hand products can only have 0 or 1 unit in stock", 400)
-        );
-    }
-
-    if (Array.isArray(req.body.images)) {
-        const newImages = [];
-        for (const img of req.body.images) {
-            if (typeof img === "string" && img.startsWith("data:image")) {
-                const result = await cloudinary.uploader.upload(img, {
-                    folder: "aureo/products",
-                    crop: "limit",
-                    width: 1200
-                });
-                newImages.push({
-                    public_id: result.public_id,
-                    url: result.secure_url
-                });
-            } else if (img && img.url) {
-                newImages.push(img);
-            }
+    let product;
+    try {
+        product = await Product.findById(req.params.id).session(session);
+        if (!product) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Product not found", 404));
         }
 
-        // Clean up removed Cloudinary images if they were deleted by the admin
-        if (product.images && product.images.length > 0) {
-            const keptPublicIds = new Set(newImages.map((i) => i.public_id).filter(Boolean));
-            for (const oldImg of product.images) {
-                if (oldImg.public_id && !keptPublicIds.has(oldImg.public_id)) {
-                    try {
-                        await cloudinary.uploader.destroy(oldImg.public_id);
-                    } catch (err) {
-                        // ignore cloudinary deletion error
+        const targetCondition = req.body.condition || product.condition;
+        const targetStock = req.body.stock !== undefined ? Number(req.body.stock) : product.stock;
+
+        if (targetCondition === "second-hand" && ![0, 1].includes(targetStock)) {
+            await session.abortTransaction();
+            return next(
+                new ErrorHandler("Second-hand products can only have 0 or 1 unit in stock", 400)
+            );
+        }
+
+        if (Array.isArray(req.body.images)) {
+            const newImages = [];
+            for (const img of req.body.images) {
+                if (typeof img === "string" && img.startsWith("data:image")) {
+                    const result = await cloudinary.uploader.upload(img, {
+                        folder: "aureo/products",
+                        crop: "limit",
+                        width: 1200
+                    });
+                    newImages.push({
+                        public_id: result.public_id,
+                        url: result.secure_url
+                    });
+                } else if (img && img.url) {
+                    newImages.push(img);
+                }
+            }
+
+            if (product.images && product.images.length > 0) {
+                const keptPublicIds = new Set(newImages.map((i) => i.public_id).filter(Boolean));
+                for (const oldImg of product.images) {
+                    if (oldImg.public_id && !keptPublicIds.has(oldImg.public_id)) {
+                        try {
+                            await cloudinary.uploader.destroy(oldImg.public_id);
+                        } catch {
+                            // ignore cloudinary deletion error
+                        }
                     }
                 }
             }
+
+            req.body.images = newImages;
         }
 
-        req.body.images = newImages;
-    }
+        product = await Product.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+            runValidators: true,
+            session
+        });
 
-    product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,
-        runValidators: true
-    });
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
+    }
 
     res.status(200).json({
         success: true,
@@ -190,26 +228,41 @@ const updateProduct = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Admin: Delete product (Strictly soft delete - no hard delete)
+// Admin: Delete product (Strictly soft delete - no hard delete) inside a transaction
 const deleteProduct = catchAsyncErrors(async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         return next(new ErrorHandler("Invalid product ID", 400));
     }
 
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-        return next(new ErrorHandler("Product not found", 404));
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const product = await Product.findById(req.params.id).session(session);
+        if (!product) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Product not found", 404));
+        }
+
+        product.isActive = false;
+        await product.save({ session, validateBeforeSave: false });
+
+        // Also remove from any user's active wishlist atomically
+        await User.updateMany(
+            { wishlist: req.params.id },
+            { $pull: { wishlist: req.params.id } },
+            { session }
+        );
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
     }
-
-    // Strictly soft delete: mark isActive = false
-    product.isActive = false;
-    await product.save({ validateBeforeSave: false });
-
-    // Also remove from any user's active wishlist
-    await User.updateMany(
-        { wishlist: req.params.id },
-        { $pull: { wishlist: req.params.id } }
-    );
 
     res.status(200).json({
         success: true,
@@ -217,31 +270,50 @@ const deleteProduct = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Admin: Permanently delete an archived product.
+// Admin: Permanently delete an archived product inside a transaction
 const permanentlyDeleteProduct = catchAsyncErrors(async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
         return next(new ErrorHandler("Invalid product ID", 400));
     }
 
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-        return next(new ErrorHandler("Product not found", 404));
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    let imageIds = [];
+    try {
+        const product = await Product.findById(req.params.id).session(session);
+        if (!product) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Product not found", 404));
+        }
+
+        if (product.isActive !== false) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Only archived products can be permanently deleted", 400));
+        }
+
+        imageIds = (product.images || []).map((image) => image.public_id).filter(Boolean);
+
+        await User.updateMany(
+            { wishlist: req.params.id },
+            { $pull: { wishlist: req.params.id } },
+            { session }
+        );
+        await Product.deleteOne({ _id: product._id }).session(session);
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
     }
 
-    if (product.isActive !== false) {
-        return next(new ErrorHandler("Only archived products can be permanently deleted", 400));
-    }
-
-    const imageIds = (product.images || []).map((image) => image.public_id).filter(Boolean);
     if (imageIds.length > 0) {
         await Promise.all(imageIds.map((publicId) => cloudinary.uploader.destroy(publicId)));
     }
-
-    await User.updateMany(
-        { wishlist: req.params.id },
-        { $pull: { wishlist: req.params.id } }
-    );
-    await Product.deleteOne({ _id: product._id });
 
     res.status(200).json({
         success: true,
@@ -249,7 +321,7 @@ const permanentlyDeleteProduct = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Admin: Bulk delete products (Strictly soft delete - no hard delete)
+// Admin: Bulk delete products (Strictly soft delete - no hard delete) inside a transaction
 const bulkDeleteProducts = catchAsyncErrors(async (req, res, next) => {
     const { ids } = req.body;
 
@@ -266,16 +338,32 @@ const bulkDeleteProducts = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("No valid product ids were provided", 400));
     }
 
-    const result = await Product.updateMany(
-        { _id: { $in: validIds } },
-        { isActive: false }
-    );
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    // Also remove from wishlists
-    await User.updateMany(
-        { wishlist: { $in: validIds } },
-        { $pull: { wishlist: { $in: validIds } } }
-    );
+    let result;
+    try {
+        result = await Product.updateMany(
+            { _id: { $in: validIds } },
+            { isActive: false },
+            { session }
+        );
+
+        await User.updateMany(
+            { wishlist: { $in: validIds } },
+            { $pull: { wishlist: { $in: validIds } } },
+            { session }
+        );
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
+    }
 
     res.status(200).json({
         success: true,
@@ -285,7 +373,7 @@ const bulkDeleteProducts = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Admin: Bulk update product active/archived status
+// Admin: Bulk update product active/archived status inside a transaction
 const bulkUpdateProductStatus = catchAsyncErrors(async (req, res, next) => {
     const { ids, isActive } = req.body;
 
@@ -302,10 +390,25 @@ const bulkUpdateProductStatus = catchAsyncErrors(async (req, res, next) => {
 
     const targetStatus = Boolean(isActive);
 
-    await Product.updateMany(
-        { _id: { $in: validIds } },
-        { $set: { isActive: targetStatus } }
-    );
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        await Product.updateMany(
+            { _id: { $in: validIds } },
+            { $set: { isActive: targetStatus } },
+            { session }
+        );
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
+    }
 
     res.status(200).json({
         success: true,
@@ -331,7 +434,7 @@ const getWishlist = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// User: Add product to Wishlist
+// User: Add product to Wishlist inside a transaction
 const addToWishlist = catchAsyncErrors(async (req, res, next) => {
     const { productId } = req.params;
 
@@ -339,19 +442,35 @@ const addToWishlist = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Invalid product ID", 400));
     }
 
-    const product = await Product.findById(productId);
-    if (!product) {
-        return next(new ErrorHandler("Product not found", 404));
-    }
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    const user = await User.findByIdAndUpdate(
-        req.user._id,
-        { $addToSet: { wishlist: productId } },
-        { new: true }
-    ).populate({
-        path: "wishlist",
-        select: "name brand price condition stock images ratings numOfReviews isActive"
-    });
+    let user;
+    try {
+        const product = await Product.findById(productId).session(session);
+        if (!product) {
+            await session.abortTransaction();
+            return next(new ErrorHandler("Product not found", 404));
+        }
+
+        user = await User.findByIdAndUpdate(
+            req.user._id,
+            { $addToSet: { wishlist: productId } },
+            { new: true, session }
+        ).populate({
+            path: "wishlist",
+            select: "name brand price condition stock images ratings numOfReviews isActive"
+        });
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
+    }
 
     res.status(200).json({
         success: true,
@@ -360,7 +479,7 @@ const addToWishlist = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// User: Remove product from Wishlist
+// User: Remove product from Wishlist inside a transaction
 const removeFromWishlist = catchAsyncErrors(async (req, res, next) => {
     const { productId } = req.params;
 
@@ -368,14 +487,29 @@ const removeFromWishlist = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Invalid product ID", 400));
     }
 
-    const user = await User.findByIdAndUpdate(
-        req.user._id,
-        { $pull: { wishlist: productId } },
-        { new: true }
-    ).populate({
-        path: "wishlist",
-        select: "name brand price condition stock images ratings numOfReviews isActive"
-    });
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    let user;
+    try {
+        user = await User.findByIdAndUpdate(
+            req.user._id,
+            { $pull: { wishlist: productId } },
+            { new: true, session }
+        ).populate({
+            path: "wishlist",
+            select: "name brand price condition stock images ratings numOfReviews isActive"
+        });
+
+        await session.commitTransaction();
+    } catch (txError) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw txError;
+    } finally {
+        session.endSession();
+    }
 
     res.status(200).json({
         success: true,

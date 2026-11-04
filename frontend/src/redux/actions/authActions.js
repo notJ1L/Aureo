@@ -27,49 +27,15 @@ const translateSupabaseError = (error) => {
     return SUPABASE_ERROR_MESSAGES[raw] || raw;
 };
 
-// FR 1.1: Register the Supabase identity first, then link it to the Aureo
-// profile and dispatch the Aureo Registration Acknowledgement Email via SMTP.
+// FR 1.1: Register the Aureo Collector profile and dispatch the
+// Registration Acknowledgement Email via the backend SMTP service.
 export const registerUser = ({ name, email, password }) => async (dispatch) => {
     dispatch({ type: AUTH_REGISTER_REQUEST });
     try {
-        let supabaseUserId = null;
-
-        try {
-            const supabase = getSupabase();
-
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: { name }
-                }
-            });
-
-            if (error) {
-                const isRecoverableOnBackend =
-                    error?.code === "email_exists" ||
-                    error?.code === "over_email_send_rate_limit" ||
-                    /already|registered|exists|rate limit/i.test(error?.message || "");
-
-                if (!isRecoverableOnBackend) {
-                    throw new Error(translateSupabaseError(error));
-                }
-            } else {
-                supabaseUserId = data?.user?.id || null;
-            }
-        } catch (supaErr) {
-            const isRecoverable =
-                /already|registered|exists|rate limit|fetch|network/i.test(supaErr?.message || "");
-            if (!isRecoverable) {
-                throw supaErr;
-            }
-        }
-
         const { data: response } = await api.post("/register", {
             name,
             email,
-            password,
-            supabaseUserId
+            password
         });
 
         dispatch({ type: AUTH_REGISTER_SUCCESS, payload: response.email });
@@ -81,8 +47,7 @@ export const registerUser = ({ name, email, password }) => async (dispatch) => {
     }
 };
 
-// FR 1.5: Verify the 6-digit code with Supabase, then let the backend confirm
-// the verification state on the Aureo profile.
+// FR 1.5: Verify email if a verification code is used.
 export const verifyEmail = (email, code) => async (dispatch) => {
     dispatch({ type: AUTH_VERIFY_REQUEST });
     try {
@@ -104,9 +69,6 @@ export const verifyEmail = (email, code) => async (dispatch) => {
             return;
         }
 
-        // The backend validates the code against Supabase first and then
-        // against the Aureo fallback code, so the flow still completes when
-        // the Supabase email template is not set to a 6 digit code.
         const { data: response } = await api.post("/verify-email", { email, code });
 
         dispatch({ type: AUTH_VERIFY_SUCCESS, payload: response.message });
@@ -118,45 +80,43 @@ export const verifyEmail = (email, code) => async (dispatch) => {
     }
 };
 
-// FR 1.1: Sign in with the Supabase identity, then exchange the Supabase
-// session for the Aureo Bearer JWT.
+// FR 1.1: Sign in with email and password.
 export const loginUser = (email, password) => async (dispatch) => {
     dispatch({ type: AUTH_LOGIN_REQUEST });
     try {
-        const supabase = getSupabase();
+        // Authenticate directly against the Aureo backend first (supports both
+        // local password hashes and Supabase-backed identities seamlessly).
+        try {
+            const { data: response } = await api.post("/login", { email, password });
 
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password
-        });
+            localStorage.setItem("aureoToken", response.token);
+            dispatch({ type: AUTH_LOGIN_SUCCESS, payload: response.user });
+            return;
+        } catch (backendErr) {
+            // If backend direct login failed, check if client-side Supabase session works
+            const supabase = getSupabase();
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
 
-        let accessToken = data?.session?.access_token;
-
-        if (error || !accessToken) {
-            // Fall back to backend authentication: handles local accounts (e.g. seeded
-            // administrator), unconfirmed accounts, and accounts managed server-side.
-            try {
-                const { data: response } = await api.post("/login", { email, password });
-
-                localStorage.setItem("aureoToken", response.token);
-                dispatch({ type: AUTH_LOGIN_SUCCESS, payload: response.user });
-                return;
-            } catch (backendErr) {
+            const accessToken = data?.session?.access_token;
+            if (error || !accessToken) {
                 const message =
                     backendErr.response?.data?.message ||
                     translateSupabaseError(error) ||
                     "Invalid email or password";
                 throw new Error(message);
             }
+
+            const { data: response } = await api.post("/login", {
+                email,
+                accessToken
+            });
+
+            localStorage.setItem("aureoToken", response.token);
+            dispatch({ type: AUTH_LOGIN_SUCCESS, payload: response.user });
         }
-
-        const { data: response } = await api.post("/login", {
-            email,
-            accessToken
-        });
-
-        localStorage.setItem("aureoToken", response.token);
-        dispatch({ type: AUTH_LOGIN_SUCCESS, payload: response.user });
     } catch (err) {
         dispatch({
             type: AUTH_LOGIN_FAIL,
