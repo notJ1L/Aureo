@@ -268,7 +268,7 @@ const registerUser = catchAsyncErrors(async (req, res, next) => {
         session.endSession();
     }
 
-    await sendEmail({
+    const emailPromise = sendEmail({
         to: user.email,
         subject: "Welcome to Aureo Horology Vault — Registration Acknowledgement",
         text: buildRegistrationAcknowledgementText(user),
@@ -278,6 +278,10 @@ const registerUser = catchAsyncErrors(async (req, res, next) => {
     }).catch((error) => {
         console.error("Registration acknowledgement email could not be sent:", error.message);
     });
+
+    if (process.env.NODE_ENV === "test") {
+        await emailPromise;
+    }
 
     const token = generateToken(user._id);
     const userData = user.toObject();
@@ -764,7 +768,7 @@ const googleLogin = catchAsyncErrors(async (req, res, next) => {
     }
 
     if (isNewRegistration && user) {
-        await sendEmail({
+        const googleEmailPromise = sendEmail({
             to: user.email,
             subject: "Welcome to Aureo Horology Vault — Registration Acknowledgement",
             text: buildRegistrationAcknowledgementText(user),
@@ -774,6 +778,10 @@ const googleLogin = catchAsyncErrors(async (req, res, next) => {
         }).catch((error) => {
             console.error("Google registration acknowledgement email could not be sent:", error.message);
         });
+
+        if (process.env.NODE_ENV === "test") {
+            await googleEmailPromise;
+        }
     }
 
     const token = generateToken(user._id);

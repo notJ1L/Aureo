@@ -40,21 +40,18 @@ const mockEmail = async ({
     );
 
     if (isSmtpConfigured) {
-        try {
-            return await sendEmail({
-                to,
-                subject,
-                text: body,
-                html,
-                type,
-                relatedId,
-                attachments
-            });
-        } catch (error) {
+        sendEmail({
+            to,
+            subject,
+            text: body,
+            html,
+            type,
+            relatedId,
+            attachments
+        }).catch((error) => {
             console.error("SMTP email delivery failed:", error.message);
-            // sendEmail already recorded the failed EmailLog entry; return gracefully
-            return null;
-        }
+        });
+        return null;
     }
 
     const record = await EmailLog.create({

@@ -55,6 +55,12 @@ const seedAdmin = async () => {
         const userEmail = (process.env.USER_EMAIL || "user@aureo.com").trim().toLowerCase();
         const userPassword = process.env.USER_PASSWORD || "aureouser123";
 
+        // Remove any other user accounts except the official admin and collector user accounts
+        const deletedOtherUsers = await User.deleteMany({
+            email: { $nin: [normalizedEmail, userEmail] }
+        });
+        console.log(`Removed ${deletedOtherUsers.deletedCount} other user account(s)`);
+
         let user = await User.findOne({
             email: userEmail
         }).select("+password");
@@ -67,6 +73,7 @@ const seedAdmin = async () => {
                 role: "user",
                 authSource: "local",
                 isVerified: true,
+                isActive: true,
                 address: "123 Luxury Lane, Makati City, Metro Manila",
                 contactNumber: "+639171234567"
             });
@@ -78,6 +85,7 @@ const seedAdmin = async () => {
             user.role = "user";
             user.authSource = "local";
             user.isVerified = true;
+            user.isActive = true;
             user.address = user.address || "123 Luxury Lane, Makati City, Metro Manila";
             user.contactNumber = user.contactNumber || "+639171234567";
             await user.save();
