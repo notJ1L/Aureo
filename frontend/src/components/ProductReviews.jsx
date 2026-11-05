@@ -11,6 +11,7 @@ import {
 import { reviewSchema } from "../utils/validationSchemas";
 import { confirmAction } from "../utils/sweetAlert";
 import { showNotification } from "../utils/notification";
+import { AureoRating } from "./ui";
 
 function ProductReviews({ productId, onReviewAdded }) {
     const dispatch = useDispatch();
@@ -180,17 +181,12 @@ function ProductReviews({ productId, onReviewAdded }) {
 
                         <div className="star-rating-select">
                             <label>Rating:</label>
-                            <div className="star-buttons">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                    <button
-                                        type="button"
-                                        key={star}
-                                        className={`star-btn ${rating >= star ? "filled" : ""}`}
-                                        onClick={() => setValue("rating", star, { shouldValidate: true })}
-                                    >
-                                        ★
-                                    </button>
-                                ))}
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "4px" }}>
+                                <AureoRating
+                                    value={Number(rating)}
+                                    onChange={(_, val) => setValue("rating", val || 5, { shouldValidate: true })}
+                                    size="medium"
+                                />
                                 <span className="rating-num-label">({rating} of 5 Stars)</span>
                             </div>
                             {errors.rating && (
@@ -265,7 +261,7 @@ function ProductReviews({ productId, onReviewAdded }) {
                                     </div>
 
                                     <div className="review-rating-stars">
-                                        {"★".repeat(rev.rating)}{"☆".repeat(5 - rev.rating)}
+                                        <AureoRating value={Number(rev.rating)} readOnly size="small" />
                                     </div>
                                 </div>
 

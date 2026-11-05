@@ -1,4 +1,5 @@
 import ModalPortal from "../../components/ui/ModalPortal";
+import { AureoRating } from "../../components/ui";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
@@ -356,13 +357,9 @@ function AdminReviewsPage() {
                                                 )}
                                             </td>
                                             <td>
-                                                <div style={{ display: "flex", alignItems: "center", gap: "2px", color: "var(--gold)" }}>
-                                                    {[...Array(5)].map((_, i) => (
-                                                        <span key={i} style={{ opacity: i < rev.rating ? 1 : 0.25 }}>
-                                                            ★
-                                                        </span>
-                                                    ))}
-                                                    <span style={{ marginLeft: "4px", fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                                    <AureoRating value={Number(rev.rating)} readOnly size="small" />
+                                                    <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
                                                         ({rev.rating}/5)
                                                     </span>
                                                 </div>
@@ -477,25 +474,13 @@ function AdminReviewsPage() {
 
                             <label>
                                 Star Rating (1 - 5)
-                                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", margin: "0.3rem 0" }}>
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                        <button
-                                            key={star}
-                                            type="button"
-                                            onClick={() => setEditRating(star)}
-                                            style={{
-                                                background: "none",
-                                                border: "none",
-                                                fontSize: "1.6rem",
-                                                cursor: "pointer",
-                                                color: star <= editRating ? "var(--gold)" : "var(--text-muted)",
-                                                padding: 0
-                                            }}
-                                        >
-                                            ★
-                                        </button>
-                                    ))}
-                                    <span style={{ marginLeft: "0.5rem", fontWeight: 600, color: "var(--gold)" }}>
+                                <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", margin: "0.5rem 0" }}>
+                                    <AureoRating
+                                        value={Number(editRating)}
+                                        onChange={(_, val) => setEditRating(val || 5)}
+                                        size="medium"
+                                    />
+                                    <span style={{ fontWeight: 600, color: "var(--gold)" }}>
                                         {editRating} / 5 Stars
                                     </span>
                                 </div>

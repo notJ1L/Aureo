@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { IconHeart, IconStar } from "./layout/icons";
+import { IconHeart } from "./layout/icons";
+import { AureoRating } from "./ui";
 import "../styles/watchCard.css";
 
 const formatPrice = (price) =>
@@ -89,7 +90,7 @@ export function WatchCard({ watch, index = 0, wishlist }) {
                 <div className="watch-card__meta-row">
                     <span className="watch-card__price">{formatPrice(watch.price)}</span>
                     <div className="watch-card__rating">
-                        <IconStar width={13} height={13} />
+                        <AureoRating value={Number(ratingVal)} readOnly precision={0.5} size="small" />
                         <span className="watch-card__rating-score">{ratingVal}</span>
                         {reviewCount > 0 && <span className="watch-card__rating-count">({reviewCount})</span>}
                     </div>

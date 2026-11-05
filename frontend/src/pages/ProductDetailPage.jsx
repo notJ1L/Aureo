@@ -9,6 +9,7 @@ import SiteFooter from "../components/layout/SiteFooter";
 import { IconBag, IconHeart, IconStar } from "../components/layout/icons";
 import { showNotification, AUTO_CLOSE_MS } from "../utils/notification";
 import { ProductDetailSkeleton } from "../components/ui/Skeleton";
+import { AureoRating } from "../components/ui";
 import "../styles/productDetail.css";
 
 function ProductDetailPage() {
@@ -228,12 +229,12 @@ function ProductDetailPage() {
                         <h1 className="pdp-title">{product.name}</h1>
 
                         <div className="pdp-rating-row">
-                            <div className="pdp-rating">
-                                <IconStar width={14} height={14} />
+                            <div className="pdp-rating" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <AureoRating value={Number(product.ratings || 5)} readOnly precision={0.5} size="small" />
                                 <span>{Number(product.ratings || 5).toFixed(1)}</span>
                             </div>
                             <span className="pdp-rating-count">
-                                {product.numOfReviews || 0} {product.numOfReviews === 1 ? "review" : "reviews"}
+                                ({product.numOfReviews || 0} {product.numOfReviews === 1 ? "review" : "reviews"})
                             </span>
                         </div>
 
