@@ -1,12 +1,11 @@
-﻿node_modules/
+node_modules/
 .env
 *.env
 backend/config/.env
 frontend/dist/
 coverage/
 frontend/.env
-
-# Local runtime logs
 backend-start.log
 backend-start.err.log
 *.log
+*.md
