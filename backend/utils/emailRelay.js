@@ -98,77 +98,100 @@ const buildFallbackRegistrationHtml = (user, fallbackEmail) => {
     </div>`;
 };
 
+let isFlushing = false;
+
 const flushFailedEmails = async () => {
+    if (isFlushing) {
+        return 0;
+    }
+
     if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
         return 0;
     }
 
-    const cutoff = new Date(Date.now() - 60 * 60 * 1000);
-    const pendingLogs = await EmailLog.find({
-        status: "failed",
-        createdAt: { $gte: cutoff }
-    })
-        .sort({ createdAt: 1 })
-        .limit(10);
+    isFlushing = true;
 
-    if (!pendingLogs.length) {
-        return 0;
-    }
+    try {
+        const cutoff = new Date(Date.now() - 60 * 60 * 1000);
+        let deliveredCount = 0;
+        const transporter = createSmtpTransporter();
 
-    const transporter = createSmtpTransporter();
+        // Atomically claim one pending email at a time to prevent duplicate deliveries across intervals or processes
+        while (true) {
+            const log = await EmailLog.findOneAndUpdate(
+                {
+                    status: "failed",
+                    createdAt: { $gte: cutoff }
+                },
+                {
+                    $set: {
+                        status: "processing",
+                        updatedAt: new Date()
+                    }
+                },
+                { sort: { createdAt: 1 }, new: true }
+            );
 
-    let deliveredCount = 0;
-
-    for (const log of pendingLogs) {
-        try {
-            let attachments = [];
-            let html = log.html;
-
-            if (log.type === "order" && log.relatedId && mongoose.Types.ObjectId.isValid(log.relatedId)) {
-                const order = await Order.findById(log.relatedId).populate("user", "name email contactNumber");
-                if (order) {
-                    const receiptBuffer = await generateReceipt(order, order.user);
-                    attachments = [
-                        {
-                            filename: `aureo-receipt-${order._id}.pdf`,
-                            content: Buffer.from(receiptBuffer),
-                            contentType: "application/pdf",
-                            contentDisposition: "attachment"
-                        }
-                    ];
-                }
-            } else if (log.type === "registration" && !html) {
-                let regUser = null;
-                if (log.relatedId && mongoose.Types.ObjectId.isValid(log.relatedId)) {
-                    regUser = await User.findById(log.relatedId);
-                }
-                html = buildFallbackRegistrationHtml(regUser, log.to);
+            if (!log) {
+                break;
             }
 
-            const info = await transporter.sendMail({
-                from: process.env.EMAIL_FROM || process.env.SMTP_USER,
-                to: log.to,
-                subject: log.subject,
-                text: log.body,
-                ...(html ? { html } : {}),
-                attachments
-            });
+            try {
+                let attachments = [];
+                let html = log.html;
 
-            log.status = "sent";
-            log.providerMessageId = info.messageId;
-            log.errorMessage = null;
-            log.sentAt = new Date();
-            await log.save();
+                if (log.type === "order" && log.relatedId && mongoose.Types.ObjectId.isValid(log.relatedId)) {
+                    const order = await Order.findById(log.relatedId).populate("user", "name email contactNumber");
+                    if (order) {
+                        const receiptBuffer = await generateReceipt(order, order.user);
+                        attachments = [
+                            {
+                                filename: `aureo-receipt-${order._id}.pdf`,
+                                content: Buffer.from(receiptBuffer),
+                                contentType: "application/pdf",
+                                contentDisposition: "attachment"
+                            }
+                        ];
+                    }
+                } else if (log.type === "registration" && !html) {
+                    let regUser = null;
+                    if (log.relatedId && mongoose.Types.ObjectId.isValid(log.relatedId)) {
+                        regUser = await User.findById(log.relatedId);
+                    }
+                    html = buildFallbackRegistrationHtml(regUser, log.to);
+                }
 
-            deliveredCount += 1;
-            console.log(`[EmailRelay] Delivered queued ${log.type} email to ${log.to}`);
-        } catch (err) {
-            // Leave status as failed if local machine also cannot reach SMTP
-            console.warn(`[EmailRelay] Could not relay email to ${log.to}:`, err.message);
+                const info = await transporter.sendMail({
+                    from: process.env.EMAIL_FROM || process.env.SMTP_USER,
+                    to: log.to,
+                    subject: log.subject,
+                    text: log.body,
+                    ...(html ? { html } : {}),
+                    attachments
+                });
+
+                log.status = "sent";
+                log.providerMessageId = info.messageId;
+                log.errorMessage = null;
+                log.sentAt = new Date();
+                await log.save();
+
+                deliveredCount += 1;
+                console.log(`[EmailRelay] Delivered queued ${log.type} email to ${log.to}`);
+            } catch (err) {
+                // Revert status to failed so it can be retried later
+                log.status = "failed";
+                log.errorMessage = err.message;
+                await log.save();
+                console.warn(`[EmailRelay] Could not relay email to ${log.to}:`, err.message);
+                break;
+            }
         }
-    }
 
-    return deliveredCount;
+        return deliveredCount;
+    } finally {
+        isFlushing = false;
+    }
 };
 
 let relayTimer = null;
