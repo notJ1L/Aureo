@@ -62,7 +62,8 @@ export const authReducer = (state = initialState, action) => {
             return {
                 ...state,
                 updateLoading: false,
-                user: action.payload
+                user: action.payload,
+                error: null
             };
 
         // Avatar update success
@@ -70,7 +71,8 @@ export const authReducer = (state = initialState, action) => {
             return {
                 ...state,
                 updateLoading: false,
-                user: { ...state.user, avatar: action.payload }
+                user: { ...state.user, avatar: action.payload },
+                error: null
             };
 
         // Failures

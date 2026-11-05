@@ -25,7 +25,7 @@ function ProfilePage() {
         formState: { errors }
     } = useForm({
         resolver: yupResolver(profileSchema),
-        mode: "onBlur",
+        mode: "onTouched",
         defaultValues: {
             name: "",
             contactNumber: "",
@@ -53,26 +53,39 @@ function ProfilePage() {
                 postalCode = user.address.postalCode || "";
                 country = user.address.country || "";
             } else if (typeof user.address === "string") {
-                const parts = user.address.split(",").map((p) => p.trim());
-                addressLine = parts[0] || "";
-                city = parts[1] || "";
-                const postalPart = parts.find((p) => /^\d{4,6}$/.test(p));
-                if (postalPart) {
-                    postalCode = postalPart;
-                } else if (parts.length > 2 && /^\d+$/.test(parts[2])) {
-                    postalCode = parts[2];
+                const trimmed = user.address.trim();
+                const isOnlyPhilippines =
+                    trimmed.toLowerCase() === "philippines" ||
+                    /^philippines(\s*,\s*philippines)+$/i.test(trimmed);
+
+                if (!isOnlyPhilippines && trimmed.length > 0) {
+                    const parts = trimmed.split(",").map((p) => p.trim()).filter(Boolean);
+                    if (parts.length >= 4) {
+                        addressLine = parts.slice(0, parts.length - 3).join(", ");
+                        city = parts[parts.length - 3];
+                        postalCode = parts[parts.length - 2];
+                        country = parts[parts.length - 1];
+                    } else if (parts.length === 3) {
+                        addressLine = parts[0];
+                        city = parts[1];
+                        country = parts[2];
+                    } else if (parts.length === 2) {
+                        addressLine = parts[0];
+                        city = parts[1];
+                    } else if (parts.length === 1) {
+                        addressLine = parts[0];
+                    }
                 }
-                country = parts[parts.length - 1] || "Philippines";
             }
         }
 
         reset({
             name: user.name || "",
             contactNumber: user.contactNumber || "",
-            addressLine: addressLine || (typeof user.address === "string" ? user.address : ""),
+            addressLine: addressLine || "",
             city: city || "",
             postalCode: postalCode || "",
-            country: country || (user.address ? "" : "Philippines")
+            country: country || ""
         });
     }, [user, reset]);
 
@@ -177,7 +190,7 @@ function ProfilePage() {
                     </div>
                 </section>
 
-                {error && <div className="auth-error">{error}</div>}
+                {error && !savedMsg && <div className="auth-error">{error}</div>}
                 {savedMsg && <div className="auth-info">{savedMsg}</div>}
 
                 <form onSubmit={handleSubmit(onProfileSubmit)} className="profile-form" noValidate>

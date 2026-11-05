@@ -56,11 +56,49 @@ function CheckoutPage() {
 
     useEffect(() => {
         if (user) {
+            let addressLine = "";
+            let city = "";
+            let postalCode = "";
+            let country = "Philippines";
+
+            if (user.address) {
+                if (typeof user.address === "object") {
+                    addressLine = user.address.addressLine || "";
+                    city = user.address.city || "";
+                    postalCode = user.address.postalCode || "";
+                    country = user.address.country || "Philippines";
+                } else if (typeof user.address === "string") {
+                    const trimmed = user.address.trim();
+                    const isOnlyPhilippines =
+                        trimmed.toLowerCase() === "philippines" ||
+                        /^philippines(\s*,\s*philippines)+$/i.test(trimmed);
+
+                    if (!isOnlyPhilippines && trimmed.length > 0) {
+                        const parts = trimmed.split(",").map((p) => p.trim()).filter(Boolean);
+                        if (parts.length >= 4) {
+                            addressLine = parts.slice(0, parts.length - 3).join(", ");
+                            city = parts[parts.length - 3];
+                            postalCode = parts[parts.length - 2];
+                            country = parts[parts.length - 1];
+                        } else if (parts.length === 3) {
+                            addressLine = parts[0];
+                            city = parts[1];
+                            country = parts[2];
+                        } else if (parts.length === 2) {
+                            addressLine = parts[0];
+                            city = parts[1];
+                        } else if (parts.length === 1) {
+                            addressLine = parts[0];
+                        }
+                    }
+                }
+            }
+
             reset({
-                addressLine: user.address?.addressLine || "",
-                city: user.address?.city || "",
-                postalCode: user.address?.postalCode || "",
-                country: user.address?.country || "Philippines",
+                addressLine,
+                city,
+                postalCode,
+                country,
                 contactNumber: user.contactNumber || ""
             });
         }

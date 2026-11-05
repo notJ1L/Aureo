@@ -46,23 +46,15 @@ export const profileSchema = Yup.object({
     name: requiredText("Full name", { min: 2, max: 60 }),
     contactNumber: Yup.string()
         .trim()
-        .matches(/^[+\d][\d\s()\-.]{6,19}$/, {
-            message: "Enter a valid contact number (e.g. +63 917 123 4567).",
-            excludeEmptyString: true
-        })
-        .nullable()
-        .default(""),
-    addressLine: Yup.string().trim().max(200, "Street address cannot exceed 200 characters.").default(""),
-    city: Yup.string().trim().max(60, "City cannot exceed 60 characters.").default(""),
+        .required("Contact number is required.")
+        .matches(/^[+\d][\d\s()\-.]{6,19}$/, "Enter a valid contact number (e.g. +63 917 123 4567)."),
+    addressLine: requiredText("Street address", { min: 5, max: 200 }),
+    city: requiredText("City", { min: 2, max: 60 }),
     postalCode: Yup.string()
         .trim()
-        .matches(/^[\w\s-]{3,10}$/, {
-            message: "Enter a valid postal code (e.g. 1226).",
-            excludeEmptyString: true
-        })
-        .nullable()
-        .default(""),
-    country: Yup.string().trim().max(60, "Country cannot exceed 60 characters.").default("")
+        .required("Postal code is required.")
+        .matches(/^[\w\s-]{3,10}$/, "Enter a valid postal code (e.g. 1226)."),
+    country: requiredText("Country", { min: 2, max: 60 })
 });
 
 export const productSchema = Yup.object({
@@ -127,13 +119,13 @@ export const checkoutSchema = Yup.object({
     city: requiredText("City", { min: 2, max: 60 }),
     postalCode: Yup.string()
         .trim()
-        .matches(/^[\w\s-]{3,10}$/, "Enter a valid postal code (e.g. 1226).")
-        .required("Postal code is required."),
+        .required("Postal code is required.")
+        .matches(/^[\w\s-]{3,10}$/, "Enter a valid postal code (e.g. 1226)."),
     country: requiredText("Country", { min: 2, max: 60 }),
     contactNumber: Yup.string()
         .trim()
-        .matches(/^[+\d][\d\s()\-.]{6,19}$/, "Enter a valid contact number (e.g. +63 917 123 4567).")
         .required("Contact number is required.")
+        .matches(/^[+\d][\d\s()\-.]{6,19}$/, "Enter a valid contact number (e.g. +63 917 123 4567).")
 });
 
 export const appraisalSchema = Yup.object({
