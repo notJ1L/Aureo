@@ -91,7 +91,7 @@ const sampleProducts = [
         ],
         stock: 5,
         isActive: true,
-        ratings: 4.7,
+        ratings: 3.5,
         numOfReviews: 6
     },
     {
@@ -227,7 +227,7 @@ const sampleProducts = [
         ],
         stock: 6,
         isActive: true,
-        ratings: 4.8,
+        ratings: 3.6,
         numOfReviews: 15
     },
     {
@@ -247,7 +247,7 @@ const sampleProducts = [
         ],
         stock: 7,
         isActive: true,
-        ratings: 4.6,
+        ratings: 2.5,
         numOfReviews: 10
     },
     {
@@ -291,7 +291,7 @@ const sampleProducts = [
         ],
         stock: 3,
         isActive: true,
-        ratings: 4.8,
+        ratings: 3.4,
         numOfReviews: 5
     },
     {
@@ -331,7 +331,7 @@ const sampleProducts = [
         ],
         stock: 6,
         isActive: true,
-        ratings: 4.8,
+        ratings: 3.7,
         numOfReviews: 17
     },
     {
@@ -371,7 +371,7 @@ const sampleProducts = [
         ],
         stock: 5,
         isActive: true,
-        ratings: 4.7,
+        ratings: 3.3,
         numOfReviews: 8
     },
     {
@@ -391,7 +391,7 @@ const sampleProducts = [
         ],
         stock: 2,
         isActive: true,
-        ratings: 4.8,
+        ratings: 2.2,
         numOfReviews: 6
     },
     {
@@ -411,7 +411,7 @@ const sampleProducts = [
         ],
         stock: 5,
         isActive: true,
-        ratings: 4.7,
+        ratings: 2.8,
         numOfReviews: 9
     },
     {

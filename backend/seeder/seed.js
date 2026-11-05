@@ -110,8 +110,13 @@ const seedDatabase = async () => {
         const insertedServices = await Service.insertMany(sampleServices);
         console.log(` Seeded ${insertedServices.length} master watchmaker services.`);
 
-        // 5. Seed sample reviews for the first 3 products
-        if (insertedProducts.length >= 3 && user) {
+        // 5. Seed diverse sample reviews (5, 4, 3, and 2 stars) for rating demonstration
+        if (insertedProducts.length >= 8 && user) {
+            const solarBeat = insertedProducts.find((p) => p.name.includes("SolarBeat")) || insertedProducts[7];
+            const bigPilot = insertedProducts.find((p) => p.name.includes("Big Pilot")) || insertedProducts[4];
+            const apDiver = insertedProducts.find((p) => p.name.includes("Offshore Diver")) || insertedProducts[6];
+            const pelagos = insertedProducts.find((p) => p.name.includes("Pelagos")) || insertedProducts[5];
+
             const sampleReviews = [
                 {
                     user: user._id,
@@ -130,10 +135,34 @@ const seedDatabase = async () => {
                     product: insertedProducts[2]._id,
                     rating: 4,
                     comment: "Superb daily wearer. The movement accuracy is well within chronometer standards. Very satisfied with the vault service."
+                },
+                {
+                    user: user._id,
+                    product: bigPilot._id,
+                    rating: 3,
+                    comment: "Magnificent dial legibility and power reserve, but the 44mm case is bulky and the oversized conical crown digs into the wrist slightly."
+                },
+                {
+                    user: user._id,
+                    product: pelagos._id,
+                    rating: 3,
+                    comment: "Grade 2 titanium makes it very light, though the satin finish shows hairline scuffs fairly quickly under daily wear."
+                },
+                {
+                    user: user._id,
+                    product: solarBeat._id,
+                    rating: 2,
+                    comment: "The photovoltaic movement works as described, but the synthetic non-leather strap feels stiff and lacks the luxury tactile feel expected at this tier."
+                },
+                {
+                    user: user._id,
+                    product: apDiver._id,
+                    rating: 2,
+                    comment: "The Méga Tapisserie dial is bold, but the inner rotating bezel control crown felt stiff out of the box. Required service lubrication."
                 }
             ];
             await Review.insertMany(sampleReviews);
-            console.log(` Seeded ${sampleReviews.length} sample reviews.`);
+            console.log(` Seeded ${sampleReviews.length} diverse reviews (2★, 3★, 4★, and 5★).`);
         }
 
         console.log("----------------------------------------------------");
