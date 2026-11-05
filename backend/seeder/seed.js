@@ -9,64 +9,73 @@ const { connectDB } = require("../config/db");
 const User = require("../models/user");
 const Product = require("../models/product");
 const Service = require("../models/service");
+const Order = require("../models/order");
+const Ticket = require("../models/ticket");
+const Appraisal = require("../models/appraisal");
+const Review = require("../models/review");
+const ChatHistory = require("../models/chatHistory");
+const EmailLog = require("../models/emailLog");
 const { sampleProducts, sampleServices } = require("./seedData");
 
-const seedAdmin = async () => {
+const seedDatabase = async () => {
     try {
+        console.log("Connecting to database...");
         await connectDB();
 
-        const adminEmail = process.env.ADMIN_EMAIL;
-        const adminPassword = process.env.ADMIN_PASSWORD;
+        console.log("----------------------------------------------------");
+        console.log(" Wiping test data for a clean database state...");
+        console.log("----------------------------------------------------");
 
-        if (!adminEmail || !adminPassword) {
-            throw new Error(
-                "ADMIN_EMAIL and ADMIN_PASSWORD are required"
-            );
-        }
+        // 1. Clear test transactional data
+        await Promise.all([
+            Order.deleteMany({}),
+            Ticket.deleteMany({}),
+            Appraisal.deleteMany({}),
+            Review.deleteMany({}),
+            ChatHistory.deleteMany({}),
+            EmailLog.deleteMany({})
+        ]);
+        console.log(" Cleared Orders, Tickets, Appraisals, Reviews, ChatHistory, and EmailLogs.");
 
-        const normalizedEmail = adminEmail.trim().toLowerCase();
+        // 2. Setup Default Accounts
+        const adminEmail = (process.env.ADMIN_EMAIL || "aureo.officialadmin@gmail.com").trim().toLowerCase();
+        const adminPassword = process.env.ADMIN_PASSWORD || "aureoadmin";
+        const userEmail = (process.env.USER_EMAIL || "user@aureo.com").trim().toLowerCase();
+        const userPassword = process.env.USER_PASSWORD || "aureouser123";
 
-        let admin = await User.findOne({
-            email: normalizedEmail
-        }).select("+password");
+        // Remove any other user accounts
+        await User.deleteMany({
+            email: { $nin: [adminEmail, userEmail] }
+        });
 
+        // Upsert Admin
+        let admin = await User.findOne({ email: adminEmail }).select("+password");
         if (!admin) {
-            await User.create({
+            admin = await User.create({
                 name: "Aureo Administrator",
-                email: normalizedEmail,
+                email: adminEmail,
                 password: adminPassword,
                 role: "admin",
                 authSource: "local",
-                isVerified: true
+                isVerified: true,
+                isActive: true
             });
-
-            console.log("Admin account created");
+            console.log(" Admin account created:", adminEmail);
         } else {
             admin.name = "Aureo Administrator";
             admin.password = adminPassword;
             admin.role = "admin";
             admin.authSource = "local";
             admin.isVerified = true;
+            admin.isActive = true;
             await admin.save();
-
-            console.log("Admin account updated and password reset");
+            console.log(" Admin account reset:", adminEmail);
         }
 
-        const userEmail = (process.env.USER_EMAIL || "user@aureo.com").trim().toLowerCase();
-        const userPassword = process.env.USER_PASSWORD || "aureouser123";
-
-        // Remove any other user accounts except the official admin and collector user accounts
-        const deletedOtherUsers = await User.deleteMany({
-            email: { $nin: [normalizedEmail, userEmail] }
-        });
-        console.log(`Removed ${deletedOtherUsers.deletedCount} other user account(s)`);
-
-        let user = await User.findOne({
-            email: userEmail
-        }).select("+password");
-
+        // Upsert Default Collector User
+        let user = await User.findOne({ email: userEmail }).select("+password");
         if (!user) {
-            await User.create({
+            user = await User.create({
                 name: "Aureo Collector",
                 email: userEmail,
                 password: userPassword,
@@ -77,8 +86,7 @@ const seedAdmin = async () => {
                 address: "123 Luxury Lane, Makati City, Metro Manila",
                 contactNumber: "+639171234567"
             });
-
-            console.log("User account created");
+            console.log(" Collector account created:", userEmail);
         } else {
             user.name = "Aureo Collector";
             user.password = userPassword;
@@ -86,43 +94,54 @@ const seedAdmin = async () => {
             user.authSource = "local";
             user.isVerified = true;
             user.isActive = true;
-            user.address = user.address || "123 Luxury Lane, Makati City, Metro Manila";
-            user.contactNumber = user.contactNumber || "+639171234567";
+            user.address = "123 Luxury Lane, Makati City, Metro Manila";
+            user.contactNumber = "+639171234567";
             await user.save();
-
-            console.log("User account updated and password reset");
+            console.log(" Collector account reset:", userEmail);
         }
 
-        for (const product of sampleProducts) {
-            await Product.findOneAndUpdate(
+        // 3. Clean and reseed Products
+        await Product.deleteMany({});
+        const insertedProducts = await Product.insertMany(sampleProducts);
+        console.log(` Seeded ${insertedProducts.length} curated luxury timepieces.`);
+
+        // 4. Clean and reseed Services
+        await Service.deleteMany({});
+        const insertedServices = await Service.insertMany(sampleServices);
+        console.log(` Seeded ${insertedServices.length} master watchmaker services.`);
+
+        // 5. Seed sample reviews for the first 3 products
+        if (insertedProducts.length >= 3 && user) {
+            const sampleReviews = [
                 {
-                    name: product.name,
-                    brand: product.brand
+                    user: user._id,
+                    product: insertedProducts[0]._id,
+                    rating: 5,
+                    comment: "Exceptional craftsmanship. The dial finish and sunray pattern exceed expectations. Impeccable packaging by Aureo."
                 },
-                product,
                 {
-                    upsert: true,
-                    returnDocument: "after",
-                    setDefaultsOnInsert: true
-                }
-            );
-        }
-
-        for (const service of sampleServices) {
-            await Service.findOneAndUpdate(
-                {
-                    name: service.name
+                    user: user._id,
+                    product: insertedProducts[1]._id,
+                    rating: 5,
+                    comment: "The gilt accents and snowflake hands on this timepiece are stunning. Arrived in pristine condition with authentic papers."
                 },
-                service,
                 {
-                    upsert: true,
-                    returnDocument: "after",
-                    setDefaultsOnInsert: true
+                    user: user._id,
+                    product: insertedProducts[2]._id,
+                    rating: 4,
+                    comment: "Superb daily wearer. The movement accuracy is well within chronometer standards. Very satisfied with the vault service."
                 }
-            );
+            ];
+            await Review.insertMany(sampleReviews);
+            console.log(` Seeded ${sampleReviews.length} sample reviews.`);
         }
 
-        console.log(`Seeded ${sampleProducts.length} products and ${sampleServices.length} services`);
+        console.log("----------------------------------------------------");
+        console.log(" Database successfully reseeded to a pristine state!");
+        console.log(" Admin Credentials:     ", adminEmail, "/", adminPassword);
+        console.log(" User Credentials:      ", userEmail, "/", userPassword);
+        console.log("----------------------------------------------------");
+
         process.exit(0);
     } catch (error) {
         console.error("Seed failed:", error.message);
@@ -130,4 +149,4 @@ const seedAdmin = async () => {
     }
 };
 
-seedAdmin();
+seedDatabase();
