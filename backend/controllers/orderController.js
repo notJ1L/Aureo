@@ -557,17 +557,22 @@ const createOrder = catchAsyncErrors(async (req, res, next) => {
     }
 
     // FR 4.5: Send confirmation email with attached PDF receipt upon checkout
-    const checkoutAttachments = await buildPdfAttachment(order, req.user);
+    const customerEmail = req.user?.email || order.shippingInfo?.email;
+    const customerUser = req.user || { name: order.shippingInfo?.name || "Collector" };
 
-    await mockEmail({
-        to: req.user.email,
-        subject: `Aureo Order Confirmation #${order._id}`,
-        body: buildCheckoutOrderEmail(order, req.user),
-        html: buildCheckoutOrderHtml(order, req.user, "Acquisition Order Confirmed"),
-        type: "order",
-        relatedId: order._id.toString(),
-        attachments: checkoutAttachments
-    });
+    const checkoutAttachments = await buildPdfAttachment(order, customerUser);
+
+    if (customerEmail) {
+        await mockEmail({
+            to: customerEmail,
+            subject: `Aureo Order Confirmation #${order._id}`,
+            body: buildCheckoutOrderEmail(order, customerUser),
+            html: buildCheckoutOrderHtml(order, customerUser, "Acquisition Order Confirmed"),
+            type: "order",
+            relatedId: order._id.toString(),
+            attachments: checkoutAttachments
+        });
+    }
 
     res.status(201).json({
         success: true,
@@ -776,30 +781,43 @@ const updateAdminOrder = catchAsyncErrors(async (req, res, next) => {
         session.endSession();
     }
 
+    // Ensure customer details are resolved even if order.user was unpopulated
+    let customerUser = order.user;
+    if (!customerUser || !customerUser.email) {
+        customerUser = await User.findById(order.user).select("name email");
+    }
+
+    const customerEmail = customerUser?.email || order.shippingInfo?.email;
+    const recipientUser = customerUser || { name: order.shippingInfo?.name || "Collector" };
+
     // Generate PDF receipt attachment for every status notification
-    const attachments = await buildPdfAttachment(order, order.user);
+    const attachments = await buildPdfAttachment(order, recipientUser);
 
     // FR 4.5: every status change notifies the customer with the updated PDF receipt attached.
-    if (status === "Completed") {
-        await mockEmail({
-            to: order.user.email,
-            subject: `Aureo Transaction Complete - Order #${order._id}`,
-            body: buildCompletedOrderEmail(order, order.user),
-            html: buildCheckoutOrderHtml(order, order.user, "Transaction Complete — Delivered"),
-            type: "order",
-            relatedId: order._id.toString(),
-            attachments
-        });
+    if (customerEmail) {
+        if (status === "Completed") {
+            await mockEmail({
+                to: customerEmail,
+                subject: `Aureo Transaction Complete - Order #${order._id}`,
+                body: buildCompletedOrderEmail(order, recipientUser),
+                html: buildCheckoutOrderHtml(order, recipientUser, "Transaction Complete — Delivered"),
+                type: "order",
+                relatedId: order._id.toString(),
+                attachments
+            });
+        } else {
+            await mockEmail({
+                to: customerEmail,
+                subject: `Aureo Order #${order._id} - Status updated to ${status}`,
+                body: buildOrderStatusEmail(order, recipientUser),
+                html: buildCheckoutOrderHtml(order, recipientUser, `Order Status Updated: ${status}`),
+                type: "order",
+                relatedId: order._id.toString(),
+                attachments
+            });
+        }
     } else {
-        await mockEmail({
-            to: order.user.email,
-            subject: `Aureo Order #${order._id} - Status updated to ${status}`,
-            body: buildOrderStatusEmail(order, order.user),
-            html: buildCheckoutOrderHtml(order, order.user, `Order Status Updated: ${status}`),
-            type: "order",
-            relatedId: order._id.toString(),
-            attachments
-        });
+        console.warn(`Order #${order._id} status updated to "${status}", but no customer email found to notify.`);
     }
 
     res.status(200).json({

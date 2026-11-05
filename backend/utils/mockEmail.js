@@ -33,25 +33,27 @@ const mockEmail = async ({
     );
 
     const isSmtpConfigured = Boolean(
-        process.env.SMTP_HOST &&
+        (process.env.SMTP_HOST || process.env.SMTP_USER?.includes("@gmail.com")) &&
             process.env.SMTP_USER &&
             process.env.SMTP_PASSWORD &&
             process.env.NODE_ENV !== "test"
     );
 
     if (isSmtpConfigured) {
-        sendEmail({
-            to,
-            subject,
-            text: body,
-            html,
-            type,
-            relatedId,
-            attachments
-        }).catch((error) => {
-            console.error("SMTP email delivery failed:", error.message);
-        });
-        return null;
+        try {
+            return await sendEmail({
+                to,
+                subject,
+                text: body,
+                html,
+                type,
+                relatedId,
+                attachments
+            });
+        } catch (error) {
+            console.error("SMTP email delivery failed in mockEmail wrapper:", error.message);
+            return null;
+        }
     }
 
     const record = await EmailLog.create({

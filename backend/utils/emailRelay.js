@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const nodemailer = require("nodemailer");
+const { createSmtpTransporter } = require("./sendEmail");
 const EmailLog = require("../models/emailLog");
 const Order = require("../models/order");
 const User = require("../models/user");
@@ -115,19 +115,7 @@ const flushFailedEmails = async () => {
         return 0;
     }
 
-    const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT || 587),
-        secure: process.env.SMTP_SECURE === "true",
-        family: 4,
-        connectionTimeout: 8000,
-        greetingTimeout: 8000,
-        socketTimeout: 10000,
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASSWORD
-        }
-    });
+    const transporter = createSmtpTransporter();
 
     let deliveredCount = 0;
 
