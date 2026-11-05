@@ -1,4 +1,4 @@
-﻿import axios from "axios";
+import axios from "axios";
 
 const api = axios.create({
     baseURL:
@@ -26,6 +26,47 @@ api.interceptors.request.use(
         return config;
     },
     (error) => Promise.reject(error)
+);
+
+let isTerminatingSession = false;
+
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        const status = error.response ? error.response.status : null;
+        const message = error.response?.data?.message || "";
+        const isDeactivated = message.toLowerCase().includes("deactivated");
+
+        // If the request fails due to 401 (token expired/invalid/deactivated)
+        // or 403 (explicit account deactivation), force immediate session termination.
+        if (status === 401 || (status === 403 && isDeactivated)) {
+            const token = localStorage.getItem("aureoToken");
+
+            if (token && !isTerminatingSession) {
+                isTerminatingSession = true;
+                localStorage.removeItem("aureoToken");
+                localStorage.removeItem("aureoUser");
+
+                // Dispatch global event caught by SessionMonitor to alert and redirect
+                window.dispatchEvent(
+                    new CustomEvent("aureo:session-terminated", {
+                        detail: {
+                            isDeactivated,
+                            message: isDeactivated
+                                ? "Your account has been deactivated by an administrator. You have been forcibly signed out."
+                                : (message || "Your session has expired. Please sign in again.")
+                        }
+                    })
+                );
+
+                setTimeout(() => {
+                    isTerminatingSession = false;
+                }, 4000);
+            }
+        }
+
+        return Promise.reject(error);
+    }
 );
 
 export default api;

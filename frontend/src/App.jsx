@@ -1,3 +1,4 @@
+import SessionMonitor from "./components/auth/SessionMonitor";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Link, Route, Routes, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -584,6 +585,7 @@ function App() {
     return (
         <BrowserRouter>
             <ScrollToTop />
+            <SessionMonitor />
             <Suspense fallback={<RouteFallback />}>
                 <Routes>
                     <Route path="/" element={<StoreLanding />} />

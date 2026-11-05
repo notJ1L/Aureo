@@ -42,6 +42,12 @@ const isAuthenticatedUser = catchAsyncErrors(async (req, res, next) => {
         );
     }
 
+    if (user.isActive === false) {
+        return next(
+            new ErrorHandler("Your account has been deactivated. Please contact support.", 401)
+        );
+    }
+
     req.user = user;
 
     next();
@@ -54,6 +60,11 @@ const authorizeRoles = (...roles) => {
         if (!req.user || !roles.includes(req.user.role)) {
             return next(
                 new ErrorHandler("You are not authorized to access this resource", 403)
+            );
+        }
+        if (req.user.isActive === false) {
+            return next(
+                new ErrorHandler("Your account has been deactivated. Please contact support.", 401)
             );
         }
         next();

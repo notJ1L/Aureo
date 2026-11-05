@@ -711,6 +711,13 @@ const googleLogin = catchAsyncErrors(async (req, res, next) => {
             .session(session);
 
         if (user) {
+            if (user.isActive === false) {
+                await session.abortTransaction();
+                return next(
+                    new ErrorHandler("This account has been deactivated. Please contact support.", 403)
+                );
+            }
+
             if (user.googleId && user.googleId !== uid) {
                 await session.abortTransaction();
                 return next(

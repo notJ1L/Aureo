@@ -83,4 +83,21 @@ export const showSuccess = (message, title = "All set") => {
     });
 };
 
-export default { confirmAction, showError, showSuccess };
+export const showSessionAlert = (title, message) => {
+    const theme = buildTheme();
+    return Swal.fire({
+        ...theme,
+        title: title || "Session Terminated",
+        text: message || "Your session has expired. Please sign in again.",
+        icon: "warning",
+        confirmButtonText: "Sign In",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        customClass: {
+            ...theme.customClass,
+            confirmButton: "aureo-swal-confirm aureo-swal-danger"
+        }
+    });
+};
+
+export default { confirmAction, showError, showSuccess, showSessionAlert };
