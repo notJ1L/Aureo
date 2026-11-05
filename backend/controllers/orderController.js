@@ -462,12 +462,15 @@ const createOrder = catchAsyncErrors(async (req, res, next) => {
         const verifiedOrderItems = [];
 
         for (const item of orderItems) {
-            if (!mongoose.Types.ObjectId.isValid(item.product)) {
-                await session.abortTransaction();
-                return next(new ErrorHandler(`Invalid product ID: ${item.product}`, 400));
+            let product = null;
+            if (item.product && mongoose.Types.ObjectId.isValid(item.product)) {
+                product = await Product.findById(item.product).session(session);
+            }
+            // Reseed recovery: if ID changed across a database reset, gracefully match by exact product name
+            if ((!product || !product.isActive) && item.name) {
+                product = await Product.findOne({ name: item.name, isActive: true }).session(session);
             }
 
-            const product = await Product.findById(item.product).session(session);
             if (!product || !product.isActive) {
                 await session.abortTransaction();
                 return next(
