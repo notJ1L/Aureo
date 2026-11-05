@@ -83,22 +83,53 @@ const buildCheckoutOrderHtml = (order, user, titleText = "Acquisition Order Conf
         year: "numeric"
     });
     const clientUrl = (process.env.CLIENT_URL || "http://localhost:5173").split(",")[0].trim();
-    const apiBaseUrl = process.env.API_PUBLIC_URL || `http://localhost:${process.env.PORT || 3000}`;
     const orderUrl = `${clientUrl}/order/${order._id}`;
+
+    // Determine the public API URL for email links.
+    // Never fall back to internal container ports like localhost:10000 which cannot be reached by clients.
+    const publicApiUrl =
+        process.env.API_PUBLIC_URL ||
+        process.env.RENDER_EXTERNAL_URL ||
+        (process.env.BACKEND_URL ? process.env.BACKEND_URL.replace(/\/$/, "") : null);
 
     const userId = user?._id || order?.user?._id || order?.user;
     let pdfDownloadUrl = orderUrl;
-    if (userId && process.env.JWT_SECRET) {
-        try {
-            const receiptToken = jwt.sign({ id: userId.toString() }, process.env.JWT_SECRET, {
-                expiresIn: "30d"
-            });
-            pdfDownloadUrl = `${apiBaseUrl}/api/v1/order/${order._id}/receipt?token=${encodeURIComponent(
-                receiptToken
-            )}&download=1`;
-        } catch (err) {
-            pdfDownloadUrl = orderUrl;
+
+    if (publicApiUrl && !publicApiUrl.includes("localhost:10000")) {
+        if (userId && process.env.JWT_SECRET) {
+            try {
+                const receiptToken = jwt.sign({ id: userId.toString() }, process.env.JWT_SECRET, {
+                    expiresIn: "30d"
+                });
+                pdfDownloadUrl = `${publicApiUrl.replace(/\/$/, "")}/api/v1/order/${order._id}/receipt?token=${encodeURIComponent(
+                    receiptToken
+                )}&download=1`;
+            } catch (err) {
+                pdfDownloadUrl = orderUrl;
+            }
         }
+    } else if (
+        process.env.NODE_ENV !== "production" &&
+        process.env.PORT !== "10000" &&
+        process.env.PORT !== 10000
+    ) {
+        // Local development with standard port (e.g. 3000)
+        const localBase = `http://localhost:${process.env.PORT || 3000}`;
+        if (userId && process.env.JWT_SECRET) {
+            try {
+                const receiptToken = jwt.sign({ id: userId.toString() }, process.env.JWT_SECRET, {
+                    expiresIn: "30d"
+                });
+                pdfDownloadUrl = `${localBase}/api/v1/order/${order._id}/receipt?token=${encodeURIComponent(
+                    receiptToken
+                )}&download=1`;
+            } catch (err) {
+                pdfDownloadUrl = orderUrl;
+            }
+        }
+    } else {
+        // If deployed without a known API URL, send the user to the web order page
+        pdfDownloadUrl = orderUrl;
     }
 
     const statusBadgeBg =
@@ -915,13 +946,14 @@ const getOrderReceipt = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Order not found", 404));
     }
 
-    const isOwner = order.user._id.toString() === requestingUser._id.toString();
+    const orderUserId = order.user?._id ? order.user._id.toString() : order.user?.toString();
+    const isOwner = orderUserId === requestingUser._id.toString();
     const isAdmin = requestingUser.role === "admin";
     if (!isOwner && !isAdmin) {
         return next(new ErrorHandler("Unauthorized to view this receipt", 403));
     }
 
-    const pdfBuffer = await generateReceipt(order, order.user);
+    const pdfBuffer = await generateReceipt(order, order.user || requestingUser);
     const dispositionType = req.query.download === "1" ? "attachment" : "inline";
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
