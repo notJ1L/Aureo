@@ -57,9 +57,10 @@ function ProfilePage() {
         };
     }, [dispatch]);
 
-    const onProfileSubmit = (values) => {
+    const onProfileSubmit = async (values) => {
         setSavedMsg("");
-        dispatch(
+        dispatch(clearAuthError());
+        const result = await dispatch(
             updateProfile({
                 name: values.name,
                 contactNumber: values.contactNumber,
@@ -71,12 +72,14 @@ function ProfilePage() {
                 }
             })
         );
-        showNotification({
-            type: "success",
-            message: "Profile updated successfully."
-        });
-        setSavedMsg("Profile updated successfully.");
-        setTimeout(() => setSavedMsg(""), 3000);
+        if (result?.success) {
+            showNotification({
+                type: "success",
+                message: "Profile updated successfully."
+            });
+            setSavedMsg("Profile updated successfully.");
+            setTimeout(() => setSavedMsg(""), 3000);
+        }
     };
 
     const handleAvatarChange = (e) => {

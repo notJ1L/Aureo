@@ -98,11 +98,14 @@ export const updateProfile = (formData) => async (dispatch) => {
     try {
         const { data } = await api.put("/me/update", formData);
         dispatch({ type: AUTH_UPDATE_PROFILE_SUCCESS, payload: data.user });
+        return { success: true, user: data.user };
     } catch (err) {
+        const errorMessage = err.response?.data?.message || "Profile update failed";
         dispatch({
             type: AUTH_UPDATE_PROFILE_FAIL,
-            payload: err.response?.data?.message || "Profile update failed"
+            payload: errorMessage
         });
+        return { success: false, error: errorMessage };
     }
 };
 

@@ -635,6 +635,22 @@ const updateProfile = catchAsyncErrors(async (req, res, next) => {
         }
     }
 
+    if (updates.address !== undefined) {
+        if (updates.address && typeof updates.address === "object") {
+            const parts = [
+                updates.address.addressLine,
+                updates.address.city,
+                updates.address.postalCode,
+                updates.address.country
+            ]
+                .map((s) => (typeof s === "string" ? s.trim() : ""))
+                .filter(Boolean);
+            updates.address = parts.join(", ");
+        } else {
+            updates.address = String(updates.address || "").trim();
+        }
+    }
+
     if (Object.keys(updates).length === 0) {
         return next(
             new ErrorHandler(
