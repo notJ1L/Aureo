@@ -10,6 +10,7 @@
     "production": "node server.js",
     "seed": "node seeder/seed.js",
     "clear:users": "node seeder/clearUsers.js",
+    "email:relay": "node relayWorker.js",
     "test": "jest --runInBand --setupFiles ./tests/setupEnv.js --setupFilesAfterEnv ./tests/setup.js --forceExit"
   },
   "keywords": [],
