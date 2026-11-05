@@ -91,10 +91,13 @@ function CheckoutPage() {
     }, [success, order, navigate, dispatch, reset, orderCreateReady]);
 
     useEffect(() => {
+        if (error) {
+            toast.error(error);
+        }
         return () => {
             dispatch(clearOrderErrors());
         };
-    }, [dispatch]);
+    }, [error, dispatch]);
 
     const formatPrice = (price) => {
         return new Intl.NumberFormat("en-PH", {
@@ -389,6 +392,12 @@ function CheckoutPage() {
                                     </div>
                                 )}
                             </section>
+
+                            {error && (
+                                <div className="auth-error" style={{ marginBottom: "1rem" }}>
+                                    <strong>Checkout Error:</strong> {error}
+                                </div>
+                            )}
 
                             <button
                                 type="submit"
