@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getProducts, addToWishlist, removeFromWishlist, getWishlist } from "../redux/actions/productActions";
+import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import SiteHeader from "../components/layout/SiteHeader";
 import SiteFooter from "../components/layout/SiteFooter";
 import WatchCard from "../components/WatchCard";
@@ -94,6 +95,7 @@ function CatalogPage() {
     const [minRating, setMinRating] = useState(searchParams.get("minRating") || "");
     const [minReviews, setMinReviews] = useState(searchParams.get("minReviews") || "");
     const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
+    const [displayedProducts, setDisplayedProducts] = useState([]);
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -122,7 +124,7 @@ function CatalogPage() {
     }
 
     useEffect(() => {
-        const params = {};
+        const params = { limit: 8 };
         if (keyword) params.keyword = keyword;
         if (brand) params.brand = brand;
         if (movement) params.movement = movement;
@@ -152,6 +154,36 @@ function CatalogPage() {
         page,
         setSearchParams
     ]);
+
+    useEffect(() => {
+        if (!products) return;
+        if (page === 1) {
+            setDisplayedProducts(products);
+        } else {
+            setDisplayedProducts((previous) => {
+                const existingIds = new Set(previous.map((p) => p._id));
+                const fresh = products.filter((p) => !existingIds.has(p._id));
+                return fresh.length ? [...previous, ...fresh] : previous;
+            });
+        }
+    }, [products, page]);
+
+    const totalPages = pagination?.totalPages || 1;
+    const hasMore = page < totalPages;
+
+    const loadMore = () => {
+        if (loading || !hasMore) {
+            return;
+        }
+        setPage((current) => current + 1);
+    };
+
+    const sentinelRef = useInfiniteScroll({
+        onLoadMore: loadMore,
+        hasMore,
+        loading,
+        rootMargin: "300px"
+    });
 
     const isWishlisted = (productId) =>
         wishlist?.some((item) => (item._id || item) === productId);
@@ -351,7 +383,7 @@ function CatalogPage() {
                         </div>
                     )}
 
-                    {!loading && !error && products.length === 0 && (
+                    {!loading && !error && displayedProducts.length === 0 && (
                         <div className="cat-empty">
                             <p>No watches match your filters.</p>
                             <button type="button" className="btn-ghost" onClick={handleResetFilters}>
@@ -360,7 +392,7 @@ function CatalogPage() {
                         </div>
                     )}
 
-                    {loading ? (
+                    {loading && displayedProducts.length === 0 ? (
                         <div className="watch-grid watch-grid--3" aria-busy="true">
                             {Array.from({ length: 6 }).map((_, i) => (
                                 <WatchCardSkeleton key={i} index={i} />
@@ -368,7 +400,7 @@ function CatalogPage() {
                         </div>
                     ) : (
                         <div className="watch-grid watch-grid--3">
-                            {products.map((watch, i) => (
+                            {displayedProducts.map((watch, i) => (
                                 <WatchCard
                                     key={watch._id}
                                     watch={watch}
@@ -379,29 +411,23 @@ function CatalogPage() {
                                     }}
                                 />
                             ))}
+
+                            {loading && displayedProducts.length > 0 &&
+                                Array.from({ length: 3 }).map((_, i) => (
+                                    <WatchCardSkeleton key={`loading-more-${i}`} index={i} />
+                                ))
+                            }
                         </div>
                     )}
 
-                    {pagination?.totalPages > 1 && (
-                        <nav className="cat-pager" aria-label="Pagination">
-                            <button
-                                type="button"
-                                disabled={page <= 1}
-                                onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                            >
-                                Previous
-                            </button>
-                            <span>
-                                {pagination.page} / {pagination.totalPages}
-                            </span>
-                            <button
-                                type="button"
-                                disabled={page >= pagination.totalPages}
-                                onClick={() => setPage((p) => Math.min(p + 1, pagination.totalPages))}
-                            >
-                                Next
-                            </button>
-                        </nav>
+                    {hasMore && (
+                        <div ref={sentinelRef} className="infinite-scroll-sentinel" aria-hidden="true" style={{ width: "100%", height: "40px", margin: "1.5rem 0" }} />
+                    )}
+
+                    {!hasMore && displayedProducts.length > 0 && (
+                        <div className="cat-all-loaded" style={{ textAlign: "center", padding: "3rem 0 1.5rem", color: "#8d877b", fontSize: "0.85rem", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                            ✦ All {total} Horological References Loaded ✦
+                        </div>
                     )}
                 </section>
             </div>

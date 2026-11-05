@@ -84,7 +84,6 @@ function StoreLanding() {
 
     const [page, setPage] = useState(1);
     const [visibleProducts, setVisibleProducts] = useState([]);
-    const [loadedPage, setLoadedPage] = useState(0);
     const [activeTab, setActiveTab] = useState("all");
 
     // Interactive selector state (CADRAN inspired)
@@ -96,8 +95,8 @@ function StoreLanding() {
         dispatch(getProducts({ page, limit: 8 }));
     }, [dispatch, page]);
 
-    if (products?.length && page !== loadedPage) {
-        setLoadedPage(page);
+    useEffect(() => {
+        if (!products?.length) return;
 
         setVisibleProducts((previous) => {
             if (page === 1) {
@@ -109,7 +108,7 @@ function StoreLanding() {
 
             return fresh.length ? [...previous, ...fresh] : previous;
         });
-    }
+    }, [products, page]);
 
     const totalPages = pagination?.totalPages || 1;
     const hasMore = page < totalPages;
@@ -125,7 +124,8 @@ function StoreLanding() {
     const sentinelRef = useInfiniteScroll({
         onLoadMore: loadMore,
         hasMore,
-        loading: productsLoading
+        loading: productsLoading,
+        rootMargin: "300px"
     });
 
     // Filter by active collection tab
@@ -320,11 +320,9 @@ function StoreLanding() {
                         <div ref={sentinelRef} className="infinite-scroll-sentinel" aria-hidden="true" />
                     )}
 
-                    {hasMore && !productsLoading && (
-                        <div className="home-more">
-                            <button type="button" className="btn-gold" onClick={loadMore}>
-                                Load Additional References <IconArrow />
-                            </button>
+                    {!hasMore && visibleProducts.length > 0 && (
+                        <div className="home-all-loaded" style={{ textAlign: "center", padding: "2.5rem 0 1rem", color: "#8d877b", fontSize: "0.85rem", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                            ✦ All {pagination?.totalCount || visibleProducts.length} Curated Vault References Loaded ✦
                         </div>
                     )}
                 </div>
