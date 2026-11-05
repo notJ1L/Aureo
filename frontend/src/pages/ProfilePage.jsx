@@ -41,13 +41,38 @@ function ProfilePage() {
             return;
         }
 
+        let addressLine = "";
+        let city = "";
+        let postalCode = "";
+        let country = "";
+
+        if (user.address) {
+            if (typeof user.address === "object") {
+                addressLine = user.address.addressLine || "";
+                city = user.address.city || "";
+                postalCode = user.address.postalCode || "";
+                country = user.address.country || "";
+            } else if (typeof user.address === "string") {
+                const parts = user.address.split(",").map((p) => p.trim());
+                addressLine = parts[0] || "";
+                city = parts[1] || "";
+                const postalPart = parts.find((p) => /^\d{4,6}$/.test(p));
+                if (postalPart) {
+                    postalCode = postalPart;
+                } else if (parts.length > 2 && /^\d+$/.test(parts[2])) {
+                    postalCode = parts[2];
+                }
+                country = parts[parts.length - 1] || "Philippines";
+            }
+        }
+
         reset({
             name: user.name || "",
             contactNumber: user.contactNumber || "",
-            addressLine: user.address?.addressLine || "",
-            city: user.address?.city || "",
-            postalCode: user.address?.postalCode || "",
-            country: user.address?.country || ""
+            addressLine: addressLine || (typeof user.address === "string" ? user.address : ""),
+            city: city || "",
+            postalCode: postalCode || "",
+            country: country || (user.address ? "" : "Philippines")
         });
     }, [user, reset]);
 
