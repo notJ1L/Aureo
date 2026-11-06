@@ -130,14 +130,14 @@ function AdminProductsPage() {
     const mutationKey = success
         ? "create"
         : isUpdated
-          ? "update"
-          : isDeleted
-            ? "delete"
-            : isBulkDeleted
-              ? "bulk"
-              : isBulkStatusUpdated
-                ? "bulk-status"
-                : null;
+            ? "update"
+            : isDeleted
+                ? "delete"
+                : isBulkDeleted
+                    ? "bulk"
+                    : isBulkStatusUpdated
+                        ? "bulk-status"
+                        : null;
 
     const [handledMutation, setHandledMutation] = useState(null);
 
@@ -174,7 +174,7 @@ function AdminProductsPage() {
             toast.success(mutationMsg || "Timepieces updated successfully");
             dispatch({ type: PRODUCT_BULK_STATUS_RESET });
         } else {
-            toast.success("Bulk delete complete");
+            toast.success(mutationMsg || "Bulk delete complete");
             dispatch({ type: PRODUCT_BULK_DELETE_RESET });
         }
 
@@ -354,7 +354,7 @@ function AdminProductsPage() {
         }
     };
 
-    // MP1: checkbox selection for the admin datatable.
+    // checkbox selection for the admin datatable.
     const isSelected = (id) => selectedIds.includes(id);
 
     const handleToggleSelect = (id) => {
@@ -854,217 +854,217 @@ function AdminProductsPage() {
             {/* Modal for Add / Edit */}
             {isModalOpen && (
                 <ModalPortal>
-                <div className="modal-backdrop">
-                    <div className="modal-card">
-                        <div className="modal-head">
-                            <h2>{editingProduct ? "Edit Timepiece" : "Add Timepiece to Vault"}</h2>
-                            <button type="button" className="modal-close" onClick={() => setIsModalOpen(false)}>×</button>
-                        </div>
-
-                        <form onSubmit={handleSubmit(onSubmit)} className="admin-form" noValidate>
-                            <div className="form-row-2">
-                                <ValidatedField
-                                    control={control}
-                                    name="name"
-                                    label="Watch Name"
-                                    placeholder="e.g. Submariner Date 41"
-                                    error={errors.name?.message}
-                                />
-                                <ValidatedField
-                                    control={control}
-                                    name="brand"
-                                    label="Brand"
-                                    placeholder="e.g. Rolex"
-                                    error={errors.brand?.message}
-                                />
+                    <div className="modal-backdrop">
+                        <div className="modal-card">
+                            <div className="modal-head">
+                                <h2>{editingProduct ? "Edit Timepiece" : "Add Timepiece to Vault"}</h2>
+                                <button type="button" className="modal-close" onClick={() => setIsModalOpen(false)}>×</button>
                             </div>
 
-                            <div className="form-row-3">
-                                <ValidatedField
-                                    control={control}
-                                    name="movement"
-                                    label="Movement"
-                                    options={[
-                                        { value: "automatic", label: "Automatic" },
-                                        { value: "manual", label: "Manual" },
-                                        { value: "quartz", label: "Quartz" }
-                                    ]}
-                                    error={errors.movement?.message}
-                                />
-                                <ValidatedField
-                                    control={control}
-                                    name="category"
-                                    label="Category"
-                                    options={CATEGORY_OPTIONS}
-                                    error={errors.category?.message}
-                                />
-                                <ValidatedField
-                                    control={control}
-                                    name="caseSize"
-                                    label="Case Size (mm)"
-                                    type="number"
-                                    error={errors.caseSize?.message}
-                                />
-                            </div>
-
-                            <div className="form-row-3">
-                                <ValidatedField
-                                    control={control}
-                                    name="condition"
-                                    label="Condition"
-                                    options={[
-                                        { value: "new", label: "Brand New" },
-                                        { value: "second-hand", label: "Second-hand (Pre-owned)" }
-                                    ]}
-                                    onValueChange={handleConditionChange}
-                                    error={errors.condition?.message}
-                                />
-                                <ValidatedField
-                                    control={control}
-                                    name="price"
-                                    label="Price (PHP)"
-                                    type="number"
-                                    placeholder="e.g. 2500000"
-                                    error={errors.price?.message}
-                                />
-                                <ValidatedField
-                                    control={control}
-                                    name="stock"
-                                    label="Stock"
-                                    type="number"
-                                    disabled={watchedCondition === "second-hand"}
-                                    hint={watchedCondition === "second-hand" ? "Locked to 1 for second-hand items (FR 2.2)" : undefined}
-                                    error={errors.stock?.message}
-                                />
-                            </div>
-
-                            <ValidatedField
-                                control={control}
-                                name="description"
-                                label="Description & Provenance"
-                                type="textarea"
-                                rows={4}
-                                placeholder="Details on movement, archival history, box/papers..."
-                                error={errors.description?.message}
-                            />
-
-                            {/* Product Photos Manager with Edit / Delete / Cover / Reorder */}
-                            <div className="product-photos-manager">
-                                <div className="product-photos-manager-head">
-                                    <label className="admin-form-label" style={{ margin: 0, fontWeight: 600 }}>
-                                        Timepiece Photographs ({imagePreviews.length})
-                                    </label>
-                                    <span className="product-photos-hint">
-                                        The 1st photo is the primary showcase cover. Hover to manage.
-                                    </span>
+                            <form onSubmit={handleSubmit(onSubmit)} className="admin-form" noValidate>
+                                <div className="form-row-2">
+                                    <ValidatedField
+                                        control={control}
+                                        name="name"
+                                        label="Watch Name"
+                                        placeholder="e.g. Submariner Date 41"
+                                        error={errors.name?.message}
+                                    />
+                                    <ValidatedField
+                                        control={control}
+                                        name="brand"
+                                        label="Brand"
+                                        placeholder="e.g. Rolex"
+                                        error={errors.brand?.message}
+                                    />
                                 </div>
 
-                                <div className="product-photos-grid">
-                                    {imagePreviews.map((src, i) => (
-                                        <div key={i} className={`product-photo-card ${i === 0 ? "is-cover" : ""}`}>
-                                            <div className="product-photo-preview">
-                                                <img src={src} alt={`Photograph ${i + 1}`} />
-                                                {i === 0 && (
-                                                    <span className="product-photo-cover-tag">Cover</span>
-                                                )}
-                                                <button
-                                                    type="button"
-                                                    className="photo-delete-badge-btn"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleRemoveImage(i);
-                                                    }}
-                                                    title="Delete this photograph"
-                                                    aria-label="Delete photograph"
-                                                >
-                                                    &times;
-                                                </button>
-                                            </div>
+                                <div className="form-row-3">
+                                    <ValidatedField
+                                        control={control}
+                                        name="movement"
+                                        label="Movement"
+                                        options={[
+                                            { value: "automatic", label: "Automatic" },
+                                            { value: "manual", label: "Manual" },
+                                            { value: "quartz", label: "Quartz" }
+                                        ]}
+                                        error={errors.movement?.message}
+                                    />
+                                    <ValidatedField
+                                        control={control}
+                                        name="category"
+                                        label="Category"
+                                        options={CATEGORY_OPTIONS}
+                                        error={errors.category?.message}
+                                    />
+                                    <ValidatedField
+                                        control={control}
+                                        name="caseSize"
+                                        label="Case Size (mm)"
+                                        type="number"
+                                        error={errors.caseSize?.message}
+                                    />
+                                </div>
 
-                                            <div className="product-photo-controls">
-                                                {i !== 0 ? (
+                                <div className="form-row-3">
+                                    <ValidatedField
+                                        control={control}
+                                        name="condition"
+                                        label="Condition"
+                                        options={[
+                                            { value: "new", label: "Brand New" },
+                                            { value: "second-hand", label: "Second-hand (Pre-owned)" }
+                                        ]}
+                                        onValueChange={handleConditionChange}
+                                        error={errors.condition?.message}
+                                    />
+                                    <ValidatedField
+                                        control={control}
+                                        name="price"
+                                        label="Price (PHP)"
+                                        type="number"
+                                        placeholder="e.g. 2500000"
+                                        error={errors.price?.message}
+                                    />
+                                    <ValidatedField
+                                        control={control}
+                                        name="stock"
+                                        label="Stock"
+                                        type="number"
+                                        disabled={watchedCondition === "second-hand"}
+                                        hint={watchedCondition === "second-hand" ? "Locked to 1 for second-hand items (FR 2.2)" : undefined}
+                                        error={errors.stock?.message}
+                                    />
+                                </div>
+
+                                <ValidatedField
+                                    control={control}
+                                    name="description"
+                                    label="Description & Provenance"
+                                    type="textarea"
+                                    rows={4}
+                                    placeholder="Details on movement, archival history, box/papers..."
+                                    error={errors.description?.message}
+                                />
+
+                                {/* Product Photos Manager with Edit / Delete / Cover / Reorder */}
+                                <div className="product-photos-manager">
+                                    <div className="product-photos-manager-head">
+                                        <label className="admin-form-label" style={{ margin: 0, fontWeight: 600 }}>
+                                            Timepiece Photographs ({imagePreviews.length})
+                                        </label>
+                                        <span className="product-photos-hint">
+                                            The 1st photo is the primary showcase cover. Hover to manage.
+                                        </span>
+                                    </div>
+
+                                    <div className="product-photos-grid">
+                                        {imagePreviews.map((src, i) => (
+                                            <div key={i} className={`product-photo-card ${i === 0 ? "is-cover" : ""}`}>
+                                                <div className="product-photo-preview">
+                                                    <img src={src} alt={`Photograph ${i + 1}`} />
+                                                    {i === 0 && (
+                                                        <span className="product-photo-cover-tag">Cover</span>
+                                                    )}
                                                     <button
                                                         type="button"
-                                                        className="photo-action-btn photo-cover-btn"
-                                                        onClick={() => handleSetCover(i)}
-                                                        title="Set as primary cover"
-                                                    >
-                                                        ★ Cover
-                                                    </button>
-                                                ) : (
-                                                    <span style={{ fontSize: "0.65rem", color: "var(--gold)", fontWeight: 600 }}>
-                                                        Showcase
-                                                    </span>
-                                                )}
-
-                                                <label className="photo-action-btn photo-replace-btn" title="Replace with another file">
-                                                    <span>Replace</span>
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        style={{ display: "none" }}
-                                                        onChange={(e) => {
-                                                            if (e.target.files?.[0]) {
-                                                                handleReplaceImage(i, e.target.files[0]);
-                                                                e.target.value = "";
-                                                            }
+                                                        className="photo-delete-badge-btn"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleRemoveImage(i);
                                                         }}
-                                                    />
-                                                </label>
-
-                                                <div className="photo-reorder-group">
-                                                    <button
-                                                        type="button"
-                                                        className="photo-action-btn"
-                                                        disabled={i === 0}
-                                                        onClick={() => handleMoveImage(i, i - 1)}
-                                                        title="Move left"
+                                                        title="Delete this photograph"
+                                                        aria-label="Delete photograph"
                                                     >
-                                                        ‹
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        className="photo-action-btn"
-                                                        disabled={i === imagePreviews.length - 1}
-                                                        onClick={() => handleMoveImage(i, i + 1)}
-                                                        title="Move right"
-                                                    >
-                                                        ›
+                                                        &times;
                                                     </button>
                                                 </div>
+
+                                                <div className="product-photo-controls">
+                                                    {i !== 0 ? (
+                                                        <button
+                                                            type="button"
+                                                            className="photo-action-btn photo-cover-btn"
+                                                            onClick={() => handleSetCover(i)}
+                                                            title="Set as primary cover"
+                                                        >
+                                                            ★ Cover
+                                                        </button>
+                                                    ) : (
+                                                        <span style={{ fontSize: "0.65rem", color: "var(--gold)", fontWeight: 600 }}>
+                                                            Showcase
+                                                        </span>
+                                                    )}
+
+                                                    <label className="photo-action-btn photo-replace-btn" title="Replace with another file">
+                                                        <span>Replace</span>
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            style={{ display: "none" }}
+                                                            onChange={(e) => {
+                                                                if (e.target.files?.[0]) {
+                                                                    handleReplaceImage(i, e.target.files[0]);
+                                                                    e.target.value = "";
+                                                                }
+                                                            }}
+                                                        />
+                                                    </label>
+
+                                                    <div className="photo-reorder-group">
+                                                        <button
+                                                            type="button"
+                                                            className="photo-action-btn"
+                                                            disabled={i === 0}
+                                                            onClick={() => handleMoveImage(i, i - 1)}
+                                                            title="Move left"
+                                                        >
+                                                            ‹
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="photo-action-btn"
+                                                            disabled={i === imagePreviews.length - 1}
+                                                            onClick={() => handleMoveImage(i, i + 1)}
+                                                            title="Move right"
+                                                        >
+                                                            ›
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ))}
 
-                                    <label className="product-photo-add-card" title="Upload more photos">
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            multiple
-                                            onChange={handleImageUpload}
-                                            style={{ display: "none" }}
-                                        />
-                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <line x1="12" y1="5" x2="12" y2="19" />
-                                            <line x1="5" y1="12" x2="19" y2="12" />
-                                        </svg>
-                                        <span>+ Add Photos</span>
-                                    </label>
+                                        <label className="product-photo-add-card" title="Upload more photos">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                multiple
+                                                onChange={handleImageUpload}
+                                                style={{ display: "none" }}
+                                            />
+                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <line x1="12" y1="5" x2="12" y2="19" />
+                                                <line x1="5" y1="12" x2="19" y2="12" />
+                                            </svg>
+                                            <span>+ Add Photos</span>
+                                        </label>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="modal-actions">
-                                <button type="button" className="outline-button" onClick={() => setIsModalOpen(false)}>
-                                    Cancel
-                                </button>
-                                <button type="submit" className="gold-button" disabled={mutationLoading}>
-                                    {mutationLoading ? "Processing..." : editingProduct ? "Save Changes" : "Create Listing"}
-                                </button>
-                            </div>
-                        </form>
+                                <div className="modal-actions">
+                                    <button type="button" className="outline-button" onClick={() => setIsModalOpen(false)}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="gold-button" disabled={mutationLoading}>
+                                        {mutationLoading ? "Processing..." : editingProduct ? "Save Changes" : "Create Listing"}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            </ModalPortal>
+                </ModalPortal>
             )}
         </main>
     );

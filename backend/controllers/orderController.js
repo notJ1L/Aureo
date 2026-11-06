@@ -535,7 +535,7 @@ const createOrder = catchAsyncErrors(async (req, res, next) => {
             const updatedProduct = await Product.findOneAndUpdate(
                 { _id: product._id, stock: { $gte: quantity } },
                 { $inc: { stock: -quantity } },
-                { new: true, session }
+                { returnDocument: "after", session }
             );
 
             if (!updatedProduct) {

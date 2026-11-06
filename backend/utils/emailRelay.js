@@ -129,7 +129,7 @@ const flushFailedEmails = async () => {
                         updatedAt: new Date()
                     }
                 },
-                { sort: { createdAt: 1 }, new: true }
+                { sort: { createdAt: 1 }, returnDocument: "after" }
             );
 
             if (!log) {

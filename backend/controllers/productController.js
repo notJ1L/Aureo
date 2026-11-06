@@ -210,7 +210,7 @@ const updateProduct = catchAsyncErrors(async (req, res, next) => {
         }
 
         product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
+            returnDocument: "after",
             runValidators: true,
             session
         });
@@ -324,7 +324,7 @@ const permanentlyDeleteProduct = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// Admin: Bulk delete products (Strictly soft delete - no hard delete) inside a transaction
+// Admin: Bulk delete products (permanently delete products not referenced by orders, deactivate those with orders) inside a transaction
 const bulkDeleteProducts = catchAsyncErrors(async (req, res, next) => {
     const { ids } = req.body;
 
@@ -344,13 +344,67 @@ const bulkDeleteProducts = catchAsyncErrors(async (req, res, next) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
-    let result;
+    let deleted = 0;
+    let deactivated = 0;
+    let imageIds = [];
+
     try {
-        result = await Product.updateMany(
-            { _id: { $in: validIds } },
-            { isActive: false },
-            { session }
-        );
+        const products = await Product.find({ _id: { $in: validIds } }).session(session);
+
+        if (products.length === 0) {
+            await session.abortTransaction();
+            return res.status(200).json({
+                success: true,
+                message: "No matching products found to delete.",
+                deleted: 0,
+                deactivated: 0,
+                skipped
+            });
+        }
+
+        // Identify which products have historic orders so we don't break order history
+        const productsWithOrders = await Order.distinct("orderItems.product", {
+            "orderItems.product": { $in: validIds }
+        }).session(session);
+
+        const orderProductSet = new Set(productsWithOrders.map((id) => id.toString()));
+
+        const deletableProducts = [];
+        const deactivatableIds = [];
+
+        for (const product of products) {
+            if (orderProductSet.has(product._id.toString())) {
+                deactivatableIds.push(product._id);
+            } else {
+                deletableProducts.push(product);
+            }
+        }
+
+        if (deactivatableIds.length > 0) {
+            await Product.updateMany(
+                { _id: { $in: deactivatableIds } },
+                { $set: { isActive: false } },
+                { session }
+            );
+            deactivated = deactivatableIds.length;
+        }
+
+        if (deletableProducts.length > 0) {
+            const deletableIds = deletableProducts.map((p) => p._id);
+
+            for (const p of deletableProducts) {
+                if (Array.isArray(p.images)) {
+                    for (const img of p.images) {
+                        if (img && img.public_id) {
+                            imageIds.push(img.public_id);
+                        }
+                    }
+                }
+            }
+
+            await Product.deleteMany({ _id: { $in: deletableIds } }, { session });
+            deleted = deletableIds.length;
+        }
 
         await User.updateMany(
             { wishlist: { $in: validIds } },
@@ -368,10 +422,22 @@ const bulkDeleteProducts = catchAsyncErrors(async (req, res, next) => {
         session.endSession();
     }
 
+    if (imageIds.length > 0) {
+        await Promise.allSettled(
+            imageIds.map((publicId) => cloudinary.uploader.destroy(publicId))
+        );
+    }
+
+    let message = `${deleted} timepiece(s) permanently deleted.`;
+    if (deactivated > 0) {
+        message = `${deleted} timepiece(s) permanently deleted, ${deactivated} kept archived (linked to existing orders).`;
+    }
+
     res.status(200).json({
         success: true,
-        message: `Bulk deactivation complete. ${result.modifiedCount} product(s) marked as inactive (soft deleted).`,
-        deleted: result.modifiedCount,
+        message,
+        deleted,
+        deactivated,
         skipped
     });
 });
@@ -459,7 +525,7 @@ const addToWishlist = catchAsyncErrors(async (req, res, next) => {
         user = await User.findByIdAndUpdate(
             req.user._id,
             { $addToSet: { wishlist: productId } },
-            { new: true, session }
+            { returnDocument: "after", session }
         ).populate({
             path: "wishlist",
             select: "name brand price condition stock images ratings numOfReviews isActive"
@@ -498,7 +564,7 @@ const removeFromWishlist = catchAsyncErrors(async (req, res, next) => {
         user = await User.findByIdAndUpdate(
             req.user._id,
             { $pull: { wishlist: productId } },
-            { new: true, session }
+            { returnDocument: "after", session }
         ).populate({
             path: "wishlist",
             select: "name brand price condition stock images ratings numOfReviews isActive"

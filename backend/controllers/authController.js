@@ -15,8 +15,6 @@ const {
     verifyVerificationCode
 } = require("../utils/verificationCode");
 
-// Every authentication failure must return the same message so the endpoint
-// cannot be used to discover which email addresses are registered.
 const INVALID_CREDENTIALS = "Invalid email or password";
 
 const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
@@ -211,9 +209,7 @@ const findSupabaseUserByEmail = async (email) => {
     return null;
 };
 
-// FR 1.1 / FR 1.5: Register a new Aureo Collector account inside a MongoDB
-// transaction and send a Registration Acknowledgement Email confirming that
-// the email address was registered on Aureo.
+
 const registerUser = catchAsyncErrors(async (req, res, next) => {
     const { name, email, password, supabaseUserId } = req.body;
 
@@ -298,7 +294,6 @@ const registerUser = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// FR 1.5: Sync verification state into the Aureo profile inside a transaction.
 const verifyEmail = catchAsyncErrors(async (req, res, next) => {
     const { email, code, accessToken } = req.body;
 
@@ -669,7 +664,7 @@ const updateProfile = catchAsyncErrors(async (req, res, next) => {
             req.user._id,
             updates,
             {
-                new: true,
+                returnDocument: "after",
                 runValidators: true,
                 session
             }

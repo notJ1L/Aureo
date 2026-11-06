@@ -6,8 +6,6 @@ const INK = "#1a1d24";
 const MUTED = "#6b707b";
 const BORDER = "#e2e4e9";
 
-// Standard PDF Helvetica uses WinAnsiEncoding where the Unicode peso sign (₱)
-// renders as garbled characters. Using "PHP " ensures crisp typography across all PDF viewers.
 const formatCurrency = (amount) => {
     const formatted = new Intl.NumberFormat("en-US", {
         minimumFractionDigits: 2,

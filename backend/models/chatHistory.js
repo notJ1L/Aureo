@@ -1,4 +1,4 @@
-﻿const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 
 const messageSchema = new mongoose.Schema(
     {
@@ -67,9 +67,5 @@ const chatHistorySchema = new mongoose.Schema(
         timestamps: true
     }
 );
-
-chatHistorySchema.index({
-    user: 1
-});
 
 module.exports = mongoose.model("ChatHistory", chatHistorySchema);
