@@ -14,7 +14,7 @@ const getProducts = catchAsyncErrors(async (req, res) => {
 
     const [products, totalProducts] = await Promise.all([
         Product.find(filter)
-            .sort({ createdAt: -1 })
+            .sort({ createdAt: -1, _id: -1 })
             .skip(skip)
             .limit(limit),
         Product.countDocuments(filter)
@@ -55,7 +55,7 @@ const getProduct = catchAsyncErrors(async (req, res, next) => {
 
 // Admin: Get all products (active and inactive)
 const getAdminProducts = catchAsyncErrors(async (req, res) => {
-    const products = await Product.find().sort({ createdAt: -1 });
+    const products = await Product.find().sort({ createdAt: -1, _id: -1 });
 
     res.status(200).json({
         success: true,

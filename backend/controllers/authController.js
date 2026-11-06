@@ -686,7 +686,7 @@ const updateProfile = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// FR 1.1 / Quiz 4: Google sign-in through Firebase inside a transaction.
+// Google sign-in through Firebase inside a transaction.
 const googleLogin = catchAsyncErrors(async (req, res, next) => {
     const { idToken } = req.body;
 

@@ -120,7 +120,7 @@ function CatalogPage() {
         setCaseSize(searchParams.get("caseSize") || "");
         setMinRating(searchParams.get("minRating") || "");
         setMinReviews(searchParams.get("minReviews") || "");
-        setPage(Number(searchParams.get("page")) || 1);
+        setPage(1);
     }
 
     useEffect(() => {
@@ -137,7 +137,19 @@ function CatalogPage() {
         if (minReviews) params.minReviews = minReviews;
         if (page > 1) params.page = page;
 
-        setSearchParams(params);
+        const urlParams = {};
+        if (keyword) urlParams.keyword = keyword;
+        if (brand) urlParams.brand = brand;
+        if (movement) urlParams.movement = movement;
+        if (condition) urlParams.condition = condition;
+        if (category) urlParams.category = category;
+        if (minPrice) urlParams.minPrice = minPrice;
+        if (maxPrice) urlParams.maxPrice = maxPrice;
+        if (caseSize) urlParams.caseSize = caseSize;
+        if (minRating) urlParams.minRating = minRating;
+        if (minReviews) urlParams.minReviews = minReviews;
+
+        setSearchParams(urlParams, { replace: true });
         dispatch(getProducts(params));
     }, [
         dispatch,
